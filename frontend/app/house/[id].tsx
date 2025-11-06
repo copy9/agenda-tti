@@ -88,7 +88,6 @@ export default function HouseDetailScreen() {
   function updateMarkedDates() {
     const marked: any = {};
 
-    // Mark blocked/approved dates in red
     events.forEach((event) => {
       if (event.type === 'blocked' || event.type === 'approved') {
         event.dates.forEach((date) => {
@@ -111,7 +110,6 @@ export default function HouseDetailScreen() {
       }
     });
 
-    // Mark selected dates for proposal
     selectedDates.forEach((date) => {
       if (!marked[date]) {
         marked[date] = {
@@ -127,7 +125,6 @@ export default function HouseDetailScreen() {
   function handleDayPress(day: any) {
     const dateStr = day.dateString;
 
-    // Check if date is blocked or approved
     const isBlocked = events.some(
       (event) =>
         (event.type === 'blocked' || event.type === 'approved') &&
@@ -140,14 +137,12 @@ export default function HouseDetailScreen() {
         return;
       }
 
-      // Toggle selection
       if (selectedDates.includes(dateStr)) {
         setSelectedDates(selectedDates.filter((d) => d !== dateStr));
       } else {
         setSelectedDates([...selectedDates, dateStr]);
       }
     } else {
-      // Proprietario - block date
       if (isBlocked) {
         Alert.alert('Atenção', 'Esta data já está bloqueada');
         return;
@@ -372,7 +367,6 @@ export default function HouseDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Share Modal */}
       <Modal visible={showShareModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -409,7 +403,6 @@ export default function HouseDetailScreen() {
         </View>
       </Modal>
 
-      {/* Propose Modal */}
       <Modal visible={showProposeModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -451,221 +444,47 @@ export default function HouseDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  houseImage: {
-    width: '100%',
-    height: 250,
-    backgroundColor: '#f0f0f0',
-  },
-  infoSection: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  houseName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  houseDescription: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E3F2FD',
-    padding: 12,
-    borderRadius: 8,
-  },
-  actionButtonText: {
-    color: '#2196F3',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  calendarSection: {
-    padding: 16,
-  },
-  calendarHeader: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-  },
-  legend: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 4,
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#666',
-  },
-  proposeButton: {
-    backgroundColor: '#2196F3',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  proposeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  proposalsSection: {
-    padding: 16,
-  },
-  proposalCard: {
-    backgroundColor: '#FFF9C4',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  proposalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  proposalBroker: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  proposalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  proposalDates: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  proposalActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  proposalActionButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  approveButton: {
-    backgroundColor: '#4CAF50',
-  },
-  rejectButton: {
-    backgroundColor: '#F44336',
-  },
-  proposalActionText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-  },
-  modalInput: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    marginBottom: 16,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  modalCancelButton: {
-    backgroundColor: '#f5f5f5',
-  },
-  modalCancelText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalConfirmButton: {
-    backgroundColor: '#2196F3',
-  },
-  modalConfirmText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  backButton: { padding: 8 },
+  headerTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
+  houseImage: { width: '100%', height: 250, backgroundColor: '#f0f0f0' },
+  infoSection: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
+  houseName: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 8 },
+  houseDescription: { fontSize: 16, color: '#666', marginBottom: 16 },
+  actionsRow: { flexDirection: 'row', gap: 12 },
+  actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E3F2FD', padding: 12, borderRadius: 8 },
+  actionButtonText: { color: '#2196F3', fontSize: 14, fontWeight: '600', marginLeft: 4 },
+  calendarSection: { padding: 16 },
+  calendarHeader: { marginBottom: 16 },
+  sectionTitle: { fontSize: 20, fontWeight: '600', color: '#333', marginBottom: 12 },
+  legend: { flexDirection: 'row', gap: 16 },
+  legendItem: { flexDirection: 'row', alignItems: 'center' },
+  legendDot: { width: 12, height: 12, borderRadius: 6, marginRight: 4 },
+  legendText: { fontSize: 12, color: '#666' },
+  proposeButton: { backgroundColor: '#2196F3', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 16 },
+  proposeButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  proposalsSection: { padding: 16 },
+  proposalCard: { backgroundColor: '#FFF9C4', borderRadius: 12, padding: 16, marginBottom: 12 },
+  proposalHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  proposalBroker: { fontSize: 16, fontWeight: '600', color: '#333' },
+  proposalValue: { fontSize: 18, fontWeight: 'bold', color: '#4CAF50' },
+  proposalDates: { fontSize: 14, color: '#666', marginBottom: 12 },
+  proposalActions: { flexDirection: 'row', gap: 12 },
+  proposalActionButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
+  approveButton: { backgroundColor: '#4CAF50' },
+  rejectButton: { backgroundColor: '#F44336' },
+  proposalActionText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 400 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 8 },
+  modalSubtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
+  modalInput: { backgroundColor: '#f5f5f5', borderRadius: 12, padding: 16, fontSize: 16, borderWidth: 1, borderColor: '#e0e0e0', marginBottom: 16 },
+  modalButtons: { flexDirection: 'row', gap: 12 },
+  modalButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center' },
+  modalCancelButton: { backgroundColor: '#f5f5f5' },
+  modalCancelText: { color: '#666', fontSize: 16, fontWeight: '600' },
+  modalConfirmButton: { backgroundColor: '#2196F3' },
+  modalConfirmText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
