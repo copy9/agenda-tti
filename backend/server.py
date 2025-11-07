@@ -257,7 +257,38 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "id": str(current_user["_id"]),
         "email": current_user["email"],
         "name": current_user["name"],
-        "role": current_user["role"]
+        "role": current_user["role"],
+        "phone": current_user.get("phone", ""),
+        "photo": current_user.get("photo", "")
+    }
+
+@api_router.put("/auth/profile")
+async def update_profile(profile_data: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
+    """Update user profile"""
+    update_dict = {}
+    
+    if profile_data.name is not None:
+        update_dict["name"] = profile_data.name
+    if profile_data.phone is not None:
+        update_dict["phone"] = profile_data.phone
+    if profile_data.photo is not None:
+        update_dict["photo"] = profile_data.photo
+    
+    if update_dict:
+        await db.users.update_one(
+            {"_id": ObjectId(current_user["_id"])},
+            {"$set": update_dict}
+        )
+    
+    updated_user = await db.users.find_one({"_id": ObjectId(current_user["_id"])})
+    
+    return {
+        "id": str(updated_user["_id"]),
+        "email": updated_user["email"],
+        "name": updated_user["name"],
+        "role": updated_user["role"],
+        "phone": updated_user.get("phone", ""),
+        "photo": updated_user.get("photo", "")
     }
 
 
