@@ -71,6 +71,9 @@ class UserProfileUpdate(BaseModel):
 class BrokerRequest(BaseModel):
     email: EmailStr
 
+class InviteToken(BaseModel):
+    token: str
+
 class HouseCreate(BaseModel):
     name: str
     description: str
