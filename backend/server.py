@@ -63,6 +63,14 @@ class UserResponse(BaseModel):
     name: str
     role: str
 
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    photo: Optional[str] = None  # base64
+
+class BrokerRequest(BaseModel):
+    email: EmailStr
+
 class HouseCreate(BaseModel):
     name: str
     description: str
