@@ -292,6 +292,119 @@ async def update_profile(profile_data: UserProfileUpdate, current_user: dict = D
     }
 
 
+# ==================== BROKER MANAGEMENT ROUTES ====================
+
+@api_router.get("/brokers")
+async def get_linked_brokers(current_user: dict = Depends(get_current_user)):
+    """Get all brokers linked to this proprietario"""
+    if current_user["role"] != "proprietario":
+        raise HTTPException(status_code=403, detail="Apenas proprietários podem ver corretores")
+    
+    # Get linked brokers
+    linked_brokers = current_user.get("linkedBrokers", [])
+    
+    # Get broker details
+    brokers = []
+    for broker_email in linked_brokers:
+        broker = await db.users.find_one({"email": broker_email, "role": "corretor"})
+        if broker:
+            brokers.append({
+                "id": str(broker["_id"]),
+                "email": broker["email"],
+                "name": broker["name"],
+                "phone": broker.get("phone", ""),
+                "photo": broker.get("photo", "")
+            })
+    
+    return brokers
+
+@api_router.post("/brokers/add")
+async def add_broker(broker_data: BrokerRequest, current_user: dict = Depends(get_current_user)):
+    """Add a broker to have access to all houses"""
+    if current_user["role"] != "proprietario":
+        raise HTTPException(status_code=403, detail="Apenas proprietários podem adicionar corretores")
+    
+    # Check if broker exists
+    broker = await db.users.find_one({"email": broker_data.email, "role": "corretor"})
+    if not broker:
+        raise HTTPException(status_code=404, detail="Corretor não encontrado com este email")
+    
+    # Check if already linked
+    linked_brokers = current_user.get("linkedBrokers", [])
+    if broker_data.email in linked_brokers:
+        raise HTTPException(status_code=400, detail="Corretor já está vinculado")
+    
+    # Add to linked brokers
+    await db.users.update_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {"$push": {"linkedBrokers": broker_data.email}}
+    )
+    
+    # Update all houses to include this broker
+    await db.houses.update_many(
+        {"ownerId": str(current_user["_id"])},
+        {"$addToSet": {"sharedWith": broker_data.email}}
+    )
+    
+    # Send notification email
+    email_body = f"""
+    <h2>Você foi vinculado como Corretor</h2>
+    <p>Olá {broker['name']},</p>
+    <p>Você foi vinculado por {current_user['name']} como corretor.</p>
+    <p>Agora você tem acesso a TODAS as casas deste proprietário!</p>
+    <p>Acesse o app Agenda TTI para visualizar as casas disponíveis.</p>
+    """
+    await send_email(broker_data.email, "Vinculação de Corretor - Agenda TTI", email_body)
+    
+    return {"message": "Corretor adicionado com sucesso", "email": broker_data.email}
+
+@api_router.delete("/brokers/{broker_email}")
+async def remove_broker(broker_email: str, current_user: dict = Depends(get_current_user)):
+    """Remove a broker"""
+    if current_user["role"] != "proprietario":
+        raise HTTPException(status_code=403, detail="Apenas proprietários podem remover corretores")
+    
+    # Remove from linked brokers
+    await db.users.update_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {"$pull": {"linkedBrokers": broker_email}}
+    )
+    
+    # Remove from all houses
+    await db.houses.update_many(
+        {"ownerId": str(current_user["_id"])},
+        {"$pull": {"sharedWith": broker_email}}
+    )
+    
+    return {"message": "Corretor removido com sucesso"}
+
+
+# ==================== NOTIFICATIONS ROUTES ====================
+
+@api_router.get("/notifications/count")
+async def get_notifications_count(current_user: dict = Depends(get_current_user)):
+    """Get count of pending notifications"""
+    count = 0
+    
+    if current_user["role"] == "proprietario":
+        # Count pending proposals for all houses
+        houses = await db.houses.find({"ownerId": str(current_user["_id"])}).to_list(1000)
+        for house in houses:
+            proposals = await db.calendar_events.count_documents({
+                "houseId": str(house["_id"]),
+                "status": "pending"
+            })
+            count += proposals
+    else:
+        # Count updates in calendar for houses shared with this broker
+        houses = await db.houses.find({"sharedWith": current_user["email"]}).to_list(1000)
+        # For corretor, we'll just return if there are new approved/rejected proposals
+        # This is a simplified version - in production you'd track timestamps
+        count = 0
+    
+    return {"count": count}
+
+
 # ==================== HOUSE ROUTES ====================
 
 @api_router.get("/houses")
