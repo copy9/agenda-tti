@@ -414,7 +414,7 @@ async def get_houses(current_user: dict = Depends(get_current_user)):
         # Get houses owned by this user
         houses = await db.houses.find({"ownerId": str(current_user["_id"])}).to_list(1000)
     else:
-        # Get houses shared with this corretor
+        # Get houses shared with this corretor (includes individually shared and linked broker access)
         houses = await db.houses.find({"sharedWith": current_user["email"]}).to_list(1000)
     
     result = []
