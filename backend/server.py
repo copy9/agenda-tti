@@ -321,45 +321,120 @@ async def get_linked_brokers(current_user: dict = Depends(get_current_user)):
     
     return brokers
 
-@api_router.post("/brokers/add")
-async def add_broker(broker_data: BrokerRequest, current_user: dict = Depends(get_current_user)):
-    """Add a broker to have access to all houses"""
+@api_router.post("/brokers/invite")
+async def invite_broker(broker_data: BrokerRequest, current_user: dict = Depends(get_current_user)):
+    """Send invitation to broker"""
     if current_user["role"] != "proprietario":
-        raise HTTPException(status_code=403, detail="Apenas proprietários podem adicionar corretores")
-    
-    # Check if broker exists
-    broker = await db.users.find_one({"email": broker_data.email, "role": "corretor"})
-    if not broker:
-        raise HTTPException(status_code=404, detail="Corretor não encontrado com este email")
+        raise HTTPException(status_code=403, detail="Apenas proprietários podem convidar corretores")
     
     # Check if already linked
     linked_brokers = current_user.get("linkedBrokers", [])
     if broker_data.email in linked_brokers:
         raise HTTPException(status_code=400, detail="Corretor já está vinculado")
     
-    # Add to linked brokers
-    await db.users.update_one(
-        {"_id": ObjectId(current_user["_id"])},
-        {"$push": {"linkedBrokers": broker_data.email}}
-    )
+    # Generate invitation token
+    invite_data = {
+        "proprietario_id": str(current_user["_id"]),
+        "proprietario_name": current_user["name"],
+        "broker_email": broker_data.email,
+        "exp": datetime.utcnow() + timedelta(days=7)  # Token expires in 7 days
+    }
+    invite_token = jwt.encode(invite_data, SECRET_KEY, algorithm=ALGORITHM)
     
-    # Update all houses to include this broker
-    await db.houses.update_many(
-        {"ownerId": str(current_user["_id"])},
-        {"$addToSet": {"sharedWith": broker_data.email}}
-    )
+    # Store pending invitation
+    invitation = {
+        "token": invite_token,
+        "proprietarioId": str(current_user["_id"]),
+        "proprietarioName": current_user["name"],
+        "brokerEmail": broker_data.email,
+        "status": "pending",
+        "createdAt": datetime.utcnow().isoformat(),
+        "expiresAt": (datetime.utcnow() + timedelta(days=7)).isoformat()
+    }
+    await db.invitations.insert_one(invitation)
     
-    # Send notification email
+    # Send invitation email with acceptance link
+    # In production, this would be your app's URL
+    accept_link = f"agendatti://accept-invite?token={invite_token}"
+    
     email_body = f"""
-    <h2>Você foi vinculado como Corretor</h2>
-    <p>Olá {broker['name']},</p>
-    <p>Você foi vinculado por {current_user['name']} como corretor.</p>
-    <p>Agora você tem acesso a TODAS as casas deste proprietário!</p>
-    <p>Acesse o app Agenda TTI para visualizar as casas disponíveis.</p>
+    <h2>Convite para ser Corretor</h2>
+    <p>Olá,</p>
+    <p><strong>{current_user['name']}</strong> está convidando você para ser corretor no Agenda TTI.</p>
+    <p>Ao aceitar, você terá acesso a TODAS as casas deste proprietário!</p>
+    <br>
+    <p><strong>Para aceitar o convite:</strong></p>
+    <p>1. Faça login no app Agenda TTI</p>
+    <p>2. Clique no link abaixo ou copie o código:</p>
+    <p><a href="{accept_link}">Aceitar Convite</a></p>
+    <p><strong>Código do convite:</strong> {invite_token[:20]}...</p>
+    <br>
+    <p>Este convite expira em 7 dias.</p>
     """
-    await send_email(broker_data.email, "Vinculação de Corretor - Agenda TTI", email_body)
+    await send_email(broker_data.email, "Convite - Agenda TTI", email_body)
     
-    return {"message": "Corretor adicionado com sucesso", "email": broker_data.email}
+    return {
+        "message": "Convite enviado com sucesso!",
+        "email": broker_data.email,
+        "token": invite_token
+    }
+
+@api_router.post("/brokers/accept-invite")
+async def accept_invite(invite_data: InviteToken, current_user: dict = Depends(get_current_user)):
+    """Accept broker invitation"""
+    if current_user["role"] != "corretor":
+        raise HTTPException(status_code=403, detail="Apenas corretores podem aceitar convites")
+    
+    try:
+        # Decode token
+        payload = jwt.decode(invite_data.token, SECRET_KEY, algorithms=[ALGORITHM])
+        proprietario_id = payload.get("proprietario_id")
+        broker_email = payload.get("broker_email")
+        
+        # Verify email matches
+        if broker_email != current_user["email"]:
+            raise HTTPException(status_code=403, detail="Este convite não é para você")
+        
+        # Check if invitation exists and is pending
+        invitation = await db.invitations.find_one({
+            "token": invite_data.token,
+            "status": "pending"
+        })
+        
+        if not invitation:
+            raise HTTPException(status_code=404, detail="Convite não encontrado ou já foi utilizado")
+        
+        # Add broker to proprietario's linked brokers
+        await db.users.update_one(
+            {"_id": ObjectId(proprietario_id)},
+            {"$addToSet": {"linkedBrokers": current_user["email"]}}
+        )
+        
+        # Add broker to all houses of this proprietario
+        await db.houses.update_many(
+            {"ownerId": proprietario_id},
+            {"$addToSet": {"sharedWith": current_user["email"]}}
+        )
+        
+        # Mark invitation as accepted
+        await db.invitations.update_one(
+            {"_id": invitation["_id"]},
+            {"$set": {"status": "accepted", "acceptedAt": datetime.utcnow().isoformat()}}
+        )
+        
+        # Get proprietario info
+        proprietario = await db.users.find_one({"_id": ObjectId(proprietario_id)})
+        
+        return {
+            "message": "Convite aceito com sucesso!",
+            "proprietario": {
+                "name": proprietario["name"],
+                "email": proprietario["email"]
+            }
+        }
+        
+    except JWTError:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado")
 
 @api_router.delete("/brokers/{broker_email}")
 async def remove_broker(broker_email: str, current_user: dict = Depends(get_current_user)):
