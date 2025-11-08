@@ -50,17 +50,49 @@ async def seed_database():
     proprietario_id = str(proprietario_result.inserted_id)
     print(f"✓ Proprietário criado: {proprietario['email']}")
     
-    # Criar corretor
-    corretor = {
+    # Criar corretores
+    corretor1 = {
         "email": "corretor@test.com",
         "password": pwd_context.hash("senha123"),
         "name": "Maria Santos",
         "role": "corretor",
+        "phone": "(11) 98765-4321",
         "createdAt": datetime.utcnow().isoformat()
     }
-    corretor_result = await db.users.insert_one(corretor)
-    corretor_id = str(corretor_result.inserted_id)
-    print(f"✓ Corretor criado: {corretor['email']}")
+    corretor1_result = await db.users.insert_one(corretor1)
+    corretor1_id = str(corretor1_result.inserted_id)
+    print(f"✓ Corretor 1 criado: {corretor1['email']}")
+    
+    corretor2 = {
+        "email": "paulo.corretor@test.com",
+        "password": pwd_context.hash("senha123"),
+        "name": "Paulo Oliveira",
+        "role": "corretor",
+        "phone": "(11) 91234-5678",
+        "createdAt": datetime.utcnow().isoformat()
+    }
+    corretor2_result = await db.users.insert_one(corretor2)
+    corretor2_id = str(corretor2_result.inserted_id)
+    print(f"✓ Corretor 2 criado: {corretor2['email']}")
+    
+    corretor3 = {
+        "email": "ana.corretor@test.com",
+        "password": pwd_context.hash("senha123"),
+        "name": "Ana Rodrigues",
+        "role": "corretor",
+        "phone": "(11) 99999-8888",
+        "createdAt": datetime.utcnow().isoformat()
+    }
+    corretor3_result = await db.users.insert_one(corretor3)
+    corretor3_id = str(corretor3_result.inserted_id)
+    print(f"✓ Corretor 3 criado: {corretor3['email']}")
+    
+    # Atualizar proprietário com corretores vinculados
+    await db.users.update_one(
+        {"_id": proprietario_result.inserted_id},
+        {"$set": {"linkedBrokers": [corretor1["email"], corretor2["email"]]}}
+    )
+    print(f"✓ Corretores vinculados ao proprietário")
     
     print("\nCriando casas...")
     
