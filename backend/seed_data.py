@@ -103,7 +103,7 @@ async def seed_database():
         "image": SAMPLE_IMAGE,
         "ownerId": proprietario_id,
         "ownerName": proprietario["name"],
-        "sharedWith": [corretor["email"]],
+        "sharedWith": [corretor1["email"], corretor2["email"]],
         "createdAt": datetime.utcnow().isoformat()
     }
     casa1_result = await db.houses.insert_one(casa1)
