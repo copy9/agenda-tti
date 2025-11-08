@@ -143,7 +143,7 @@ async def seed_database():
     await db.calendar_events.insert_one(block_event)
     print(f"✓ Datas bloqueadas na Casa 1: {', '.join(blocked_dates)}")
     
-    # Criar proposta PENDENTE do corretor para Casa 1
+    # Criar proposta PENDENTE do corretor1 para Casa 1
     proposal_dates = []
     for i in range(5, 8):  # Dias 5, 6, 7
         date = (today + timedelta(days=i)).strftime('%Y-%m-%d')
@@ -153,7 +153,7 @@ async def seed_database():
         "houseId": casa1_id,
         "dates": proposal_dates,
         "type": "pending",
-        "brokerId": corretor_id,
+        "brokerId": corretor1_id,
         "value": 1500.00,
         "status": "pending",
         "createdAt": datetime.utcnow().isoformat()
