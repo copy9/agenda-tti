@@ -1,0 +1,9 @@
+node_modules/
+data/
+.env
+*.log
+coverage/
+test-results/
+playwright-report/
+.stryker-tmp/
+reports/

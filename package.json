@@ -1,0 +1,18 @@
+{
+  "name": "agenda-tti-servidor",
+  "version": "1.0.0",
+  "description": "Servidor da Agenda TTI: agenda e comunicação entre proprietários e corretores",
+  "private": true,
+  "main": "server.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "DB_DRIVER=sqlite node server.js",
+    "test": "node --test test/api.test.js",
+    "check:db": "node scripts/check-db.js"
+  },
+  "dependencies": {},
+  "optionalDependencies": {
+    "mysql2": "^3.11.0"
+  }
+}

@@ -1,0 +1,15 @@
+# Subir:  docker compose up -d --build
+# Logs:   docker compose logs -f
+services:
+  agenda-tti:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000"   # só o proxy HTTPS (Caddy/Nginx) enxerga a porta
+    volumes:
+      - tti-data:/app/data       # banco SQLite e fotos ficam aqui
+volumes:
+  tti-data:
