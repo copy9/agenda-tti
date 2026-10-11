@@ -39,7 +39,7 @@ for (const i of issues) if (!LABELS[i.meta.type]) throw new Error(`Tipo inválid
 
 // 1) repositório
 let exists = true;
-try { run('gh', ['repo', 'view', repo], { readonly: true }); } catch (e) { exists = false; }
+try { run('gh', ['api', `repos/${repo}`, '--silent'], { readonly: true }); } catch (e) { exists = false; }
 if (!exists) run('gh', ['repo', 'create', repo, visibility, '--source', '.', '--remote', 'origin']);
 else if (!dry) { try { run('git', ['remote', 'get-url', 'origin'], { readonly: true }); } catch (e) { run('git', ['remote', 'add', 'origin', `https://github.com/${repo}.git`]); } }
 
@@ -53,7 +53,7 @@ const done = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : {};
 for (const i of issues) {
   const key = path.basename(i.file);
   if (done[key]) { map[key] = done[key]; console.log('já publicada:', key, '#' + done[key]); continue; }
-  const url = run('gh', ['issue', 'create', '--repo', repo, '--title', i.meta.title, '--body', i.body, '--label', LABELS[i.meta.type][0]]);
+  const url = run('gh', ['api', '-X', 'POST', `repos/${repo}/issues`, '-f', `title=${i.meta.title}`, '-f', `body=${i.body}`, '-f', `labels[]=${LABELS[i.meta.type][0]}`, '--jq', '.html_url']);
   const n = dry ? 0 : Number(url.split('/').pop());
   map[key] = n; console.log('issue', key, '->', dry ? '(dry-run)' : '#' + n);
 }
@@ -77,7 +77,7 @@ for (const i of issues.filter((x) => x.meta.branch)) {
   const bodyFile = path.join(require('os').tmpdir(), 'pr-' + path.basename(draft));
   fs.writeFileSync(bodyFile, body);
   run('git', ['push', '-u', 'origin', next]);
-  const url = run('gh', ['pr', 'create', '--repo', repo, '--base', base, '--head', next, '--title', pr.meta.title, '--body-file', bodyFile]);
+  const url = run('gh', ['api', '-X', 'POST', `repos/${repo}/pulls`, '-f', `base=${base}`, '-f', `head=${next}`, '-f', `title=${pr.meta.title}`, '-F', `body=@${bodyFile}`, '--jq', '.html_url']);
   console.log('PR', next, '->', dry ? '(dry-run)' : url);
   prevPR = dry ? 0 : Number(url.split('/').pop());
   base = next;
