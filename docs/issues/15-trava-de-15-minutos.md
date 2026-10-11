@@ -16,5 +16,13 @@ Hoje o corretor só segura as datas ao enviar a proposta. Entre escolher e envia
 - [ ] Todo evento da trava entra no registro de auditoria (#17)
 - [ ] Testes de integração e e2e, incluindo disputa simultânea e privacidade
 
+## Anti-acúmulo (travar datas nobres para vender depois e prejudicar a concorrência)
+- [ ] A liberação é automática: se o corretor não responde a tempo, a data volta a ficar livre sozinha, sem depender de ninguém
+- [ ] Limite de travas simultâneas por corretor (ex.: 3) e por casa
+- [ ] Datas especiais (feriados, Carnaval, réveillon) têm trava mais curta e só uma por vez
+- [ ] Não pode travar de novo as mesmas datas logo após a trava expirar sem uso (espera de alguns minutos), para impedir "renovar" a trava
+- [ ] Estender só uma vez e nunca em datas especiais
+- [ ] Padrão de abuso (muitas travas vencidas) reduz o limite do corretor e avisa a administração (#16)
+
 ## Fora do escopo
 A cobrança por trava não aproveitada (#16).
