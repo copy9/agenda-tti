@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["server.js", "scripts/*.js", "test/**/*.test.js", "e2e/**/*.spec.js", "*.config.js"],
+  "project": ["server.js", "src/**/*.js", "scripts/**/*.js"],
+  "ignoreDependencies": ["mysql2", "@commitlint/cli", "@commitlint/config-conventional", "@stryker-mutator/core"]
+}
