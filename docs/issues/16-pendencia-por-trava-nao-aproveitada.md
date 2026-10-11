@@ -1,23 +1,31 @@
 ---
-title: "Registro de pendência quando o corretor trava a data e não aproveita"
+title: "Aviso e anotação no perfil quando o corretor trava a data e não aproveita"
 type: nova função
 phase: backlog
 ---
 ## Contexto
-Travar datas (#15) e não dar proposta, não reservar ou soltar a trava tira a data do mercado sem resultado. A plataforma **não cobra e não processa pagamento**: ela só registra a pendência, e proprietário e corretor se acertam por fora (Pix). Pagamento dentro da plataforma existe apenas para a assinatura do próprio software (#13).
+Travar datas (#15) e não dar proposta, não reservar ou não soltar a trava tira a data do mercado sem resultado. A plataforma **não cobra e não processa pagamento**. O fluxo é:
 
-## Regra proposta (a confirmar)
-Gera pendência quando a trava termina em: vencimento sem proposta, soltura, ou proposta retirada sem justificativa. Não gera quando vira proposta aceita, ou quando o proprietário recusa ou cancela.
+1. O corretor trava a data.
+2. Perto do fim do prazo, ele recebe uma **notificação para decidir**: enviar proposta, reservar ou soltar a trava. Decidindo dentro do prazo, não há problema na conta.
+3. Se o prazo acabar sem decisão, a trava expira e fica uma **anotação no perfil do corretor**.
+4. As anotações servem de registro para uma **cobrança futura**, combinada entre proprietário e corretor por fora (Pix).
 
 ## Critérios de aceite
-- [ ] O proprietário define, por casa, se usa pendência por trava e o valor combinado (texto ou número, só informativo)
-- [ ] O corretor aceita o termo antes da primeira trava e vê o valor combinado antes de travar
-- [ ] Extrato de pendências por corretor e por proprietário, com a linha do tempo da trava (do registro de auditoria #17)
-- [ ] O proprietário marca a pendência como "acertada" ou "perdoada"; sem integração de pagamento
+- [ ] Notificação ao corretor antes de a trava vencer (ex.: 5 min antes; e-mail/push via #11, aviso no site sempre), com os botões: enviar proposta, reservar, soltar, estender uma vez
+- [ ] Soltar ou converter dentro do prazo não gera anotação
+- [ ] Trava vencida sem decisão gera anotação no perfil: casa, datas, horário da trava e do vencimento (vindos do registro de auditoria #17)
+- [ ] O corretor vê as próprias anotações e o total acumulado; o proprietário vê as anotações das casas dele; a administração vê todas
+- [ ] Corretor nunca vê anotações de outro corretor
+- [ ] O proprietário pode marcar a anotação como "acertada" ou "perdoada" (sem integração de pagamento)
 - [ ] Contestação pelo corretor, analisada pela administração
-- [ ] Aviso ao corretor antes de a trava vencer (#11)
-- [ ] Privacidade: o proprietário vê quem travou; outros corretores nunca veem
-- [ ] Testes para cada desfecho (gera / não gera)
+- [ ] O corretor aceita um termo (#23) explicando as anotações antes da primeira trava
+- [ ] Testes para cada desfecho (decidiu a tempo / venceu / contestou)
+
+## Decisões em aberto
+- [ ] As anotações de um corretor aparecem para todos os proprietários que o convidaram, ou só para o dono da casa?
+- [ ] Prazo de graça (ex.: soltar em até 2 minutos nunca anota)?
+- [ ] Valor combinado por casa (texto informativo) ou só o registro?
 
 ## Depende de
-#15 trava de 15 minutos e #17 registro de auditoria.
+#15 trava de 15 minutos, #17 registro de auditoria, #11 notificações e #23 termos.
