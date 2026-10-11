@@ -18,7 +18,8 @@ Hoje o corretor só segura as datas ao enviar a proposta. Entre escolher e envia
 
 ## Anti-acúmulo (travar datas nobres para vender depois e prejudicar a concorrência)
 - [ ] A liberação é automática: se o corretor não responde a tempo, a data volta a ficar livre sozinha, sem depender de ninguém
-- [ ] Limite de travas simultâneas por corretor (ex.: 3) e por casa
+- [ ] Limite base de travas simultâneas por corretor (ex.: 3) e por casa
+- [ ] O limite **sobe** para o corretor que cumpre os requisitos: adiantamentos confirmados em dia (#25), sem anotações abertas (#16) e histórico de propostas fechadas; quem trava mais precisa estar em dia
 - [ ] Datas especiais (feriados, Carnaval, réveillon) têm trava mais curta e só uma por vez
 - [ ] Não pode travar de novo as mesmas datas logo após a trava expirar sem uso (espera de alguns minutos), para impedir "renovar" a trava
 - [ ] Estender só uma vez e nunca em datas especiais

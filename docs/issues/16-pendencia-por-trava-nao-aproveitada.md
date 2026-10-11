@@ -20,6 +20,7 @@ Travar datas (#15) e não dar proposta, não reservar ou não soltar a trava tir
 - [ ] Corretor nunca vê anotações de outro corretor
 - [ ] O proprietário pode marcar a anotação como "acertada" ou "perdoada" (sem integração de pagamento)
 - [ ] Escalonamento por reincidência (valores a confirmar): 1ª e 2ª anotação só registram; a partir da 3ª o limite de travas simultâneas do corretor cai; com reincidência alta a função de trava é suspensa e a administração é avisada
+- [ ] Também geram anotação: adiantamento não pago na data combinada e cancelado pelo proprietário (#25)
 - [ ] Anotações têm validade (ex.: 90 dias sem novas) para o corretor recuperar o limite
 - [ ] Relatório para o proprietário: datas nobres travadas e vencidas, por corretor, para ele enxergar o padrão
 - [ ] Contestação pelo corretor, analisada pela administração
@@ -32,4 +33,4 @@ Travar datas (#15) e não dar proposta, não reservar ou não soltar a trava tir
 - [ ] Valor combinado por casa (texto informativo) ou só o registro?
 
 ## Depende de
-#15 trava de 15 minutos, #17 registro de auditoria, #11 notificações e #23 termos.
+#15 trava de 15 minutos, #25 data do adiantamento, #17 registro de auditoria, #11 notificações e #23 termos.
