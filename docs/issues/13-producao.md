@@ -9,4 +9,4 @@ Feito por último, em desenvolvimento conjunto.
 ## Critérios de aceite
 - [ ] Servidor e domínio no ar com HTTPS
 - [ ] Rotina de backup do banco e das fotos
-- [ ] Decisão sobre pagamento do adiantamento
+- [ ] Cobrança da assinatura do software (único pagamento dentro da plataforma; adiantamento e acertos entre proprietário e corretor ficam fora, por Pix)
