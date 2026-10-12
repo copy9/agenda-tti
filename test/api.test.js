@@ -41,7 +41,7 @@ const D = (n) => { const d = new Date(Date.now() + n * 864e5); return d.toISOStr
 
 async function signup(role, email, name) {
   const c = new Client();
-  const r = await c.post('/api/register', { role, email, name, wa: '11999990000', pass: 'senha123' });
+  const r = await c.post('/api/register', { role, email, name, wa: '11999990000', pass: 'senha123', terms: true });
   assert.equal(r.status, 200, r.txt);
   return c;
 }
@@ -57,8 +57,8 @@ test('cadastro, login, senha errada e papel trocado', async () => {
   assert.equal((await c.post('/api/login', { role: 'owner', email: 'dono@x.com', pass: 'errada1' })).status, 401);
   assert.equal((await c.post('/api/login', { role: 'broker', email: 'dono@x.com', pass: 'senha123' })).status, 409);
   assert.equal((await c.post('/api/login', { role: 'owner', email: 'dono@x.com', pass: 'senha123' })).status, 200);
-  assert.equal((await c.post('/api/register', { role: 'owner', email: 'dono@x.com', name: 'x', wa: '11999990000', pass: 'senha123' })).status, 409);
-  assert.equal((await c.post('/api/register', { role: 'owner', email: 'teste@teste.com', name: 'x', wa: '11999990000', pass: 'senha123' })).status, 409);
+  assert.equal((await c.post('/api/register', { role: 'owner', email: 'dono@x.com', name: 'x', wa: '11999990000', pass: 'senha123', terms: true })).status, 409);
+  assert.equal((await c.post('/api/register', { role: 'owner', email: 'teste@teste.com', name: 'x', wa: '11999990000', pass: 'senha123', terms: true })).status, 409);
 });
 
 test('exige JSON (defesa contra CSRF) e sessão', async () => {

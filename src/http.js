@@ -109,7 +109,7 @@ function createApp() {
       await route.handler(req, res);
     } catch (e) {
       if (res.headersSent) return;
-      if (e instanceof HttpError) return res.json(e.status, { error: e.message });
+      if (e instanceof HttpError) return res.json(e.status, e.code ? { error: e.message, code: e.code } : { error: e.message });
       T.captureException(e, { reqId: tctx.id, route: tctx.route });
       res.json(500, { error: 'Erro interno do servidor.' });
     }

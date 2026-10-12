@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Gera public/index.html (front em MODO SERVIDOR) a partir do front de demonstração.
 Se window.TTI_BOOT.api não existir (arquivo aberto direto), o front continua funcionando em modo demonstração."""
-import sys, re
+import sys, re, os, json
 src, dst = sys.argv[1], sys.argv[2]
 s = open(src, encoding='utf8').read()
+HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'front')
+def extra(name):
+    return open(os.path.join(HERE, name), encoding='utf8').read()
 
 def rep(old, new, count=1):
     global s
@@ -36,6 +39,17 @@ rep("const ex=!!BR()[iv.email];$('nmw')", "const ex=SRV?!!iv.exists:!!BR()[iv.em
 rep("function readInvite(){const m=", "function readInvite(){if(SRV)return null;const m=")
 rep("function readPub(){try{", "function readPub(){if(SRV)return null;try{")
 rep("if(pv0)showPub(pv0,false);else if(iv0)", "if(SRV)srvBoot();else if(pv0)showPub(pv0,false);else if(iv0)")
+
+# 3b) termos e privacidade (#23)
+rep('<div class="err" id="err" hidden role="alert"></div>\n    <button class="btn" id="go"', '<label class="tcw" id="tcw" hidden><input type="checkbox" id="tc"><span>Li e aceito: <a href="/termos" data-legal="terms">Termos de uso</a> · <a href="/privacidade" data-legal="privacy">Política de privacidade</a></span></label>\n    <div class="err" id="err" hidden role="alert"></div>\n    <button class="btn" id="go"')
+rep("$('nmw').hidden=$('waw').hidden=!su;$('lh')", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=!su;$('lh')")
+rep("$('nmw').hidden=$('waw').hidden=ex;", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=ex;")
+rep("function resetLogin(){INVT=null;", "function resetLogin(){INVT=null;$('tc').checked=false;")
+rep('<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button></div></div>', '<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a></div></div>')
+rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fdata">Meus dados</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
+rep('<dialog id="dlg" aria-labelledby="dtt">', extra('server-extra.html') + '<dialog id="dlg" aria-labelledby="dtt">')
+rep('</style>', extra('server-extra.css') + '</style>')
+rep('const I18N_D=/*I18N_DATA*/[', 'const I18N_D=/*I18N_DATA*/' + json.dumps(json.loads(extra('server-extra.i18n.json')), ensure_ascii=False)[:-1] + ',')
 
 # 4) convites pelo servidor
 rep("const ok=((B[v.email]||{}).houses||[]).some(x=>x.id==='r'+h.id);", "const ok=SRV?!!v.ok:((B[v.email]||{}).houses||[]).some(x=>x.id==='r'+h.id);")
@@ -75,7 +89,7 @@ async function api(path,body){MO.bar.start();try{return await api0(path,body)}fi
 async function api0(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
- if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;throw e}return j}
+ if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;if(j&&j.code)e.code=j.code;if(r.status===403&&e.code==='terms')srvTerms();throw e}return j}
 const SRVK=['edits','susp','owners','brokers','houses','blocks','props','inv','chat','noti','prof','tour','remx','rems'];
 const PUSHK=['houses','props','blocks','noti','chat','prof','inv','tour','remx','rems'];
 let SREV=0,SNAP={},SDIRTY=new Set(),SBUSY=false,STMR=null,SPOLL=null,SPEND=false;
@@ -122,17 +136,19 @@ DB.onChange((n)=>{if(SRV)srvQueue(n)});
 async function srvGo(){
  const e=$('e').value.trim().toLowerCase(),p=$('p').value,nm=$('nm').value.trim().replace(/[<>"'&]/g,''),wa=$('wa').value.replace(/\D/g,'');
  const bad=m=>{$('err').hidden=false;$('err').textContent=m},btn=$('go');
- if(btn.disabled)return;MO.busy(btn,true);$('err').hidden=true;
+ if(btn.disabled)return;
+ if(((INVT&&!INVT.exists)||(!INVT&&SU))&&!$('tc').checked)return bad('Aceite os Termos de uso e a Política de privacidade para criar a conta.');
+ MO.busy(btn,true);$('err').hidden=true;
  const inv=INVT,su=SU,lr=LR;let logged=false;
  try{
   let r;
   if(inv){
    if(inv.exists)r=await api('/api/login',{email:e,pass:p,role:'broker'});
-   else r=await api('/api/register',{role:'broker',email:e,name:nm,wa,pass:p});
-   SRVU=r.user;logged=true;
+   else r=await api('/api/register',{role:'broker',email:e,name:nm,wa,pass:p,terms:true});
+   SRVU=r.user;logged=true;if(SRVU.needTerms)await srvTerms();
    await api('/api/invites/accept',{token:inv.token});
-  }else if(su){r=await api('/api/register',{role:lr,email:e,name:nm,wa,pass:p});SRVU=r.user;logged=true}
-  else{r=await api('/api/login',{email:e,pass:p,role:lr});SRVU=r.user;logged=true}
+  }else if(su){r=await api('/api/register',{role:lr,email:e,name:nm,wa,pass:p,terms:true});SRVU=r.user;logged=true}
+  else{r=await api('/api/login',{email:e,pass:p,role:lr});SRVU=r.user;logged=true;if(SRVU.needTerms)await srvTerms()}
   $('login').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');
   await srvPull();
   try{history.replaceState(null,'','/')}catch(x){}
@@ -169,12 +185,12 @@ async function srvBoot(){
    if(i.otherRole){$('err').hidden=false;$('err').textContent='Este e-mail pertence a uma conta de proprietário. Peça um novo convite com outro e-mail.'}}
   catch(x){$('ibt').classList.remove('sk');$('ibt').style.cssText='';$('ib').hidden=true;toast(x.message)}
   return}
- if(SRVU){try{$('home').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');await srvPull();if(SRVU.role==='admin'){srvPoll();return}enter(SRVU.role,SRVU.email);srvPoll()}catch(x){if(x.status===401){SRVU=null}$('app').hidden=true;$('home').hidden=false}}}
+ if(SRVU){try{$('home').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');if(SRVU.needTerms&&SRVU.role!=='admin')await srvTerms();await srvPull();if(SRVU.role==='admin'){srvPoll();return}enter(SRVU.role,SRVU.email);srvPoll()}catch(x){if(x.status===401){SRVU=null}$('app').hidden=true;$('home').hidden=false}}}
 /* ========================================================= */
 """
 marker = "const iv0=readInvite(),pv0=readPub();"
 assert s.count(marker) == 1
-s = s.replace(marker, SRV_JS + marker)
+s = s.replace(marker, SRV_JS + extra('server-extra.js') + marker)
 
 open(dst, 'w', encoding='utf8').write(s)
 print('ok', len(s))

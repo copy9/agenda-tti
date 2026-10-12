@@ -107,6 +107,11 @@ async function notify(t, to, text, pid, at) {
   for (const r of old.slice(200)) await t.run('DELETE FROM notifications WHERE id = ?', [r.id]);
 }
 
+// ---------- consentimentos (termos e privacidade) ----------
+async function consent(t, email, ip, version, kind) {
+  await t.run('INSERT INTO consents (id, email, kind, version, at, ip_hash) VALUES (?,?,?,?,?,?)', [U.rid(8), email, kind || 'terms', version, Date.now(), U.sha256(String(ip || ''))]);
+}
+
 // ---------- propostas ----------
 const isOpen = (s) => s === 'pending' || s === 'countered';
 async function saveProposal(t, doc, houseId, broker, owner) {
@@ -143,4 +148,4 @@ async function writeBlocks(t, houseId, dates) {
   if (!r.changes) await t.run('INSERT INTO blocks (house_id, dates) VALUES (?,?)', [houseId, j]);
 }
 
-module.exports = { rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
+module.exports = { rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };

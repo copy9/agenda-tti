@@ -2,9 +2,9 @@
 const crypto = require('crypto');
 
 class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  constructor(status, message, code) { super(message); this.status = status; if (code) this.code = code; }
 }
-const bad = (m, s = 400) => new HttpError(s, m);
+const bad = (m, s = 400, code) => new HttpError(s, m, code);
 
 const now = () => Date.now();
 const rid = (n = 12) => crypto.randomBytes(n).toString('hex');

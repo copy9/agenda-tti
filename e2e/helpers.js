@@ -16,6 +16,7 @@ async function signup(page, role, email, name, wa, pass) {
   await page.fill('#nm', name);
   await page.fill('#wa', wa);
   await page.fill('#p', pass);
+  await page.check('#tc');
   await page.click('#go');
   await page.waitForSelector('#app:not([hidden])', { timeout: 8000 });
   await skipTour(page);
@@ -27,6 +28,7 @@ async function acceptInvite(page, link, name, wa, pass) {
   await page.fill('#nm', name);
   await page.fill('#wa', wa);
   await page.fill('#p', pass);
+  await page.check('#tc');
   await page.click('#go');
   await page.waitForSelector('.hc', { timeout: 8000 });
   await skipTour(page);

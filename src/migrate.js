@@ -76,6 +76,24 @@ const TABLES = [
     email VARCHAR(190) NOT NULL PRIMARY KEY,
     doc LONGTEXT NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS consents (
+    id VARCHAR(40) NOT NULL PRIMARY KEY,
+    email VARCHAR(190) NOT NULL,
+    kind VARCHAR(20) NOT NULL,
+    version VARCHAR(20) NOT NULL,
+    at BIGINT NOT NULL,
+    ip_hash CHAR(64) NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS data_requests (
+    id VARCHAR(40) NOT NULL PRIMARY KEY,
+    email_hash CHAR(64) NOT NULL,
+    email VARCHAR(190) NOT NULL DEFAULT '',
+    kind VARCHAR(12) NOT NULL,
+    status VARCHAR(12) NOT NULL,
+    created BIGINT NOT NULL,
+    due BIGINT NOT NULL,
+    done BIGINT NOT NULL DEFAULT 0
+  )`,
   `CREATE TABLE IF NOT EXISTS settings (
     k VARCHAR(60) NOT NULL PRIMARY KEY,
     v LONGTEXT NOT NULL
@@ -91,6 +109,8 @@ const INDEXES = [
   ['idx_inv_owner', 'invites', 'owner_email'],
   ['idx_photos_house', 'photos', 'house_id'],
   ['idx_sess_email', 'sessions', 'email'],
+  ['idx_consent_email', 'consents', 'email'],
+  ['idx_dreq_hash', 'data_requests', 'email_hash'],
 ];
 
 async function migrate() {

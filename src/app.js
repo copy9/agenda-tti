@@ -8,6 +8,7 @@ const A = require('./auth');
 const V = require('./views');
 const P = require('./policy');
 const ADM = require('./admin');
+const L = require('./legal');
 const T = require('./telemetry');
 const { createApp } = require('./http');
 
@@ -21,6 +22,11 @@ function build() {
   const need = (req, ...roles) => {
     if (!req.user) throw U.bad('Sessão expirada. Entre de novo.', 401);
     if (roles.length && !roles.includes(req.user.role)) throw U.bad('Você não tem permissão para essa ação.', 403);
+    if (req.user.needTerms) throw U.bad('Leia e aceite os Termos de uso e a Política de privacidade atualizados para continuar.', 403, 'terms');
+  };
+  // Para ações permitidas mesmo antes de aceitar os termos novos (aceitar, baixar os próprios dados, pedir exclusão).
+  const needLogin = (req) => {
+    if (!req.user || req.user.role === 'admin') throw U.bad('Sessão expirada. Entre de novo.', 401);
   };
 
   // ---------- página ----------
@@ -31,7 +37,7 @@ function build() {
     const json = JSON.stringify(boot || {}).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, '');
     return htmlCache.replace('window.TTI_BOOT=null;', 'window.TTI_BOOT=' + json + ';');
   }
-  const bootBase = (req) => ({ api: true, user: req.user ? A.publicUser(req.user) : null });
+  const bootBase = (req) => ({ api: true, user: req.user ? A.publicUser(req.user) : null, terms: cfg.LEGAL_VERSION });
 
   app.get('/', (req, res) => res.html(200, page(bootBase(req))));
 
@@ -58,6 +64,30 @@ function build() {
   app.post('/api/login', async (req, res) => res.json(200, { user: await A.login(req, res) }));
   app.post('/api/logout', async (req, res) => { await A.endSession(req, res); res.json(200, { ok: true }); });
   app.get('/api/session', (req, res) => res.json(200, { user: req.user ? A.publicUser(req.user) : null, rev: S.rev() }));
+
+  // ---------- termos, privacidade e direitos do titular ----------
+  const legalPage = (kind) => (req, res) => res.html(200, L.page(kind, req.query.lg));
+  app.get('/termos', legalPage('terms'));
+  app.get('/privacidade', legalPage('privacy'));
+  app.post('/api/terms/accept', async (req, res) => {
+    needLogin(req);
+    A.limit('terms:' + req.user.email, 30, 3600e3);
+    await L.accept(req.user, req.ip_, req.body.version);
+    res.json(200, { ok: true, terms: L.termsState({ needTerms: false }) });
+  });
+  app.get('/api/me/export', async (req, res) => {
+    needLogin(req);
+    A.limit('export:' + req.user.email, 10, 3600e3);
+    const d = await L.exportData(req.user);
+    res.send(200, JSON.stringify(d, null, 2), { 'Content-Type': 'application/json; charset=utf-8', 'Content-Disposition': 'attachment; filename="meus-dados-agenda-tti-' + U.today() + '.json"', 'Cache-Control': 'no-store' });
+  });
+  app.get('/api/me/delete', async (req, res) => { needLogin(req); res.json(200, await L.deleteStatus(req.user)); });
+  app.post('/api/me/delete', async (req, res) => {
+    needLogin(req);
+    A.limit('mdel:' + req.user.email, 10, 3600e3);
+    res.json(200, await L.requestDelete(req.user, req.body.pass, A.checkPass));
+  });
+  app.post('/api/me/delete/cancel', async (req, res) => { needLogin(req); res.json(200, await L.cancelDelete(req.user)); });
   app.get('/api/health', async (req, res) => { await db.one('SELECT 1 AS ok'); res.json(200, { ok: true, db: db.dialect }); });
 
   // ---------- observabilidade ----------
@@ -185,6 +215,7 @@ function build() {
     try {
       const n = await db.write((t) => S.expireDue(t));
       if (n) S.bump();
+      if (await L.processDue()) S.bump();
     } catch (e) { T.captureException(e, { source: 'tick' }); }
   }
   app.tick = tick;

@@ -39,6 +39,12 @@ module.exports = {
   TRACES_SAMPLE_RATE: Math.min(1, Math.max(0, Number(e.TRACES_SAMPLE_RATE) || 0.1)),
   OTEL_ENABLED: !!(e.OTEL_EXPORTER_OTLP_ENDPOINT || e.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT),
   METRICS_TOKEN: e.METRICS_TOKEN || '',
+  // Documentos legais (#23). Mude a versão quando o texto mudar: todos precisam aceitar de novo.
+  LEGAL_VERSION: e.LEGAL_VERSION || '2026-10-12',
+  LEGAL_REVIEWED: e.LEGAL_REVIEWED === '1',
+  COMPANY_NAME: e.COMPANY_NAME || 'Agenda TTI',
+  LEGAL_CONTACT: (e.LEGAL_CONTACT || e.ADMIN_EMAIL || '').trim(),
+  DELETE_GRACE_DAYS: Math.max(0, Number(e.DELETE_GRACE_DAYS) || 7),
   MAX_PHOTO_BYTES: 1.5 * 1024 * 1024,
   MAX_HOUSES_PER_OWNER: 60,
 };
