@@ -4,12 +4,19 @@
   "description": "Servidor da Agenda TTI: agenda e comunicação entre proprietários e corretores",
   "private": true,
   "main": "server.js",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "DB_DRIVER=sqlite node server.js",
     "test": "node --test test/api.test.js",
-    "check:db": "node scripts/check-db.js"
+    "check:db": "node scripts/check-db.js",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "check:commit": "node scripts/check-commit-msg.js",
+    "publish:github": "node scripts/publish-github.js",
+    "build:front": "python3 scripts/make-front.py front/source.html public/index.html",
+    "check:fast": "node --check server.js"
   },
   "dependencies": {},
   "optionalDependencies": {

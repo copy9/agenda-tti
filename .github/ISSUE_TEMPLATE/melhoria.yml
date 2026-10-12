@@ -1,0 +1,29 @@
+name: "Melhoria"
+description: "Algo que existe e vai ficar melhor"
+title: "[Melhoria] "
+labels: ["tipo: melhoria"]
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: "O que existe hoje, o que incomoda e o ganho esperado."
+    validations: { required: true }
+  - type: textarea
+    id: aceite
+    attributes:
+      label: Critérios de aceite
+      description: Lista de verificação. Cada item deve ser testável.
+      placeholder: "- [ ] ..."
+    validations: { required: true }
+  - type: textarea
+    id: fora
+    attributes:
+      label: Fora do escopo
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      multiple: true
+      options: [Front, Servidor, Banco, Infra/Deploy, Testes, Observabilidade, Documentação]
+    validations: { required: true }

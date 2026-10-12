@@ -1,0 +1,29 @@
+name: "Nova função"
+description: "Algo que ainda não existe"
+title: "[Nova função] "
+labels: ["tipo: nova função"]
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: "Quem precisa, para quê, e como isso se encaixa na regra de privacidade entre corretores."
+    validations: { required: true }
+  - type: textarea
+    id: aceite
+    attributes:
+      label: Critérios de aceite
+      description: Lista de verificação. Cada item deve ser testável.
+      placeholder: "- [ ] ..."
+    validations: { required: true }
+  - type: textarea
+    id: fora
+    attributes:
+      label: Fora do escopo
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      multiple: true
+      options: [Front, Servidor, Banco, Infra/Deploy, Testes, Observabilidade, Documentação]
+    validations: { required: true }

@@ -1,0 +1,29 @@
+name: "Correção"
+description: "Algo que deveria funcionar e não funciona"
+title: "[Correção] "
+labels: ["tipo: correção"]
+body:
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: "O que acontece, o que deveria acontecer, passos para reproduzir, navegador/aparelho."
+    validations: { required: true }
+  - type: textarea
+    id: aceite
+    attributes:
+      label: Critérios de aceite
+      description: Lista de verificação. Cada item deve ser testável.
+      placeholder: "- [ ] ..."
+    validations: { required: true }
+  - type: textarea
+    id: fora
+    attributes:
+      label: Fora do escopo
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      multiple: true
+      options: [Front, Servidor, Banco, Infra/Deploy, Testes, Observabilidade, Documentação]
+    validations: { required: true }
