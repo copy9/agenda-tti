@@ -1,5 +1,6 @@
 'use strict';
 const fs = require('fs');
+const path = require('path');
 const cfg = require('./config');
 const db = require('./db');
 const U = require('./util');
@@ -9,6 +10,8 @@ const V = require('./views');
 const P = require('./policy');
 const ADM = require('./admin');
 const L = require('./legal');
+const N = require('./notifier');
+const PUSH = require('./push');
 const T = require('./telemetry');
 const { createApp } = require('./http');
 
@@ -90,6 +93,35 @@ function build() {
   app.post('/api/me/delete/cancel', async (req, res) => { needLogin(req); res.json(200, await L.cancelDelete(req.user)); });
   app.get('/api/health', async (req, res) => { await db.one('SELECT 1 AS ok'); res.json(200, { ok: true, db: db.dialect }); });
 
+  // ---------- avisos fora do site: preferências e push ----------
+  const prefsOut = async (user) => {
+    const p = await db.write((t) => S.prefsOf(t, user.email));
+    const subs = await PUSH.subsOf(user.email);
+    return { lang: p.lang, ch: p.ch, ev: p.ev, mail: !!cfg.SMTP_HOST, push: subs.length };
+  };
+  app.get('/api/me/prefs', async (req, res) => { need(req, 'owner', 'broker'); res.json(200, await prefsOut(req.user)); });
+  app.post('/api/me/prefs', async (req, res) => {
+    need(req, 'owner', 'broker');
+    A.limit('prefs:' + req.user.email, 60, 3600e3);
+    const b = req.body || {};
+    await db.write((t) => S.setPrefs(t, req.user.email, { lang: b.lang, ch: b.ch, ev: b.ev }));
+    res.json(200, await prefsOut(req.user));
+  });
+  app.get('/api/push/key', async (req, res) => { need(req, 'owner', 'broker'); res.json(200, { key: await PUSH.publicKey() }); });
+  app.post('/api/push/subscribe', async (req, res) => {
+    need(req, 'owner', 'broker');
+    A.limit('psub:' + req.user.email, 30, 3600e3);
+    await PUSH.subscribe(req.user.email, req.body);
+    res.json(200, await prefsOut(req.user));
+  });
+  app.post('/api/push/unsubscribe', async (req, res) => {
+    need(req, 'owner', 'broker');
+    await PUSH.unsubscribe(req.user.email, req.body && req.body.endpoint);
+    res.json(200, await prefsOut(req.user));
+  });
+  // Service worker do push: precisa ser servido na raiz para valer para o site todo.
+  app.get('/sw.js', (req, res) => res.send(200, fs.readFileSync(path.join(__dirname, '..', 'public', 'sw.js')), { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'no-cache', 'Service-Worker-Allowed': '/' }));
+
   // ---------- observabilidade ----------
   app.get('/metrics', (req, res) => {
     if (!cfg.METRICS_TOKEN) return res.json(404, { error: 'Não encontrado.' });
@@ -134,8 +166,11 @@ function build() {
     if (!IDRE.test(hid)) throw U.bad('Casa inválida.');
     if (!U.isEmail(email)) throw U.bad('Informe um e-mail válido.');
     if (email === req.user.email) throw U.bad('Use o e-mail do corretor, não o seu.');
+    const base = cfg.PUBLIC_URL || (req.secure_ ? 'https://' : 'http://') + (req.headers.host || 'localhost');
+    let mailOk = true;
+    try { A.limit('invmail:' + req.user.email, 30, 864e5); } catch (e) { mailOk = false; } // trava de spam: no máximo 30 e-mails de convite por dia
     const out = await db.write(async (t) => {
-      const h = await S.one(t, 'SELECT owner_email FROM houses WHERE id = ?', [hid]);
+      const h = await S.one(t, 'SELECT owner_email, doc FROM houses WHERE id = ?', [hid]);
       if (!h || h.owner_email !== req.user.email) throw U.bad('Casa não encontrada.', 404);
       const other = await S.one(t, 'SELECT role FROM users WHERE email = ?', [email]);
       if (other && other.role !== 'broker') throw U.bad('Este e-mail pertence a uma conta de proprietário.', 409);
@@ -144,11 +179,11 @@ function build() {
       if (!i) {
         i = { token: U.rid(16), house_id: hid, owner_email: req.user.email, broker_email: email, status: 'pending', created: Date.now(), accepted: 0 };
         await t.run('INSERT INTO invites (token, house_id, owner_email, broker_email, status, created, accepted) VALUES (?,?,?,?,?,?,?)', [i.token, hid, i.owner_email, email, 'pending', i.created, 0]);
+        if (mailOk) await S.event(t, email, 'invite', { owner: req.user.name, house: U.parse(h.doc, {}).name, url: base + '/?convite=' + i.token, lang: (await S.prefsOf(t, req.user.email)).lang });
       }
       return i;
     });
     S.bump();
-    const base = cfg.PUBLIC_URL || (req.secure_ ? 'https://' : 'http://') + (req.headers.host || 'localhost');
     res.json(200, { token: out.token, url: base + '/?convite=' + out.token, view: await V.viewFor(req.user), rev: S.rev() });
   });
 
@@ -164,6 +199,7 @@ function build() {
       if (i.status !== 'accepted') await t.run("UPDATE invites SET status = 'accepted', accepted = ? WHERE token = ?", [Date.now(), token]);
       const h = await S.one(t, 'SELECT doc FROM houses WHERE id = ?', [i.house_id]);
       await S.notify(t, i.owner_email, req.user.name + ' aceitou o convite para ' + (h ? U.parse(h.doc, {}).name : 'a casa'));
+      if (i.status !== 'accepted') await S.event(t, i.owner_email, 'invite_accepted', { broker: req.user.name, house: h ? U.parse(h.doc, {}).name : '' });
     });
     S.bump();
     res.json(200, { ok: true, rev: S.rev(), view: await V.viewFor(req.user) });
@@ -216,9 +252,12 @@ function build() {
       const n = await db.write((t) => S.expireDue(t));
       if (n) S.bump();
       if (await L.processDue()) S.bump();
+      await db.write((t) => S.remindDue(t));
+      await N.purge();
     } catch (e) { T.captureException(e, { source: 'tick' }); }
   }
   app.tick = tick;
+  app.drain = async () => { try { await N.drain(); } catch (e) { T.captureException(e, { source: 'drain' }); } };
   return app;
 }
 module.exports = { build };

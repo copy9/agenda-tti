@@ -51,6 +51,9 @@ async function cancelProposal(id) {
     await S.saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
     await S.notify(t, r.broker_email, 'A administração cancelou a proposta para ' + d.house, d.id);
     await S.notify(t, r.owner_email, 'A administração cancelou a proposta de ' + d.bname + ' para ' + d.house, d.id);
+    const vars = { house: d.house, in: d.in, out: d.out, pid: d.id };
+    await S.event(t, r.broker_email, 'admin_cancelled', vars);
+    await S.event(t, r.owner_email, 'admin_cancelled', vars);
   });
 }
 

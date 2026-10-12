@@ -45,6 +45,17 @@ module.exports = {
   COMPANY_NAME: e.COMPANY_NAME || 'Agenda TTI',
   LEGAL_CONTACT: (e.LEGAL_CONTACT || e.ADMIN_EMAIL || '').trim(),
   DELETE_GRACE_DAYS: Math.max(0, Number(e.DELETE_GRACE_DAYS) || 7),
+  // E-mail (SMTP) e push web (#11). Sem SMTP_HOST, o e-mail fica desligado; o push usa chaves VAPID geradas e guardadas no banco.
+  SMTP_HOST: e.SMTP_HOST || '',
+  SMTP_PORT: Number(e.SMTP_PORT) || 587,
+  SMTP_SECURITY: ['tls', 'none'].includes((e.SMTP_SECURITY || '').toLowerCase()) ? e.SMTP_SECURITY.toLowerCase() : 'starttls',
+  SMTP_USER: e.SMTP_USER || '',
+  SMTP_PASS: e.SMTP_PASS || '',
+  MAIL_FROM: e.MAIL_FROM || '',
+  VAPID_SUBJECT: e.VAPID_SUBJECT || '',
+  PUSH_HOSTS: (e.PUSH_HOSTS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean),
+  PUSH_ALLOW_INSECURE: e.PUSH_ALLOW_INSECURE === '1',
+  OUTBOX_MAX_ATTEMPTS: Math.max(1, Number(e.OUTBOX_MAX_ATTEMPTS) || 5),
   MAX_PHOTO_BYTES: 1.5 * 1024 * 1024,
   MAX_HOUSES_PER_OWNER: 60,
 };

@@ -94,6 +94,32 @@ const TABLES = [
     due BIGINT NOT NULL,
     done BIGINT NOT NULL DEFAULT 0
   )`,
+  `CREATE TABLE IF NOT EXISTS uprefs (
+    email VARCHAR(190) NOT NULL PRIMARY KEY,
+    lang VARCHAR(2) NOT NULL DEFAULT 'pt',
+    doc LONGTEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS push_subs (
+    id CHAR(64) NOT NULL PRIMARY KEY,
+    email VARCHAR(190) NOT NULL,
+    endpoint LONGTEXT NOT NULL,
+    p256dh VARCHAR(200) NOT NULL,
+    auth VARCHAR(100) NOT NULL,
+    created BIGINT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS outbox (
+    id VARCHAR(40) NOT NULL PRIMARY KEY,
+    to_email VARCHAR(190) NOT NULL,
+    channel VARCHAR(8) NOT NULL,
+    kind VARCHAR(30) NOT NULL,
+    doc LONGTEXT NOT NULL,
+    status VARCHAR(8) NOT NULL,
+    attempts INT NOT NULL DEFAULT 0,
+    next_at BIGINT NOT NULL,
+    last_error VARCHAR(300) NOT NULL DEFAULT '',
+    created BIGINT NOT NULL,
+    sent BIGINT NOT NULL DEFAULT 0
+  )`,
   `CREATE TABLE IF NOT EXISTS settings (
     k VARCHAR(60) NOT NULL PRIMARY KEY,
     v LONGTEXT NOT NULL
@@ -110,6 +136,8 @@ const INDEXES = [
   ['idx_photos_house', 'photos', 'house_id'],
   ['idx_sess_email', 'sessions', 'email'],
   ['idx_consent_email', 'consents', 'email'],
+  ['idx_push_email', 'push_subs', 'email'],
+  ['idx_outbox_due', 'outbox', 'status'],
   ['idx_dreq_hash', 'data_requests', 'email_hash'],
 ];
 
