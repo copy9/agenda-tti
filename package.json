@@ -10,16 +10,30 @@
   "scripts": {
     "start": "node server.js",
     "dev": "DB_DRIVER=sqlite node server.js",
-    "test": "node --test test/api.test.js",
+    "test": "node --test \"test/**/*.test.js\"",
     "check:db": "node scripts/check-db.js",
     "prepare": "git config core.hooksPath .githooks || true",
     "check:commit": "node scripts/check-commit-msg.js",
     "publish:github": "node scripts/publish-github.js",
     "build:front": "python3 scripts/make-front.py front/source.html public/index.html",
-    "check:fast": "node --check server.js"
+    "check:fast": "node scripts/arch-contract.js",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "arch": "node scripts/arch-contract.js",
+    "knip": "knip",
+    "mutation": "stryker run",
+    "check": "npm run lint && npm run arch && npm run knip && npm test"
   },
   "dependencies": {},
   "optionalDependencies": {
     "mysql2": "^3.11.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "knip": "^5.0.0",
+    "@stryker-mutator/core": "^9.0.0"
   }
 }
