@@ -988,6 +988,59 @@ details.pdd{margin-top:12px;border:1px solid var(--line);border-radius:18px;back
 .fun{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--bg);gap:2px}.fun i{display:block;min-width:0}
 .fun .a,.fl .a{background:var(--ok)}.fun .o,.fl .o{background:var(--brass)}.fun .c,.fl .c{background:var(--mute)}
 .fl{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:14px}.fl i{display:inline-block;width:10px;height:10px;border-radius:99px;margin-right:6px}
+
+/* ===== Camada de movimento (Design Motion Principles: lente Emil, apoio Jakub) ===== */
+:root{--mo-fast:120ms;--mo-base:180ms;--mo-slow:280ms;--ease-out:cubic-bezier(.23,1,.32,1);--ease-in:cubic-bezier(.755,.05,.855,.06);--ease-io:cubic-bezier(.77,0,.175,1)}
+@keyframes mo-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes mo-fade{from{opacity:0}to{opacity:1}}
+@keyframes mo-fade-out{to{opacity:0}}
+@keyframes mo-pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes mo-pop-out{to{opacity:0;transform:translateY(4px) scale(.99)}}
+@keyframes mo-shimmer{to{transform:translateX(100%)}}
+@keyframes mo-spin{to{transform:rotate(360deg)}}
+/* entrada nas trocas de tela (só quando a tela muda, nunca a cada atualização de dados) */
+#m.mo-in>*,#am.mo-in>*{animation:mo-in var(--mo-base) var(--ease-out) backwards}
+#m.mo-in .houses>*{animation:mo-in var(--mo-base) var(--ease-out) backwards}
+#m.mo-in .houses>:nth-child(2){animation-delay:30ms}#m.mo-in .houses>:nth-child(3){animation-delay:60ms}#m.mo-in .houses>:nth-child(4){animation-delay:90ms}#m.mo-in .houses>:nth-child(5){animation-delay:120ms}#m.mo-in .houses>:nth-child(6){animation-delay:150ms}#m.mo-in .houses>:nth-child(7){animation-delay:180ms}#m.mo-in .houses>:nth-child(8){animation-delay:210ms}
+/* diálogos e avisos com entrada e saída */
+dialog[open]{animation:mo-pop var(--mo-base) var(--ease-out)}
+dialog[open]::backdrop{animation:mo-fade var(--mo-base) var(--ease-out)}
+dialog.closing{animation:mo-pop-out var(--mo-fast) var(--ease-in) forwards}
+dialog.closing::backdrop{animation:mo-fade-out var(--mo-fast) var(--ease-in) forwards}
+.toast{transform:translate(-50%,8px);transition:opacity var(--mo-base) var(--ease-out),transform var(--mo-base) var(--ease-out)}
+.toast.on{transform:translate(-50%,0)}
+.toast:not(.on){transition-duration:var(--mo-fast);transition-timing-function:var(--ease-in)}
+/* troca de tela inteira (entrar, sair, painel admin) */
+::view-transition-old(root),::view-transition-new(root){animation-duration:var(--mo-base);animation-timing-function:var(--ease-out)}
+/* skeleton: tem a forma do conteúdo final; o brilho é linear e para com reduced-motion */
+.sk{position:relative;overflow:hidden;background:var(--line);border-radius:10px;color:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--surf) 65%,transparent),transparent);transform:translateX(-100%);animation:mo-shimmer 1.4s linear infinite}
+.sk-card{background:var(--surf);border-radius:26px;overflow:hidden;box-shadow:var(--sh-1,0 1px 2px rgba(16,36,43,.06))}
+.sk-card .sk-im{aspect-ratio:4/3;border-radius:0}
+.sk-in{padding:16px 18px 20px;display:grid;gap:10px}.sk-chips{display:flex;gap:8px;margin-top:4px}.sk-chips .sk{height:26px;width:72px;border-radius:99px}
+.sk-row{display:flex;gap:14px;align-items:center;padding:14px 16px;background:var(--surf);border-radius:18px}.sk-row .sk-av{width:42px;height:42px;border-radius:50%;flex:0 0 auto}.sk-row>div{flex:1;display:grid;gap:8px}
+.sk-list{display:grid;gap:10px;margin-top:18px}
+.sk-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:16px}.sk-cal .sk{min-height:56px;border-radius:12px}
+.sk-pub{max-width:980px;margin:0 auto;padding:18px}.sk-pub .sk-g{display:grid;grid-template-columns:2fr 1fr;gap:8px}.sk-pub .sk-g .sk{aspect-ratio:4/3}.sk-pub .sk-st{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;margin-top:18px}.sk-pub .sk-st .sk{height:58px}
+.th .sk{aspect-ratio:1;border-radius:8px}
+/* progresso global de requisições */
+#mo-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--brass);transform:scaleX(0);transform-origin:left;opacity:0;z-index:2000;pointer-events:none;transition:opacity var(--mo-base) var(--ease-out)}
+/* botões: feedback ao toque e estado ocupado */
+.btn:active{transform:scale(.97)}
+.btn[aria-busy=true]{pointer-events:none;opacity:.78}
+.btn[aria-busy=true]::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:mo-spin .7s linear infinite}
+/* imagens: preguiçosas, com fundo reservado e fade ao chegar */
+.hc .im,.ph,.pv-g figure,.mos figure{background:var(--line)}
+img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opacity:1}
+.hc img{transition:transform var(--mo-slow) var(--ease-out)}.ph img{transition:transform var(--mo-slow) var(--ease-out)}
+#home.js .rv{transform:translateY(12px);transition:opacity .45s var(--ease-out),transform .45s var(--ease-out)}
+@media(prefers-reduced-motion:reduce){
+ :root{--mo-fast:0ms;--mo-base:0ms;--mo-slow:0ms}
+ #m.mo-in>*,#am.mo-in>*,#m.mo-in .houses>*{animation:none!important}
+ dialog[open],dialog.closing,dialog[open]::backdrop,dialog.closing::backdrop{animation:none!important}
+ .sk::after{animation:none}.btn:active{transform:none}.btn[aria-busy=true]::before{animation-duration:2.4s}
+ .toast{transform:translate(-50%,0)}img.lz{opacity:1}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+}
 </style>
 </head>
 <body>
@@ -1686,7 +1739,7 @@ function openForm(h){$('hf').reset();EDIT=h?h.id:null;$('dtt').textContent=h?'Ed
  $('f-cit').value=h?(h.cit||''):'';$('f-cot').value=h?(h.cot||''):'';$('f-acc').value=h?(h.acc||''):'';$('f-wfn').value=h?(h.wfn||''):'';$('f-wfp').value=h?(h.wfp||''):'';$('f-ci').value=h?(h.ci||''):'';$('f-co').value=h?(h.co||''):'';$('fe').hidden=true;dlg.showModal()}
 function syncBr(id,f){const B=BR();let ch=false;for(const e in B)(B[e].houses||[]).forEach(x=>{if(x.id==='r'+id){const {photos,...r}=f;Object.assign(x,r);ch=true}});if(ch)saveBR(B)}
 const shrink=f=>new Promise(r=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',.72))};im.onerror=()=>r(null);im.src=u});
-$('f-ph').onchange=async e=>{const fs=[...e.target.files].slice(0,8-pics.length);for(const f of fs){const u=await shrink(f);if(u)pics.push(u)}e.target.value='';thumbs()};
+$('f-ph').onchange=async e=>{const fs=[...e.target.files].slice(0,8-pics.length);thumbs();const ph=fs.map(()=>{const d=document.createElement('div');d.className='sk';d.setAttribute('aria-busy','true');$('th').appendChild(d);return d});MO.bar.start();try{for(let i=0;i<fs.length;i++){const u=await shrink(fs[i]);if(u)pics.push(u);ph[i].remove()}}finally{MO.bar.end();e.target.value='';thumbs()}};
 $('fx').onclick=$('fc').onclick=()=>dlg.close();
 $('f-ckt').onclick=()=>{$('f-ci').value=tx(CI0);$('f-co').value=tx(CO0)};
 dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
@@ -2205,6 +2258,44 @@ const _cfm=window.confirm.bind(window);window.confirm=m=>_cfm(tx(m));
 TMOstart();if(TTI_LANG!=='pt'){TMO.disconnect();trWalk(document.body);document.title=trText(TTL0,TTI_LANG)??TTL0;TMOstart()}
 
 function trDoc(html){if(TTI_LANG==='pt')return html;try{const d=new DOMParser().parseFromString(html,'text/html'),tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),L=[];let n;while((n=tw.nextNode()))L.push(n);L.forEach(n=>{const r=trText(n.nodeValue,TTI_LANG);if(r!=null)n.nodeValue=r});const t=d.querySelector('title');if(t){const r=trText(t.textContent,TTI_LANG);if(r)t.textContent=r}d.documentElement.lang=LNAMES[TTI_LANG];return '<!DOCTYPE html>'+d.documentElement.outerHTML}catch(e){return html}}
+
+/* ===================== MOVIMENTO ===================== */
+const REDUCED=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
+const MO={k:'',ak:'',
+ // barra de progresso global: sobe devagar até 85% e completa quando a última requisição termina
+ bar:(()=>{const b=document.createElement('div');b.id='mo-bar';b.setAttribute('aria-hidden','true');document.body.appendChild(b);let n=0,t;
+  return{start(){if(!n++){clearTimeout(t);b.style.transition='none';b.style.opacity='1';b.style.transform='scaleX(0)';void b.offsetWidth;b.style.transition='transform 6s cubic-bezier(.1,.6,.2,1)';b.style.transform='scaleX(.85)'}},
+   end(){if(n&&!--n){b.style.transition='transform var(--mo-fast) linear';b.style.transform='scaleX(1)';t=setTimeout(()=>{b.style.transition='opacity var(--mo-base) var(--ease-out)';b.style.opacity='0'},160)}}}})(),
+ // botão ocupado (spinner + aria-busy); bloqueia clique duplo
+ busy(b,on){if(!b)return;b.disabled=!!on;if(on)b.setAttribute('aria-busy','true');else b.removeAttribute('aria-busy')},
+ // esqueletos com a forma do conteúdo final
+ skel(kind){const L=(w,h,x)=>`<div class="sk" style="height:${h}px;width:${w};${x||''}"></div>`;
+  const card=`<div class="sk-card"><div class="sk sk-im"></div><div class="sk-in">${L('70%',20)}${L('45%',12)}<div class="sk-chips"><span class="sk"></span><span class="sk"></span><span class="sk"></span></div></div></div>`;
+  const row=`<div class="sk-row"><div class="sk sk-av"></div><div>${L('40%',14)}${L('65%',11)}</div></div>`;
+  const body={
+   cards:`<div class="top"><div style="flex:1;min-width:0">${L('min(260px,70%)',34)}${L('min(380px,90%)',14,'margin-top:12px')}</div></div><div class="houses">${card}${card}${card}</div>`,
+   list:`${L('min(240px,60%)',30)}<div class="sk-list">${row}${row}${row}${row}</div>`,
+   cal:`${L('min(220px,60%)',28)}<div class="sk-cal">${'<div class="sk"></div>'.repeat(35)}</div>`,
+   pub:`<div class="sk-pub"><div class="sk-g"><div class="sk"></div><div class="sk"></div></div>${L('min(420px,80%)',36,'margin-top:22px')}${L('min(260px,50%)',14,'margin-top:12px')}<div class="sk-st">${'<div class="sk"></div>'.repeat(5)}</div></div>`
+  }[kind]||'';
+  return `<div role="status" aria-busy="true" aria-label="Carregando">${body}</div>`}};
+// entrada ao trocar de tela (aba, casa, proposta), nunca a cada atualização de dados
+function moEnter(el,key,slot){const first=key!==MO[slot];MO[slot]=key;if(first&&!REDUCED()&&el){el.classList.remove('mo-in');void el.offsetWidth;el.classList.add('mo-in')}}
+{const _r=render;render=function(){const k=PG+'|'+(view||'')+'|'+(PV||'')+'|'+(PT||'');const r=_r.apply(this,arguments);moEnter($('m'),k,'k');return r};
+ const _e=enter;enter=function(){MO.k='';return _e.apply(this,arguments)};
+ const _a=arender;arender=function(){const r=_a.apply(this,arguments);moEnter($('am'),'a'+AT,'ak');return r};
+ // troca de tela inteira com View Transitions (rara, então pode ser expressiva; cai para instantâneo sem suporte)
+ const vt=fn=>function(){const a=arguments,t=this;if(!document.startViewTransition||REDUCED())return fn.apply(t,a);try{document.startViewTransition(()=>{fn.apply(t,a)})}catch(e){return fn.apply(t,a)}};
+ showHome=vt(showHome);showAdmin=vt(showAdmin);const _en=enter;enter=vt(_en)}
+// diálogos: saída antes de fechar (Esc e botão Fechar)
+{const _c=HTMLDialogElement.prototype.close;HTMLDialogElement.prototype.close=function(v){if(!this.open||REDUCED()||this.classList.contains('closing'))return _c.call(this,v);this.classList.add('closing');setTimeout(()=>{this.classList.remove('closing');_c.call(this,v)},120)};
+ document.querySelectorAll('dialog').forEach(d=>d.addEventListener('cancel',e=>{if(REDUCED())return;e.preventDefault();d.close()}))}
+// imagens: lazy loading, decodificação assíncrona e fade ao chegar (a 1ª foto da página pública e o lightbox ficam imediatos)
+{const prep=i=>{if(i.dataset.mo)return;i.dataset.mo='1';i.decoding='async';
+  const first=i.closest('#lb')||i.closest('.pv-g figure:first-child');if(!first)i.loading='lazy';
+  if(!i.complete&&!first){i.classList.add('lz');const d=()=>i.classList.add('ld');i.addEventListener('load',d,{once:true});i.addEventListener('error',d,{once:true})}};
+ const scan=n=>{if(n.nodeType!==1)return;if(n.tagName==='IMG')prep(n);else n.querySelectorAll&&n.querySelectorAll('img').forEach(prep)};
+ new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(scan))).observe(document.body,{childList:true,subtree:true});scan(document.body)}
 const iv0=readInvite(),pv0=readPub();
 if(pv0)showPub(pv0,false);else if(iv0)showInvite(iv0);else try{const a=sessionStorage.getItem('tti-auth')||'';if(a.startsWith('owner:')&&(a.slice(6)===USER.email||OW()[a.slice(6)])&&!SUSP()[a.slice(6)])enter('owner',a.slice(6));else if(a.startsWith('broker:')&&BR()[a.slice(7)]&&!SUSP()[a.slice(7)])enter('broker',a.slice(7))}catch(e){}
 </script>

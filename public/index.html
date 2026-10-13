@@ -989,6 +989,59 @@ details.pdd{margin-top:12px;border:1px solid var(--line);border-radius:18px;back
 .fun{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--bg);gap:2px}.fun i{display:block;min-width:0}
 .fun .a,.fl .a{background:var(--ok)}.fun .o,.fl .o{background:var(--brass)}.fun .c,.fl .c{background:var(--mute)}
 .fl{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:14px}.fl i{display:inline-block;width:10px;height:10px;border-radius:99px;margin-right:6px}
+
+/* ===== Camada de movimento (Design Motion Principles: lente Emil, apoio Jakub) ===== */
+:root{--mo-fast:120ms;--mo-base:180ms;--mo-slow:280ms;--ease-out:cubic-bezier(.23,1,.32,1);--ease-in:cubic-bezier(.755,.05,.855,.06);--ease-io:cubic-bezier(.77,0,.175,1)}
+@keyframes mo-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes mo-fade{from{opacity:0}to{opacity:1}}
+@keyframes mo-fade-out{to{opacity:0}}
+@keyframes mo-pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes mo-pop-out{to{opacity:0;transform:translateY(4px) scale(.99)}}
+@keyframes mo-shimmer{to{transform:translateX(100%)}}
+@keyframes mo-spin{to{transform:rotate(360deg)}}
+/* entrada nas trocas de tela (só quando a tela muda, nunca a cada atualização de dados) */
+#m.mo-in>*,#am.mo-in>*{animation:mo-in var(--mo-base) var(--ease-out) backwards}
+#m.mo-in .houses>*{animation:mo-in var(--mo-base) var(--ease-out) backwards}
+#m.mo-in .houses>:nth-child(2){animation-delay:30ms}#m.mo-in .houses>:nth-child(3){animation-delay:60ms}#m.mo-in .houses>:nth-child(4){animation-delay:90ms}#m.mo-in .houses>:nth-child(5){animation-delay:120ms}#m.mo-in .houses>:nth-child(6){animation-delay:150ms}#m.mo-in .houses>:nth-child(7){animation-delay:180ms}#m.mo-in .houses>:nth-child(8){animation-delay:210ms}
+/* diálogos e avisos com entrada e saída */
+dialog[open]{animation:mo-pop var(--mo-base) var(--ease-out)}
+dialog[open]::backdrop{animation:mo-fade var(--mo-base) var(--ease-out)}
+dialog.closing{animation:mo-pop-out var(--mo-fast) var(--ease-in) forwards}
+dialog.closing::backdrop{animation:mo-fade-out var(--mo-fast) var(--ease-in) forwards}
+.toast{transform:translate(-50%,8px);transition:opacity var(--mo-base) var(--ease-out),transform var(--mo-base) var(--ease-out)}
+.toast.on{transform:translate(-50%,0)}
+.toast:not(.on){transition-duration:var(--mo-fast);transition-timing-function:var(--ease-in)}
+/* troca de tela inteira (entrar, sair, painel admin) */
+::view-transition-old(root),::view-transition-new(root){animation-duration:var(--mo-base);animation-timing-function:var(--ease-out)}
+/* skeleton: tem a forma do conteúdo final; o brilho é linear e para com reduced-motion */
+.sk{position:relative;overflow:hidden;background:var(--line);border-radius:10px;color:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--surf) 65%,transparent),transparent);transform:translateX(-100%);animation:mo-shimmer 1.4s linear infinite}
+.sk-card{background:var(--surf);border-radius:26px;overflow:hidden;box-shadow:var(--sh-1,0 1px 2px rgba(16,36,43,.06))}
+.sk-card .sk-im{aspect-ratio:4/3;border-radius:0}
+.sk-in{padding:16px 18px 20px;display:grid;gap:10px}.sk-chips{display:flex;gap:8px;margin-top:4px}.sk-chips .sk{height:26px;width:72px;border-radius:99px}
+.sk-row{display:flex;gap:14px;align-items:center;padding:14px 16px;background:var(--surf);border-radius:18px}.sk-row .sk-av{width:42px;height:42px;border-radius:50%;flex:0 0 auto}.sk-row>div{flex:1;display:grid;gap:8px}
+.sk-list{display:grid;gap:10px;margin-top:18px}
+.sk-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:16px}.sk-cal .sk{min-height:56px;border-radius:12px}
+.sk-pub{max-width:980px;margin:0 auto;padding:18px}.sk-pub .sk-g{display:grid;grid-template-columns:2fr 1fr;gap:8px}.sk-pub .sk-g .sk{aspect-ratio:4/3}.sk-pub .sk-st{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;margin-top:18px}.sk-pub .sk-st .sk{height:58px}
+.th .sk{aspect-ratio:1;border-radius:8px}
+/* progresso global de requisições */
+#mo-bar{position:fixed;top:0;left:0;right:0;height:2px;background:var(--brass);transform:scaleX(0);transform-origin:left;opacity:0;z-index:2000;pointer-events:none;transition:opacity var(--mo-base) var(--ease-out)}
+/* botões: feedback ao toque e estado ocupado */
+.btn:active{transform:scale(.97)}
+.btn[aria-busy=true]{pointer-events:none;opacity:.78}
+.btn[aria-busy=true]::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:mo-spin .7s linear infinite}
+/* imagens: preguiçosas, com fundo reservado e fade ao chegar */
+.hc .im,.ph,.pv-g figure,.mos figure{background:var(--line)}
+img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opacity:1}
+.hc img{transition:transform var(--mo-slow) var(--ease-out)}.ph img{transition:transform var(--mo-slow) var(--ease-out)}
+#home.js .rv{transform:translateY(12px);transition:opacity .45s var(--ease-out),transform .45s var(--ease-out)}
+@media(prefers-reduced-motion:reduce){
+ :root{--mo-fast:0ms;--mo-base:0ms;--mo-slow:0ms}
+ #m.mo-in>*,#am.mo-in>*,#m.mo-in .houses>*{animation:none!important}
+ dialog[open],dialog.closing,dialog[open]::backdrop,dialog.closing::backdrop{animation:none!important}
+ .sk::after{animation:none}.btn:active{transform:none}.btn[aria-busy=true]::before{animation-duration:2.4s}
+ .toast{transform:translate(-50%,0)}img.lz{opacity:1}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+}
 </style>
 </head>
 <body>
@@ -1690,7 +1743,7 @@ function openForm(h){$('hf').reset();EDIT=h?h.id:null;$('dtt').textContent=h?'Ed
  $('f-cit').value=h?(h.cit||''):'';$('f-cot').value=h?(h.cot||''):'';$('f-acc').value=h?(h.acc||''):'';$('f-wfn').value=h?(h.wfn||''):'';$('f-wfp').value=h?(h.wfp||''):'';$('f-ci').value=h?(h.ci||''):'';$('f-co').value=h?(h.co||''):'';$('fe').hidden=true;dlg.showModal()}
 function syncBr(id,f){const B=BR();let ch=false;for(const e in B)(B[e].houses||[]).forEach(x=>{if(x.id==='r'+id){const {photos,...r}=f;Object.assign(x,r);ch=true}});if(ch)saveBR(B)}
 const shrink=f=>new Promise(r=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',.72))};im.onerror=()=>r(null);im.src=u});
-$('f-ph').onchange=async e=>{const fs=[...e.target.files].slice(0,8-pics.length);for(const f of fs){const u=await shrink(f);if(u)pics.push(u)}e.target.value='';thumbs()};
+$('f-ph').onchange=async e=>{const fs=[...e.target.files].slice(0,8-pics.length);thumbs();const ph=fs.map(()=>{const d=document.createElement('div');d.className='sk';d.setAttribute('aria-busy','true');$('th').appendChild(d);return d});MO.bar.start();try{for(let i=0;i<fs.length;i++){const u=await shrink(fs[i]);if(u)pics.push(u);ph[i].remove()}}finally{MO.bar.end();e.target.value='';thumbs()}};
 $('fx').onclick=$('fc').onclick=()=>dlg.close();
 $('f-ckt').onclick=()=>{$('f-ci').value=tx(CI0);$('f-co').value=tx(CO0)};
 dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
@@ -2212,6 +2265,44 @@ TMOstart();if(TTI_LANG!=='pt'){TMO.disconnect();trWalk(document.body);document.t
 
 function trDoc(html){if(TTI_LANG==='pt')return html;try{const d=new DOMParser().parseFromString(html,'text/html'),tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),L=[];let n;while((n=tw.nextNode()))L.push(n);L.forEach(n=>{const r=trText(n.nodeValue,TTI_LANG);if(r!=null)n.nodeValue=r});const t=d.querySelector('title');if(t){const r=trText(t.textContent,TTI_LANG);if(r)t.textContent=r}d.documentElement.lang=LNAMES[TTI_LANG];return '<!DOCTYPE html>'+d.documentElement.outerHTML}catch(e){return html}}
 
+/* ===================== MOVIMENTO ===================== */
+const REDUCED=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
+const MO={k:'',ak:'',
+ // barra de progresso global: sobe devagar até 85% e completa quando a última requisição termina
+ bar:(()=>{const b=document.createElement('div');b.id='mo-bar';b.setAttribute('aria-hidden','true');document.body.appendChild(b);let n=0,t;
+  return{start(){if(!n++){clearTimeout(t);b.style.transition='none';b.style.opacity='1';b.style.transform='scaleX(0)';void b.offsetWidth;b.style.transition='transform 6s cubic-bezier(.1,.6,.2,1)';b.style.transform='scaleX(.85)'}},
+   end(){if(n&&!--n){b.style.transition='transform var(--mo-fast) linear';b.style.transform='scaleX(1)';t=setTimeout(()=>{b.style.transition='opacity var(--mo-base) var(--ease-out)';b.style.opacity='0'},160)}}}})(),
+ // botão ocupado (spinner + aria-busy); bloqueia clique duplo
+ busy(b,on){if(!b)return;b.disabled=!!on;if(on)b.setAttribute('aria-busy','true');else b.removeAttribute('aria-busy')},
+ // esqueletos com a forma do conteúdo final
+ skel(kind){const L=(w,h,x)=>`<div class="sk" style="height:${h}px;width:${w};${x||''}"></div>`;
+  const card=`<div class="sk-card"><div class="sk sk-im"></div><div class="sk-in">${L('70%',20)}${L('45%',12)}<div class="sk-chips"><span class="sk"></span><span class="sk"></span><span class="sk"></span></div></div></div>`;
+  const row=`<div class="sk-row"><div class="sk sk-av"></div><div>${L('40%',14)}${L('65%',11)}</div></div>`;
+  const body={
+   cards:`<div class="top"><div style="flex:1;min-width:0">${L('min(260px,70%)',34)}${L('min(380px,90%)',14,'margin-top:12px')}</div></div><div class="houses">${card}${card}${card}</div>`,
+   list:`${L('min(240px,60%)',30)}<div class="sk-list">${row}${row}${row}${row}</div>`,
+   cal:`${L('min(220px,60%)',28)}<div class="sk-cal">${'<div class="sk"></div>'.repeat(35)}</div>`,
+   pub:`<div class="sk-pub"><div class="sk-g"><div class="sk"></div><div class="sk"></div></div>${L('min(420px,80%)',36,'margin-top:22px')}${L('min(260px,50%)',14,'margin-top:12px')}<div class="sk-st">${'<div class="sk"></div>'.repeat(5)}</div></div>`
+  }[kind]||'';
+  return `<div role="status" aria-busy="true" aria-label="Carregando">${body}</div>`}};
+// entrada ao trocar de tela (aba, casa, proposta), nunca a cada atualização de dados
+function moEnter(el,key,slot){const first=key!==MO[slot];MO[slot]=key;if(first&&!REDUCED()&&el){el.classList.remove('mo-in');void el.offsetWidth;el.classList.add('mo-in')}}
+{const _r=render;render=function(){const k=PG+'|'+(view||'')+'|'+(PV||'')+'|'+(PT||'');const r=_r.apply(this,arguments);moEnter($('m'),k,'k');return r};
+ const _e=enter;enter=function(){MO.k='';return _e.apply(this,arguments)};
+ const _a=arender;arender=function(){const r=_a.apply(this,arguments);moEnter($('am'),'a'+AT,'ak');return r};
+ // troca de tela inteira com View Transitions (rara, então pode ser expressiva; cai para instantâneo sem suporte)
+ const vt=fn=>function(){const a=arguments,t=this;if(!document.startViewTransition||REDUCED())return fn.apply(t,a);try{document.startViewTransition(()=>{fn.apply(t,a)})}catch(e){return fn.apply(t,a)}};
+ showHome=vt(showHome);showAdmin=vt(showAdmin);const _en=enter;enter=vt(_en)}
+// diálogos: saída antes de fechar (Esc e botão Fechar)
+{const _c=HTMLDialogElement.prototype.close;HTMLDialogElement.prototype.close=function(v){if(!this.open||REDUCED()||this.classList.contains('closing'))return _c.call(this,v);this.classList.add('closing');setTimeout(()=>{this.classList.remove('closing');_c.call(this,v)},120)};
+ document.querySelectorAll('dialog').forEach(d=>d.addEventListener('cancel',e=>{if(REDUCED())return;e.preventDefault();d.close()}))}
+// imagens: lazy loading, decodificação assíncrona e fade ao chegar (a 1ª foto da página pública e o lightbox ficam imediatos)
+{const prep=i=>{if(i.dataset.mo)return;i.dataset.mo='1';i.decoding='async';
+  const first=i.closest('#lb')||i.closest('.pv-g figure:first-child');if(!first)i.loading='lazy';
+  if(!i.complete&&!first){i.classList.add('lz');const d=()=>i.classList.add('ld');i.addEventListener('load',d,{once:true});i.addEventListener('error',d,{once:true})}};
+ const scan=n=>{if(n.nodeType!==1)return;if(n.tagName==='IMG')prep(n);else n.querySelectorAll&&n.querySelectorAll('img').forEach(prep)};
+ new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(scan))).observe(document.body,{childList:true,subtree:true});scan(document.body)}
+
 /* ===== observabilidade do navegador: erros e Web Vitals ===== */
 (function(){if(!SRV)return;const sent=new Set();let n=0;
  const send=(p,b)=>{try{const body=JSON.stringify(b);if(navigator.sendBeacon&&navigator.sendBeacon(p,new Blob([body],{type:'application/json'})))return;fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{})}catch(e){}};
@@ -2222,7 +2313,9 @@ function trDoc(html){if(TTI_LANG==='pt')return html;try{const d=new DOMParser().
  addEventListener('visibilitychange',()=>{if(document.visibilityState!=='hidden'||v._s)return;v._s=1;try{const nv=performance.getEntriesByType('navigation')[0];if(nv)v.TTFB=nv.responseStart}catch(e){}['LCP','CLS','FCP','TTFB'].forEach(k=>{if(v[k]!=null)send('/api/telemetry/vitals',{name:k,value:Math.round(v[k]*1000)/1000})})});
 })();
 /* ===================== MODO SERVIDOR ===================== */
-async function api(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
+async function api(path,body){MO.bar.start();try{return await api0(path,body)}finally{MO.bar.end()}}
+/* api0: sem barra de progresso (usada nas consultas em segundo plano) */
+async function api0(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
  if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;throw e}return j}
@@ -2263,8 +2356,8 @@ function srvApply(view,force){
 async function srvPull(){const r=await api('/api/sync');SREV=r.rev;srvLoad(r.view)}
 function srvPoll(){clearInterval(SPOLL);SPOLL=setInterval(async()=>{
   if(!SRVU||SBUSY||SDIRTY.size||document.hidden)return;
-  try{const r=await api('/api/sync?since='+SREV);if(r.same){if(SPEND)srvRender();return}SREV=r.rev;srvApply(r.view)}catch(e){if(e.status===401)srvExpired()}},5000)}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SRVU&&!SBUSY)api('/api/sync?since='+SREV).then(r=>{if(!r.same){SREV=r.rev;srvApply(r.view)}},()=>{})});
+  try{const r=await api0('/api/sync?since='+SREV);if(r.same){if(SPEND)srvRender();return}SREV=r.rev;srvApply(r.view)}catch(e){if(e.status===401)srvExpired()}},5000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SRVU&&!SBUSY)api0('/api/sync?since='+SREV).then(r=>{if(!r.same){SREV=r.rev;srvApply(r.view)}},()=>{})});
 function srvExpired(){SRVU=null;clearInterval(SPOLL);SDIRTY.clear();DB.wipe();AUTH=null;try{resetLogin()}catch(e){}showHome();toast('Sua sessão expirou. Entre de novo.')}
 function srvLogout(){api('/api/logout',{}).catch(()=>{});SRVU=null;clearInterval(SPOLL);clearTimeout(STMR);SDIRTY.clear();DB.wipe();CUS=[];PROP=[];NOTI=[];CHAT=[];blocks={};Object.keys(INV).forEach(k=>delete INV[k])}
 DB.onChange((n)=>{if(SRV)srvQueue(n)});
@@ -2272,7 +2365,7 @@ DB.onChange((n)=>{if(SRV)srvQueue(n)});
 async function srvGo(){
  const e=$('e').value.trim().toLowerCase(),p=$('p').value,nm=$('nm').value.trim().replace(/[<>"'&]/g,''),wa=$('wa').value.replace(/\D/g,'');
  const bad=m=>{$('err').hidden=false;$('err').textContent=m},btn=$('go');
- if(btn.disabled)return;btn.disabled=true;$('err').hidden=true;
+ if(btn.disabled)return;MO.busy(btn,true);$('err').hidden=true;
  const inv=INVT,su=SU,lr=LR;let logged=false;
  try{
   let r;
@@ -2283,37 +2376,43 @@ async function srvGo(){
    await api('/api/invites/accept',{token:inv.token});
   }else if(su){r=await api('/api/register',{role:lr,email:e,name:nm,wa,pass:p});SRVU=r.user;logged=true}
   else{r=await api('/api/login',{email:e,pass:p,role:lr});SRVU=r.user;logged=true}
+  $('login').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');
   await srvPull();
   try{history.replaceState(null,'','/')}catch(x){}
   resetLogin();enter(SRVU.role,SRVU.email);srvPoll();
   toast(inv?'Casa adicionada à sua agenda':su?(lr==='owner'?'Conta criada. Cadastre sua primeira casa.':'Conta criada. Peça ao proprietário para convidar você.'):'Bem-vindo de volta');
  }catch(x){
   if(logged&&inv){api('/api/logout',{}).catch(()=>{});SRVU=null}
+  if(!AUTH){$('app').hidden=true;$('login').hidden=false}
   bad(x.message);
- }finally{btn.disabled=false}}
+ }finally{MO.busy(btn,false)}}
 async function srvAdminGo(){
- const e=$('ae').value.trim().toLowerCase(),btn=$('ago');if(btn.disabled)return;btn.disabled=true;$('aerr').hidden=true;
- try{await api('/api/admin/login',{email:e,pass:$('ap').value});SRVU={role:'admin',email:e,name:'Administração'};await srvPull();showAdmin();srvPoll()}
- catch(x){$('aerr').hidden=false;$('aerr').textContent=x.message}finally{btn.disabled=false}}
+ const e=$('ae').value.trim().toLowerCase(),btn=$('ago');if(btn.disabled)return;MO.busy(btn,true);$('aerr').hidden=true;
+ try{await api('/api/admin/login',{email:e,pass:$('ap').value});SRVU={role:'admin',email:e,name:'Administração'};$('adl').hidden=true;$('adm').hidden=false;$('am').innerHTML=MO.skel('list');await srvPull();showAdmin();srvPoll()}
+ catch(x){if(!AUTH&&SRVU&&SRVU.role==='admin'&&$('adl').hidden){SRVU=null;$('adm').hidden=true;$('adl').hidden=false}$('aerr').hidden=false;$('aerr').textContent=x.message}finally{MO.busy(btn,false)}}
 async function srvAdm(act,body,msg){
  try{const r=await api('/api/admin/'+act,body);SREV=r.rev;srvLoad(r.view);toast(msg)}catch(x){toast(x.message)}
  try{aload();arender()}catch(e){}}
 async function srvInvite(h,e){
+ const bt=$('iv-b');MO.busy(bt,true);
  try{const r=await api('/api/invites',{hid:h.id,email:e});SREV=r.rev;srvLoad(r.view);showLink(r.url,h,e);$('iv-e').value='';invs(h);toast('Convite criado. Link copiado, envie ao corretor')}
- catch(x){toast(x.message)}}
+ catch(x){toast(x.message)}
+ finally{MO.busy($('iv-b')||bt,false)}}
 async function srvBoot(){
  const B=window.TTI_BOOT||{},q=new URLSearchParams(location.search);
  if(B.slug){
+  $('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
   try{const p=await api('/api/public/house/'+encodeURIComponent(B.slug)+(B.b?'?b='+encodeURIComponent(B.b):''));showPub(p,false)}
   catch(x){const el=$('pub');$('home').hidden=true;el.hidden=false;el.innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>Esta casa não está disponível</h1><p class="loc">O link pode ter sido removido pelo proprietário.</p></div>'}
   return}
  const tk=q.get('convite');
  if(tk){
-  try{const i=await api('/api/invites/'+encodeURIComponent(tk));showInvite({token:tk,email:i.email,owner:i.owner,h:{name:i.house},exists:i.exists});
+  $('home').hidden=true;$('login').hidden=false;$('ib').hidden=false;$('ibt').textContent=' ';$('ibt').classList.add('sk');$('ibt').style.display='block';$('ibt').style.minHeight='1.4em';
+  try{const i=await api('/api/invites/'+encodeURIComponent(tk));$('ibt').classList.remove('sk');$('ibt').style.cssText='';showInvite({token:tk,email:i.email,owner:i.owner,h:{name:i.house},exists:i.exists});
    if(i.otherRole){$('err').hidden=false;$('err').textContent='Este e-mail pertence a uma conta de proprietário. Peça um novo convite com outro e-mail.'}}
-  catch(x){toast(x.message)}
+  catch(x){$('ibt').classList.remove('sk');$('ibt').style.cssText='';$('ib').hidden=true;toast(x.message)}
   return}
- if(SRVU){try{await srvPull();if(SRVU.role==='admin'){srvPoll();return}enter(SRVU.role,SRVU.email);srvPoll()}catch(x){if(x.status===401){SRVU=null}}}}
+ if(SRVU){try{$('home').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');await srvPull();if(SRVU.role==='admin'){srvPoll();return}enter(SRVU.role,SRVU.email);srvPoll()}catch(x){if(x.status===401){SRVU=null}$('app').hidden=true;$('home').hidden=false}}}
 /* ========================================================= */
 const iv0=readInvite(),pv0=readPub();
 if(SRV)srvBoot();else if(pv0)showPub(pv0,false);else if(iv0)showInvite(iv0);else try{const a=sessionStorage.getItem('tti-auth')||'';if(a.startsWith('owner:')&&(a.slice(6)===USER.email||OW()[a.slice(6)])&&!SUSP()[a.slice(6)])enter('owner',a.slice(6));else if(a.startsWith('broker:')&&BR()[a.slice(7)]&&!SUSP()[a.slice(7)])enter('broker',a.slice(7))}catch(e){}

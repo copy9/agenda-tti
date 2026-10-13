@@ -70,7 +70,9 @@ SRV_JS = r"""
  addEventListener('visibilitychange',()=>{if(document.visibilityState!=='hidden'||v._s)return;v._s=1;try{const nv=performance.getEntriesByType('navigation')[0];if(nv)v.TTFB=nv.responseStart}catch(e){}['LCP','CLS','FCP','TTFB'].forEach(k=>{if(v[k]!=null)send('/api/telemetry/vitals',{name:k,value:Math.round(v[k]*1000)/1000})})});
 })();
 /* ===================== MODO SERVIDOR ===================== */
-async function api(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
+async function api(path,body){MO.bar.start();try{return await api0(path,body)}finally{MO.bar.end()}}
+/* api0: sem barra de progresso (usada nas consultas em segundo plano) */
+async function api0(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
  if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;throw e}return j}
@@ -111,8 +113,8 @@ function srvApply(view,force){
 async function srvPull(){const r=await api('/api/sync');SREV=r.rev;srvLoad(r.view)}
 function srvPoll(){clearInterval(SPOLL);SPOLL=setInterval(async()=>{
   if(!SRVU||SBUSY||SDIRTY.size||document.hidden)return;
-  try{const r=await api('/api/sync?since='+SREV);if(r.same){if(SPEND)srvRender();return}SREV=r.rev;srvApply(r.view)}catch(e){if(e.status===401)srvExpired()}},5000)}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SRVU&&!SBUSY)api('/api/sync?since='+SREV).then(r=>{if(!r.same){SREV=r.rev;srvApply(r.view)}},()=>{})});
+  try{const r=await api0('/api/sync?since='+SREV);if(r.same){if(SPEND)srvRender();return}SREV=r.rev;srvApply(r.view)}catch(e){if(e.status===401)srvExpired()}},5000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SRVU&&!SBUSY)api0('/api/sync?since='+SREV).then(r=>{if(!r.same){SREV=r.rev;srvApply(r.view)}},()=>{})});
 function srvExpired(){SRVU=null;clearInterval(SPOLL);SDIRTY.clear();DB.wipe();AUTH=null;try{resetLogin()}catch(e){}showHome();toast('Sua sessão expirou. Entre de novo.')}
 function srvLogout(){api('/api/logout',{}).catch(()=>{});SRVU=null;clearInterval(SPOLL);clearTimeout(STMR);SDIRTY.clear();DB.wipe();CUS=[];PROP=[];NOTI=[];CHAT=[];blocks={};Object.keys(INV).forEach(k=>delete INV[k])}
 DB.onChange((n)=>{if(SRV)srvQueue(n)});
@@ -120,7 +122,7 @@ DB.onChange((n)=>{if(SRV)srvQueue(n)});
 async function srvGo(){
  const e=$('e').value.trim().toLowerCase(),p=$('p').value,nm=$('nm').value.trim().replace(/[<>"'&]/g,''),wa=$('wa').value.replace(/\D/g,'');
  const bad=m=>{$('err').hidden=false;$('err').textContent=m},btn=$('go');
- if(btn.disabled)return;btn.disabled=true;$('err').hidden=true;
+ if(btn.disabled)return;MO.busy(btn,true);$('err').hidden=true;
  const inv=INVT,su=SU,lr=LR;let logged=false;
  try{
   let r;
@@ -131,37 +133,43 @@ async function srvGo(){
    await api('/api/invites/accept',{token:inv.token});
   }else if(su){r=await api('/api/register',{role:lr,email:e,name:nm,wa,pass:p});SRVU=r.user;logged=true}
   else{r=await api('/api/login',{email:e,pass:p,role:lr});SRVU=r.user;logged=true}
+  $('login').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');
   await srvPull();
   try{history.replaceState(null,'','/')}catch(x){}
   resetLogin();enter(SRVU.role,SRVU.email);srvPoll();
   toast(inv?'Casa adicionada à sua agenda':su?(lr==='owner'?'Conta criada. Cadastre sua primeira casa.':'Conta criada. Peça ao proprietário para convidar você.'):'Bem-vindo de volta');
  }catch(x){
   if(logged&&inv){api('/api/logout',{}).catch(()=>{});SRVU=null}
+  if(!AUTH){$('app').hidden=true;$('login').hidden=false}
   bad(x.message);
- }finally{btn.disabled=false}}
+ }finally{MO.busy(btn,false)}}
 async function srvAdminGo(){
- const e=$('ae').value.trim().toLowerCase(),btn=$('ago');if(btn.disabled)return;btn.disabled=true;$('aerr').hidden=true;
- try{await api('/api/admin/login',{email:e,pass:$('ap').value});SRVU={role:'admin',email:e,name:'Administração'};await srvPull();showAdmin();srvPoll()}
- catch(x){$('aerr').hidden=false;$('aerr').textContent=x.message}finally{btn.disabled=false}}
+ const e=$('ae').value.trim().toLowerCase(),btn=$('ago');if(btn.disabled)return;MO.busy(btn,true);$('aerr').hidden=true;
+ try{await api('/api/admin/login',{email:e,pass:$('ap').value});SRVU={role:'admin',email:e,name:'Administração'};$('adl').hidden=true;$('adm').hidden=false;$('am').innerHTML=MO.skel('list');await srvPull();showAdmin();srvPoll()}
+ catch(x){if(!AUTH&&SRVU&&SRVU.role==='admin'&&$('adl').hidden){SRVU=null;$('adm').hidden=true;$('adl').hidden=false}$('aerr').hidden=false;$('aerr').textContent=x.message}finally{MO.busy(btn,false)}}
 async function srvAdm(act,body,msg){
  try{const r=await api('/api/admin/'+act,body);SREV=r.rev;srvLoad(r.view);toast(msg)}catch(x){toast(x.message)}
  try{aload();arender()}catch(e){}}
 async function srvInvite(h,e){
+ const bt=$('iv-b');MO.busy(bt,true);
  try{const r=await api('/api/invites',{hid:h.id,email:e});SREV=r.rev;srvLoad(r.view);showLink(r.url,h,e);$('iv-e').value='';invs(h);toast('Convite criado. Link copiado, envie ao corretor')}
- catch(x){toast(x.message)}}
+ catch(x){toast(x.message)}
+ finally{MO.busy($('iv-b')||bt,false)}}
 async function srvBoot(){
  const B=window.TTI_BOOT||{},q=new URLSearchParams(location.search);
  if(B.slug){
+  $('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
   try{const p=await api('/api/public/house/'+encodeURIComponent(B.slug)+(B.b?'?b='+encodeURIComponent(B.b):''));showPub(p,false)}
   catch(x){const el=$('pub');$('home').hidden=true;el.hidden=false;el.innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>Esta casa não está disponível</h1><p class="loc">O link pode ter sido removido pelo proprietário.</p></div>'}
   return}
  const tk=q.get('convite');
  if(tk){
-  try{const i=await api('/api/invites/'+encodeURIComponent(tk));showInvite({token:tk,email:i.email,owner:i.owner,h:{name:i.house},exists:i.exists});
+  $('home').hidden=true;$('login').hidden=false;$('ib').hidden=false;$('ibt').textContent=' ';$('ibt').classList.add('sk');$('ibt').style.display='block';$('ibt').style.minHeight='1.4em';
+  try{const i=await api('/api/invites/'+encodeURIComponent(tk));$('ibt').classList.remove('sk');$('ibt').style.cssText='';showInvite({token:tk,email:i.email,owner:i.owner,h:{name:i.house},exists:i.exists});
    if(i.otherRole){$('err').hidden=false;$('err').textContent='Este e-mail pertence a uma conta de proprietário. Peça um novo convite com outro e-mail.'}}
-  catch(x){toast(x.message)}
+  catch(x){$('ibt').classList.remove('sk');$('ibt').style.cssText='';$('ib').hidden=true;toast(x.message)}
   return}
- if(SRVU){try{await srvPull();if(SRVU.role==='admin'){srvPoll();return}enter(SRVU.role,SRVU.email);srvPoll()}catch(x){if(x.status===401){SRVU=null}}}}
+ if(SRVU){try{$('home').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');await srvPull();if(SRVU.role==='admin'){srvPoll();return}enter(SRVU.role,SRVU.email);srvPoll()}catch(x){if(x.status===401){SRVU=null}$('app').hidden=true;$('home').hidden=false}}}
 /* ========================================================= */
 """
 marker = "const iv0=readInvite(),pv0=readPub();"
