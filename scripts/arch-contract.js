@@ -33,8 +33,7 @@ function requires(file) {
   const src = fs.readFileSync(file, 'utf8');
   const out = [];
   const re = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
-  let m;
-  while ((m = re.exec(src))) out.push(m[1]);
+  for (const m of src.matchAll(re)) out.push(m[1]);
   return out;
 }
 

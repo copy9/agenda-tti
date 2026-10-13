@@ -79,7 +79,7 @@ function renderMetrics() {
   for (const h of hists.values()) {
     if (!hs.has(h.name)) { hs.add(h.name); head(h.name); }
     const lab = (extra) => '{' + Object.entries(Object.assign({}, h.labels, extra)).map(([a, b]) => `${a}="${esc(b)}"`).join(',') + '}';
-    h.buckets.forEach((b, i) => out.push(`${h.name}_bucket${lab({ le: b })} ${h.counts[i]}`));
+    for (const [i, b] of h.buckets.entries()) out.push(`${h.name}_bucket${lab({ le: b })} ${h.counts[i]}`);
     out.push(`${h.name}_bucket${lab({ le: '+Inf' })} ${h.n}`);
     out.push(`${h.name}_sum${lab({})} ${h.sum}`);
     out.push(`${h.name}_count${lab({})} ${h.n}`);
@@ -165,7 +165,7 @@ function init() {
       otel.start(); state.otel = true;
     } catch (e) { state.notes.push('OTEL_EXPORTER_OTLP_ENDPOINT definido, mas os pacotes OpenTelemetry não estão instalados (veja README, seção Observabilidade).'); }
   }
-  state.notes.forEach((n) => log('warn', n));
+  for (const n of state.notes) log('warn', n);
   log('info', 'telemetria', { sentry: state.sentry, otel: state.otel, metrics: !!cfg.METRICS_TOKEN });
   return state;
 }
