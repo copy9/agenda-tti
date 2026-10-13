@@ -46,7 +46,8 @@ async function cancelProposal(id) {
     const d = U.parse(r.doc, {});
     if (!S.isOpen(d.status)) throw U.bad('Só propostas em aberto podem ser canceladas.', 409);
     d.status = 'cancelled';
-    (d.log = d.log || []).push({ d: U.today(), s: 'cancelled', v: d.value });
+    d.log = d.log || [];
+    d.log.push({ d: U.today(), s: 'cancelled', v: d.value });
     await S.saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
     await S.notify(t, r.broker_email, 'A administração cancelou a proposta para ' + d.house, d.id);
     await S.notify(t, r.owner_email, 'A administração cancelou a proposta de ' + d.bname + ' para ' + d.house, d.id);
