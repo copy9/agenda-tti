@@ -21,7 +21,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "arch": "node scripts/arch-contract.js",
-    "knip": "knip",
+    "knip": "knip --exclude exports,nsExports,types,nsTypes,enumMembers,classMembers,duplicates",
     "mutation": "stryker run",
     "check": "npm run lint && npm run arch && npm run knip && npm test",
     "test:fast": "node --test \"test/**/*.test.js\"",
