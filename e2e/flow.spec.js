@@ -81,6 +81,7 @@ test('proprietário e dois corretores: convite, proposta, aceite e privacidade',
   });
 
   await test.step('aceite bloqueia as datas para toda a rede', async () => {
+    await owner.waitForFunction((id) => PROP.some((q) => q.id === id), pid, { timeout: 15000 });
     await owner.evaluate((id) => { const x = PROP.find((q) => q.id === id); x.status = 'accepted'; x.final = x.value; saveP(); }, pid);
     await expect.poll(async () => ((await api(owner, '/api/sync')).view.blocks[hid] || []).includes(dIn)).toBe(true);
     await expect.poll(async () => ((await api(b2, '/api/sync')).view.blocks[hid] || []).includes(dIn)).toBe(true);
