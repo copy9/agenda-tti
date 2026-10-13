@@ -45,15 +45,16 @@ async function vapidHeader(endpoint) {
 }
 
 // ---------- criptografia do conteúdo (aes128gcm) ----------
-function encrypt(payload, p256dh, auth) {
+// `fixed` (chave privada efêmera e salt, em base64url) existe só para os testes com os vetores do RFC.
+function encrypt(payload, p256dh, auth, fixed) {
   const ua = unb64u(p256dh); const authSecret = unb64u(auth);
   if (ua.length !== 65 || ua[0] !== 4 || authSecret.length < 16) throw new Error('Chaves da inscrição inválidas.');
   const ecdh = crypto.createECDH('prime256v1');
-  ecdh.generateKeys();
+  if (fixed) ecdh.setPrivateKey(unb64u(fixed.priv)); else ecdh.generateKeys();
   const asPub = ecdh.getPublicKey();
   const shared = ecdh.computeSecret(ua);
   const ikm = Buffer.from(crypto.hkdfSync('sha256', shared, authSecret, Buffer.concat([Buffer.from('WebPush: info\0'), ua, asPub]), 32));
-  const salt = crypto.randomBytes(16);
+  const salt = fixed ? unb64u(fixed.salt) : crypto.randomBytes(16);
   const cek = Buffer.from(crypto.hkdfSync('sha256', ikm, salt, Buffer.from('Content-Encoding: aes128gcm\0'), 16));
   const nonce = Buffer.from(crypto.hkdfSync('sha256', ikm, salt, Buffer.from('Content-Encoding: nonce\0'), 12));
   const data = Buffer.concat([Buffer.from(payload, 'utf8'), Buffer.from([2])]); // 0x02 = último (e único) registro
