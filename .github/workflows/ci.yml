@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm install --no-audit --no-fund
-      - run: scripts/ci-run.sh Lint npx biome check . --reporter=github --max-diagnostics=500
+      - run: scripts/ci-run.sh Lint npx biome check . --diagnostic-level=warn --max-diagnostics=300
       - run: scripts/ci-run.sh Arquitetura npm run arch
       - run: scripts/ci-run.sh Knip npm run knip
       - name: Commitlint (commits do PR)
