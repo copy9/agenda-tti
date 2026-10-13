@@ -166,7 +166,8 @@ async function expireDue(t) {
     const d = U.parse(r.doc, null);
     if (!d || !d.exp || d.exp >= Date.now()) continue;
     d.status = 'expired';
-    (d.log = d.log || []).push({ d: U.today(), s: 'expired', v: d.value });
+    d.log = d.log || [];
+    d.log.push({ d: U.today(), s: 'expired', v: d.value });
     await saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
     await notify(t, r.broker_email, 'A proposta para ' + d.house + ' expirou sem resposta', d.id);
     await notify(t, r.owner_email, 'A proposta de ' + d.bname + ' para ' + d.house + ' expirou', d.id);

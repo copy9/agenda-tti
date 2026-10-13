@@ -190,7 +190,8 @@ async function afterAccept(t, post) {
       const d = U.parse(r.doc, {});
       if (!U.nightList(d.in, d.out).some((k) => nights.includes(k))) continue;
       d.status = 'rejected';
-      (d.log = d.log || []).push({ d: U.today(), s: 'rejected', v: d.value });
+      d.log = d.log || [];
+      d.log.push({ d: U.today(), s: 'rejected', v: d.value });
       await S.saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
       await S.notify(t, r.broker_email, 'Sua proposta para ' + d.house + ' foi encerrada: as datas foram reservadas por outra proposta', d.id);
       await S.event(t, r.broker_email, 'proposal_closed', { house: d.house, in: d.in, out: d.out, pid: d.id });
@@ -281,7 +282,7 @@ async function ustate(t, user, name, op) {
 async function apply(t, user, ops) {
   const post = { accepted: [] };
   const by = {};
-  for (const o of (Array.isArray(ops) ? ops : [])) { if (o && typeof o.c === 'string') (by[o.c] = by[o.c] || []).push(o); }
+  for (const o of (Array.isArray(ops) ? ops : [])) { if (o && typeof o.c === 'string') { by[o.c] = by[o.c] || []; by[o.c].push(o); } }
   const run = async (c, fn) => { for (const o of (by[c] || [])) await fn(o); };
   await run('houses', (o) => houses(t, user, o));
   await run('props', (o) => props(t, user, o, post));

@@ -43,7 +43,8 @@ async function ownerView(user) {
   const props = await docsOf(await db.all('SELECT status, doc FROM proposals WHERE owner_email = ?', [user.email]));
   const inv = {};
   (await db.all('SELECT house_id, broker_email, created, token, status FROM invites WHERE owner_email = ? ORDER BY created', [user.email])).forEach((r) => {
-    (inv[r.house_id] = inv[r.house_id] || []).push({ email: r.broker_email, at: U.isoOf(new Date(r.created)), tok: r.token, ok: r.status === 'accepted' });
+    inv[r.house_id] = inv[r.house_id] || [];
+    inv[r.house_id].push({ email: r.broker_email, at: U.isoOf(new Date(r.created)), tok: r.token, ok: r.status === 'accepted' });
   });
   // O proprietário só enxerga corretores ligados a ele: convidados, com proposta ou com conversa.
   const mine = new Set();
