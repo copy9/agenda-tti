@@ -3,7 +3,10 @@ ENV NODE_ENV=production PORT=3000 SQLITE_FILE=/app/data/agenda-tti.db
 WORKDIR /app
 COPY package.json ./
 # mysql2 é opcional: só é usado se você configurar DB_NAME
-RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+ARG OBSERVABILITY=0
+RUN npm install --omit=dev --no-audit --no-fund \
+ && if [ "$OBSERVABILITY" = "1" ]; then npm install --no-save --omit=dev @sentry/node @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node; fi \
+ && npm cache clean --force
 COPY . .
 RUN mkdir -p /app/data && chown -R node:node /app
 USER node

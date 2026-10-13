@@ -1,6 +1,7 @@
 'use strict';
 // Rodar com:  npm test   (usa um banco SQLite em memória, não mexe nos seus dados)
 process.env.SQLITE_FILE = ':memory:';
+process.env.LOG_LEVEL = 'error';
 process.env.DB_DRIVER = 'sqlite';
 process.env.ADMIN_EMAIL = 'adm@tti.test';
 process.env.ADMIN_PASSWORD = 'admin-secreta-1';

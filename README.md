@@ -90,7 +90,21 @@ scripts/check-db.js  confere a conexão com o banco
 - O proprietário vê a lista de todos os corretores cadastrados na tela Agenda (nome e WhatsApp). Se preferir mostrar só os que ele convidou, é uma mudança pequena em `src/views.js`.
 - Uma única instância do servidor (as gravações são serializadas). Atende bem centenas de usuários; para mais que isso, use MySQL e avise para ajustarmos.
 
-## 9. Atualizar o front
+## 9. Observabilidade
+
+Sem configurar nada, o servidor já escreve **logs JSON** (uma linha por evento, com `reqId`, rota, status e duração; senhas, tokens, e-mails e mensagens são removidos) e devolve `X-Request-Id` em toda resposta. O resto é opcional e se liga por variáveis de ambiente (`.env.example`):
+
+| O que | Como ligar |
+|---|---|
+| **Métricas Prometheus** | `METRICS_TOKEN=...` e consulte `GET /metrics` com `Authorization: Bearer <token>`. Inclui requisições por rota/status, duração, erros, memória, atraso do event loop e Web Vitals do navegador. |
+| **Sentry** (erros) | `npm i @sentry/node` e `SENTRY_DSN=...`. Erros do navegador chegam por `POST /api/telemetry/error` e seguem para o Sentry. |
+| **OpenTelemetry** (traces) | `npm i @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node` e `OTEL_EXPORTER_OTLP_ENDPOINT=...`. |
+| **Datadog** | Use o OpenTelemetry apontando para o Datadog Agent com OTLP ligado: `OTEL_EXPORTER_OTLP_ENDPOINT=http://<agent>:4318`. |
+| **New Relic** | Use o OpenTelemetry: `OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.nr-data.net` e `OTEL_EXPORTER_OTLP_HEADERS=api-key=<chave>`. |
+
+No Docker, construa com `docker compose build --build-arg OBSERVABILITY=1` para incluir os SDKs. Sem os pacotes, o servidor avisa no log e segue funcionando.
+
+## 10. Atualizar o front
 
 `public/index.html` é gerado a partir do front de demonstração (`agenda-tti-proprietario.html`) pelo script `scripts/make-front.py`:
 `npm run build:front`

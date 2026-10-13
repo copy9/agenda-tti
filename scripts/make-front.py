@@ -60,6 +60,15 @@ rep("if(ARM!==k){ARM=k;return arender()}ARM=null;", "if(ARM!==k){ARM=k;return ar
 
 # 7) bloco do modo servidor (antes do restante do script terminar)
 SRV_JS = r"""
+/* ===== observabilidade do navegador: erros e Web Vitals ===== */
+(function(){if(!SRV)return;const sent=new Set();let n=0;
+ const send=(p,b)=>{try{const body=JSON.stringify(b);if(navigator.sendBeacon&&navigator.sendBeacon(p,new Blob([body],{type:'application/json'})))return;fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{})}catch(e){}};
+ const rep=(m,st)=>{m=String(m||'').slice(0,300);if(!m||sent.has(m)||n>=10)return;sent.add(m);n++;send('/api/telemetry/error',{message:m,stack:String(st||'').slice(0,2500)})};
+ addEventListener('error',e=>rep(e.message,(e.error&&e.error.stack)||((e.filename||'')+':'+e.lineno+':'+e.colno)));
+ addEventListener('unhandledrejection',e=>rep('Promise: '+((e.reason&&e.reason.message)||e.reason),e.reason&&e.reason.stack));
+ const v={};try{new PerformanceObserver(l=>{for(const x of l.getEntries()){if(x.entryType==='largest-contentful-paint')v.LCP=x.startTime;if(x.entryType==='layout-shift'&&!x.hadRecentInput)v.CLS=(v.CLS||0)+x.value;if(x.entryType==='paint'&&x.name==='first-contentful-paint')v.FCP=x.startTime}}).observe({entryTypes:['largest-contentful-paint','layout-shift','paint'],buffered:true})}catch(e){}
+ addEventListener('visibilitychange',()=>{if(document.visibilityState!=='hidden'||v._s)return;v._s=1;try{const nv=performance.getEntriesByType('navigation')[0];if(nv)v.TTFB=nv.responseStart}catch(e){}['LCP','CLS','FCP','TTFB'].forEach(k=>{if(v[k]!=null)send('/api/telemetry/vitals',{name:k,value:Math.round(v[k]*1000)/1000})})});
+})();
 /* ===================== MODO SERVIDOR ===================== */
 async function api(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}

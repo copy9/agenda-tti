@@ -3,6 +3,7 @@
 const http = require('http');
 const zlib = require('zlib');
 const { HttpError } = require('./util');
+const T = require('./telemetry');
 
 function parseCookies(h) {
   const o = {};
@@ -19,7 +20,7 @@ function createApp() {
     add(method, pattern, handler) {
       const keys = [];
       const re = new RegExp('^' + pattern.replace(/:([a-zA-Z_]+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '/?$');
-      routes.push({ method, re, keys, handler });
+      routes.push({ method, re, keys, handler, pattern });
     },
     get(p, h) { app.add('GET', p, h); },
     post(p, h) { app.add('POST', p, h); },
@@ -80,6 +81,9 @@ function createApp() {
     let url;
     try { url = new URL(req.url, 'http://x'); } catch (e) { res.statusCode = 400; return res.end(); }
     decorate(req, res, url);
+    const tctx = T.startRequest(req);
+    res.setHeader('X-Request-Id', tctx.id);
+    res.on('finish', () => T.finishRequest(tctx, req, res.statusCode));
     try {
       let route = null; let m = null;
       const path = url.pathname;
@@ -89,6 +93,7 @@ function createApp() {
         if (m) { route = r; break; }
       }
       if (!route) { return res.json(404, { error: 'Não encontrado.' }); }
+      tctx.route = route.pattern;
       req.params = {};
       route.keys.forEach((k, i) => { try { req.params[k] = decodeURIComponent(m[i + 1]); } catch (e) { req.params[k] = m[i + 1]; } });
       if (req.method === 'POST' || req.method === 'DELETE') {
@@ -105,7 +110,7 @@ function createApp() {
     } catch (e) {
       if (res.headersSent) return;
       if (e instanceof HttpError) return res.json(e.status, { error: e.message });
-      console.error('[erro]', req.method, req.url, e && e.stack || e);
+      T.captureException(e, { reqId: tctx.id, route: tctx.route });
       res.json(500, { error: 'Erro interno do servidor.' });
     }
   }

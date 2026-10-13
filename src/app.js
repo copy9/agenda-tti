@@ -8,6 +8,7 @@ const A = require('./auth');
 const V = require('./views');
 const P = require('./policy');
 const ADM = require('./admin');
+const T = require('./telemetry');
 const { createApp } = require('./http');
 
 const IDRE = /^[A-Za-z][A-Za-z0-9]{2,38}$/;
@@ -58,6 +59,24 @@ function build() {
   app.post('/api/logout', async (req, res) => { await A.endSession(req, res); res.json(200, { ok: true }); });
   app.get('/api/session', (req, res) => res.json(200, { user: req.user ? A.publicUser(req.user) : null, rev: S.rev() }));
   app.get('/api/health', async (req, res) => { await db.one('SELECT 1 AS ok'); res.json(200, { ok: true, db: db.dialect }); });
+
+  // ---------- observabilidade ----------
+  app.get('/metrics', (req, res) => {
+    if (!cfg.METRICS_TOKEN) return res.json(404, { error: 'Não encontrado.' });
+    if (!T.metricsAllowed(req)) return res.json(401, { error: 'Token inválido.' });
+    res.send(200, T.renderMetrics(), { 'Content-Type': 'text/plain; version=0.0.4; charset=utf-8', 'Cache-Control': 'no-store' });
+  });
+  // O navegador reporta erros e Web Vitals. Respostas vazias; tudo é limitado, limpo e sem dados pessoais.
+  app.post('/api/telemetry/error', (req, res) => {
+    A.limit('terr:' + req.ip_, 30, 600e3);
+    T.captureBrowserError(req.body);
+    res.send(204, '');
+  });
+  app.post('/api/telemetry/vitals', (req, res) => {
+    A.limit('tvit:' + req.ip_, 120, 600e3);
+    T.recordVital(req.body);
+    res.send(204, '');
+  });
 
   // ---------- sincronização ----------
   app.get('/api/sync', async (req, res) => {
@@ -166,7 +185,7 @@ function build() {
     try {
       const n = await db.write((t) => S.expireDue(t));
       if (n) S.bump();
-    } catch (e) { console.error('[expirar]', e.message); }
+    } catch (e) { T.captureException(e, { source: 'tick' }); }
   }
   app.tick = tick;
   return app;
