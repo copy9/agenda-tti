@@ -16,6 +16,7 @@ test('proprietário e dois corretores: convite, proposta, aceite e privacidade',
     for (const [k, v] of Object.entries(f)) await owner.fill(k, v);
     await owner.click('#fs');
     await owner.waitForTimeout(2000);
+    // biome-ignore lint/correctness/noConstAssign: `view` aqui é a variável global da página, não a const do teste
     await owner.evaluate(() => { view = null; render(); });
     await owner.waitForSelector('.hc');
   });
