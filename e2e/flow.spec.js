@@ -123,8 +123,11 @@ test('administração: login, usuários e suspensão derruba a sessão', async (
   await ad.fill('#ap', 'SenhaForte123');
   await ad.click('#ago');
   await ad.waitForSelector('#adm:not([hidden])');
-  await ad.evaluate(() => { AT = 'us'; arender(); });
-  await expect(ad.locator('#am')).toContainText('susp@x.com');
+  // Os dados chegam logo depois do login (a tela mostra o esqueleto antes): redesenha até a lista aparecer.
+  await expect.poll(async () => {
+    await ad.evaluate(() => { AT = 'us'; arender(); });
+    return ad.locator('#am').innerText();
+  }, { timeout: 10000 }).toContain('susp@x.com');
   await ad.evaluate(() => srvAdm('suspend', { email: 'susp@x.com', on: true }, 'ok'));
   await expect.poll(() => owner.evaluate(() => fetch('/api/sync').then((r) => r.status))).toBe(401);
 });
