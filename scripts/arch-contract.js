@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const LAYERS = ['util', 'config', 'http', 'db', 'migrate', 'store', 'policy', 'views', 'admin', 'auth', 'legal-texts', 'legal', 'telemetry', 'app'];
+const LAYERS = ['util', 'config', 'http', 'db', 'migrate', 'msgs', 'store', 'policy', 'views', 'admin', 'auth', 'legal-texts', 'legal', 'mail', 'push', 'notifier', 'telemetry', 'app'];
 
 // Cada regra: o módulo `from` só pode importar (dentro de src/) os módulos listados em `allow`.
 // Módulos nativos do Node e pacotes externos são tratados à parte (EXTERNAL).
@@ -16,14 +16,18 @@ const ALLOW = {
   telemetry: ['config', 'util'],
   db: ['config', 'util'],
   migrate: ['db'],
-  store: ['config', 'db', 'util'],
+  msgs: [],
+  mail: ['config', 'util'],
+  push: ['config', 'db', 'util'],
+  notifier: ['config', 'db', 'util', 'mail', 'push', 'telemetry'],
+  store: ['config', 'db', 'util', 'msgs'],
   auth: ['config', 'db', 'util', 'store'],
   policy: ['config', 'util', 'store'],
   views: ['db', 'util', 'store'],
   admin: ['db', 'util', 'store'],
   'legal-texts': [],
   legal: ['config', 'db', 'util', 'store', 'admin', 'views', 'legal-texts'],
-  app: ['config', 'db', 'util', 'store', 'auth', 'views', 'policy', 'admin', 'legal', 'http', 'telemetry'],
+  app: ['config', 'db', 'util', 'store', 'auth', 'views', 'policy', 'admin', 'legal', 'notifier', 'push', 'http', 'telemetry'],
 };
 // Só estes módulos podem carregar estes pacotes.
 const EXTERNAL = { 'node:sqlite': ['db'], 'mysql2/promise': ['db'], mysql2: ['db'] };

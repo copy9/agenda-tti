@@ -11,7 +11,7 @@ Servidor completo da Agenda TTI: contas (proprietário, corretor e administrador
 ```bash
 cp .env.example .env        # edite ADMIN_EMAIL e ADMIN_PASSWORD
 npm start                   # abre em http://localhost:3000
-npm test                    # 14 testes automáticos da API
+npm test                    # testes automáticos (API, termos, avisos)
 ```
 
 ## 2. Subir em um servidor com Docker (recomendado)
@@ -56,6 +56,9 @@ Atualizar para uma nova versão: `git pull && docker compose up -d --build` (os 
 | `LEGAL_VERSION` | Versão dos textos. Ao mudar, todos precisam aceitar de novo. |
 | `LEGAL_REVIEWED` | Coloque `1` só depois da revisão de advogado: retira o aviso de minuta das páginas. |
 | `DELETE_GRACE_DAYS` | Carência da exclusão de conta pedida pelo usuário (padrão 7 dias). |
+
+### Avisos por e-mail e push
+Convite, proposta, resposta e vencimento viram aviso por e-mail (SMTP próprio, configure `SMTP_*`) e por push no navegador (chaves VAPID geradas e guardadas no banco; service worker em `/sw.js`). Cada pessoa escolhe canal e tipos em Conta, Avisos. Os envios passam por uma fila com tentativas e espera crescente. Avisos a corretores nunca citam outro corretor. Push exige HTTPS em produção.
 
 ## 5. Cópia de segurança
 

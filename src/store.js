@@ -3,6 +3,7 @@
 const cfg = require('./config');
 const db = require('./db');
 const U = require('./util');
+const M = require('./msgs');
 
 // Revisão global: sobe a cada gravação. O app consulta e só baixa os dados quando ela muda.
 let REV = Date.now();
@@ -107,6 +108,43 @@ async function notify(t, to, text, pid, at) {
   for (const r of old.slice(200)) await t.run('DELETE FROM notifications WHERE id = ?', [r.id]);
 }
 
+// ---------- preferências de aviso e fila de envio (e-mail e push) ----------
+const CHANNELS = ['both', 'email', 'push', 'none'];
+async function prefsOf(t, email) {
+  const r = await one(t, 'SELECT lang, doc FROM uprefs WHERE email = ?', [email]);
+  const d = r ? U.parse(r.doc, {}) : {};
+  const ev = {};
+  M.GROUPS.forEach((g) => { ev[g] = !(d.ev && d.ev[g] === false); });
+  return { lang: M.pickLang(r && r.lang), ch: CHANNELS.includes(d.ch) ? d.ch : 'both', ev };
+}
+async function setPrefs(t, email, inc) {
+  const cur = await prefsOf(t, email);
+  const next = { lang: inc.lang !== undefined ? M.pickLang(inc.lang) : cur.lang, ch: CHANNELS.includes(inc.ch) ? inc.ch : cur.ch, ev: Object.assign({}, cur.ev) };
+  if (inc.ev && typeof inc.ev === 'object') M.GROUPS.forEach((g) => { if (typeof inc.ev[g] === 'boolean') next.ev[g] = inc.ev[g]; });
+  const doc = JSON.stringify({ ch: next.ch, ev: next.ev });
+  const r = await t.run('UPDATE uprefs SET lang = ?, doc = ? WHERE email = ?', [next.lang, doc, email]);
+  if (!r.changes) await t.run('INSERT INTO uprefs (email, lang, doc) VALUES (?,?,?)', [email, next.lang, doc]);
+  return next;
+}
+
+// Cria o aviso fora do site (e-mail e/ou push) respeitando canal, tipo de aviso e idioma de quem recebe.
+// opt.force: aviso de segurança (ex.: redefinição de senha), sempre por e-mail e sem olhar as preferências.
+async function event(t, to, kind, vars, opt = {}) {
+  const K = M.KINDS[kind];
+  if (!to || !K) return;
+  const known = await one(t, 'SELECT email FROM users WHERE email = ?', [to]);
+  const p = known ? await prefsOf(t, known.email) : { lang: M.pickLang(vars && vars.lang), ch: 'email', ev: {} };
+  if (!opt.force && (p.ch === 'none' || p.ev[K.grp] === false)) return;
+  const ch = opt.force ? 'email' : p.ch;
+  const msg = M.render(kind, p.lang, vars, cfg.PUBLIC_URL);
+  const now = Date.now();
+  const put = (channel, doc) => t.run('INSERT INTO outbox (id, to_email, channel, kind, doc, status, attempts, next_at, last_error, created, sent) VALUES (?,?,?,?,?,?,0,?,?,?,0)', [U.rid(8), to, channel, kind, JSON.stringify(doc), 'pending', now, '', now]);
+  if ((ch === 'both' || ch === 'email') && cfg.SMTP_HOST) await put('email', { subject: msg.subject, text: msg.text, html: msg.html });
+  if ((ch === 'both' || ch === 'push') && !opt.force && known && await one(t, 'SELECT 1 AS x FROM push_subs WHERE email = ?', [to])) {
+    await put('push', { title: msg.title, body: msg.body.slice(0, 300), url: msg.url || '/', tag: kind + ':' + U.text(vars && vars.pid, 40) });
+  }
+}
+
 // ---------- consentimentos (termos e privacidade) ----------
 async function consent(t, email, ip, version, kind) {
   await t.run('INSERT INTO consents (id, email, kind, version, at, ip_hash) VALUES (?,?,?,?,?,?)', [U.rid(8), email, kind || 'terms', version, Date.now(), U.sha256(String(ip || ''))]);
@@ -133,6 +171,26 @@ async function expireDue(t) {
     await saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
     await notify(t, r.broker_email, 'A proposta para ' + d.house + ' expirou sem resposta', d.id);
     await notify(t, r.owner_email, 'A proposta de ' + d.bname + ' para ' + d.house + ' expirou', d.id);
+    const vars = { house: d.house, in: d.in, out: d.out, pid: d.id };
+    await event(t, r.broker_email, 'proposal_expired', vars);
+    await event(t, r.owner_email, 'proposal_expired', vars);
+    n++;
+  }
+  return n;
+}
+
+// Lembrete 6 horas antes de vencer: vai a quem precisa responder (proprietário se pendente, corretor se contraproposta).
+const REMIND_MS = 6 * 36e5;
+async function remindDue(t) {
+  const now = Date.now();
+  const rows = await t.all("SELECT * FROM proposals WHERE status IN ('pending','countered')");
+  let n = 0;
+  for (const r of rows) {
+    const d = U.parse(r.doc, null);
+    if (!d || !d.exp || d.rem6 || d.exp <= now || d.exp - now > REMIND_MS) continue;
+    d.rem6 = 1;
+    await t.run('UPDATE proposals SET doc = ? WHERE id = ?', [JSON.stringify(d), r.id]);
+    await event(t, r.status === 'countered' ? r.broker_email : r.owner_email, 'proposal_expiring', { house: d.house, in: d.in, out: d.out, hours: Math.max(1, Math.ceil((d.exp - now) / 36e5)), pid: d.id });
     n++;
   }
   return n;
@@ -149,4 +207,4 @@ async function writeBlocks(t, houseId, dates) {
   if (!r.changes) await t.run('INSERT INTO blocks (house_id, dates) VALUES (?,?)', [houseId, j]);
 }
 
-module.exports = { rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
+module.exports = { rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };

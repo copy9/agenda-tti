@@ -93,6 +93,7 @@ async function createProposal(t, user, inc, post) {
     exp: Date.now() + H48, oe: hrow.owner_email, log: [], chat: [],
   };
   await S.saveProposal(t, doc, hid, user.email, hrow.owner_email);
+  await S.event(t, hrow.owner_email, 'proposal_new', { house: house.name, broker: user.name, in: a, out: b, value, pid: id });
 }
 
 const LOGS = new Set(['pending', 'accepted', 'rejected', 'countered', 'declined', 'cancelled', 'expired', 'paid', 'unpaid']);
@@ -148,6 +149,26 @@ async function updateProposal(t, user, row, inc, post) {
     next.chat = (doc.chat || []).concat(inc.chat.slice((doc.chat || []).length, (doc.chat || []).length + 5).map((m) => ({ f: isOwner ? 'owner' : 'broker', t: U.text(m && m.t, 2000), at: Date.now() })).filter((m) => m.t.trim()));
   }
   if (JSON.stringify(next) !== JSON.stringify(doc)) await S.saveProposal(t, next, row.house_id, row.broker_email, row.owner_email);
+  if (next.status !== s0) await announce(t, user, row, next, { isOwner, isBroker });
+}
+
+// Avisos por e-mail e push das mudanças de estado. Aviso ao corretor nunca cita outro corretor; só o do proprietário traz o nome de quem propôs.
+async function announce(t, user, row, next, who) {
+  const base = { house: next.house, in: next.in, out: next.out, pid: next.id };
+  const to = (email, kind, extra) => S.event(t, email, kind, Object.assign({}, base, extra));
+  if (next.status === 'expired') {
+    await to(row.broker_email, 'proposal_expired');
+    await to(row.owner_email, 'proposal_expired');
+  } else if (who.isOwner) {
+    if (next.status === 'accepted') await to(row.broker_email, 'proposal_accepted', { value: next.final });
+    else if (next.status === 'rejected') await to(row.broker_email, 'proposal_declined');
+    else if (next.status === 'countered') await to(row.broker_email, 'proposal_countered', { value: next.counter });
+  } else if (who.isBroker) {
+    const x = { broker: user.name };
+    if (next.status === 'accepted') await to(row.owner_email, 'counter_accepted', Object.assign({ value: next.final }, x));
+    else if (next.status === 'declined') await to(row.owner_email, 'counter_declined', x);
+    else if (next.status === 'cancelled') await to(row.owner_email, 'proposal_cancelled', x);
+  }
 }
 
 async function props(t, user, op, post) {
@@ -173,6 +194,7 @@ async function afterAccept(t, post) {
       d.log.push({ d: U.today(), s: 'rejected', v: d.value });
       await S.saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
       await S.notify(t, r.broker_email, 'Sua proposta para ' + d.house + ' foi encerrada: as datas foram reservadas por outra proposta', d.id);
+      await S.event(t, r.broker_email, 'proposal_closed', { house: d.house, in: d.in, out: d.out, pid: d.id });
     }
   }
 }

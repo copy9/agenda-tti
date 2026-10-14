@@ -87,6 +87,7 @@ async function register(req, res) {
     if (ex) throw U.bad('Já existe uma conta com este e-mail. Use Entrar.', 409);
     await t.run('INSERT INTO users (email, role, name, wa, pass_hash, code, suspended, created) VALUES (?,?,?,?,?,?,0,?)', [email, role, name, wa, hash, code, Date.now()]);
     await S.consent(t, email, req.ip_, cfg.LEGAL_VERSION, 'terms');
+    await S.setPrefs(t, email, { lang: b.lang });
   });
   await startSession(res, email, role);
   return { email, role, name, wa, code, needTerms: false };

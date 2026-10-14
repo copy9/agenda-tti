@@ -16,6 +16,7 @@ async function main() {
   const app = build();
   await app.tick();
   setInterval(() => app.tick(), 60e3).unref();
+  setInterval(() => app.drain(), 10e3).unref();
   app.listen(cfg.PORT, () => T.log('info', 'Agenda TTI no ar', { port: cfg.PORT, db: db.dialect }));
   const stop = async () => { try { await T.shutdown(); await db.close(); } catch (e) { /* ignora */ } process.exit(0); };
   process.on('SIGTERM', stop); process.on('SIGINT', stop);
