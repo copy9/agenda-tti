@@ -87,7 +87,7 @@ scripts/check-db.js  confere a conexão com o banco
 
 - Os avisos aparecem dentro do site; **não há envio de e-mail ou push**. O convite sai como link para copiar/WhatsApp ou pelo e-mail do próprio usuário.
 - Sem pagamento entre proprietário e corretor: o adiantamento é só registrado como pago ou não (o acerto é por Pix, fora da plataforma). Pagamento dentro da plataforma só para a assinatura do software.
-- O proprietário vê a lista de todos os corretores cadastrados na tela Agenda (nome e WhatsApp). Se preferir mostrar só os que ele convidou, é uma mudança pequena em `src/views.js`.
+- O proprietário vê apenas os corretores ligados a ele (convidados, com proposta ou conversa).
 - Uma única instância do servidor (as gravações são serializadas). Atende bem centenas de usuários; para mais que isso, use MySQL e avise para ajustarmos.
 
 ## 9. Observabilidade

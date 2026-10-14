@@ -46,9 +46,14 @@ async function ownerView(user) {
     inv[r.house_id] = inv[r.house_id] || [];
     inv[r.house_id].push({ email: r.broker_email, at: U.isoOf(new Date(r.created)), tok: r.token, ok: r.status === 'accepted' });
   });
-  const brokers = {};
-  (await usersByRole('broker')).forEach((b) => { brokers[b.email] = { name: b.name, wa: b.wa, houses: [] }; });
+  // O proprietário só enxerga corretores ligados a ele: convidados, com proposta ou com conversa.
+  const mine = new Set();
+  for (const l of Object.values(inv)) for (const i of l) mine.add(i.email);
+  props.forEach((p) => { if (p.broker) mine.add(p.broker); });
   const chat = threadDocs(await db.all('SELECT * FROM threads WHERE o_email = ?', [user.email]));
+  for (const c of chat) mine.add(c.b);
+  const brokers = {};
+  (await usersByRole('broker')).filter((b) => mine.has(b.email)).forEach((b) => { brokers[b.email] = { name: b.name, wa: b.wa, houses: [] }; });
   return {
     owners: { [user.email]: { name: user.name, wa: user.wa } }, brokers, houses, blocks, props, inv, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
