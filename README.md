@@ -6,6 +6,8 @@ Servidor completo da Agenda TTI: contas (proprietário, corretor e administrador
 - Banco: SQLite (um arquivo, ótimo para começar) ou MySQL/MariaDB (ex.: Hostinger).
 - Senhas com scrypt, sessão por cookie `HttpOnly`, limite de tentativas de login, proteção contra CSRF e HTML injetado.
 
+> **Demonstração online:** a página do GitHub Pages abre a versão de demonstração (`index.html`, gerada com `npm run pages`). Ela guarda os dados só no seu navegador, sem contas reais nem comunicação entre pessoas. O app multiusuário de verdade precisa do servidor Node (seções 2 e 3).
+
 ## 1. Rodar no seu computador (teste rápido)
 
 ```bash

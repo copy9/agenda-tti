@@ -26,7 +26,8 @@
     "check": "npm run lint && npm run arch && npm run knip && npm test",
     "test:fast": "node --test \"test/**/*.test.js\"",
     "e2e": "playwright test",
-    "e2e:install": "playwright install --with-deps chromium"
+    "e2e:install": "playwright install --with-deps chromium",
+    "pages": "cp front/source.html index.html"
   },
   "dependencies": {},
   "optionalDependencies": {
