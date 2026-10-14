@@ -42,8 +42,9 @@ rep("if(pv0)showPub(pv0,false);else if(iv0)", "if(SRV)srvBoot();else if(pv0)show
 
 # 3b) termos e privacidade (#23)
 rep('<div class="err" id="err" hidden role="alert"></div>\n    <button class="btn" id="go"', '<label class="tcw" id="tcw" hidden><input type="checkbox" id="tc"><span>Li e aceito: <a href="/termos" data-legal="terms">Termos de uso</a> · <a href="/privacidade" data-legal="privacy">Política de privacidade</a></span></label>\n    <div class="err" id="err" hidden role="alert"></div>\n    <button class="btn" id="go"')
-rep("$('nmw').hidden=$('waw').hidden=!su;$('lh')", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=!su;$('lh')")
-rep("$('nmw').hidden=$('waw').hidden=ex;", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=ex;")
+rep("$('nmw').hidden=$('waw').hidden=!su;$('lh')", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=!su;$('fgw').hidden=!SRV||su;$('lh')")
+rep('<button type="button" class="back" id="sw"', '<p class="lk" id="fgw" hidden style="margin:14px 0 0;text-align:center"><a href="#" id="fgl">Esqueci a senha</a></p>\n    <button type="button" class="back" id="sw"')
+rep("$('nmw').hidden=$('waw').hidden=ex;", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=ex;$('fgw').hidden=!SRV||!ex;")
 rep("function resetLogin(){INVT=null;", "function resetLogin(){INVT=null;$('tc').checked=false;")
 rep('<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button></div></div>', '<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a></div></div>')
 rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fdata">Meus dados</button><button class="fl" type="button" id="fnotif">Avisos por e-mail e push</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')

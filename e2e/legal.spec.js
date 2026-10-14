@@ -19,9 +19,12 @@ test('cadastro exige o aceite dos termos e a conta pode pedir e cancelar a exclu
   await page.waitForSelector('#app:not([hidden])', { timeout: 8000 });
   await skipTour(page);
 
+  const status = page.waitForResponse((r) => r.url().endsWith('/api/me/delete') && r.request().method() === 'GET');
   await page.click('#fdata');
   await expect(page.locator('#mydata')).toBeVisible();
+  await status;
   await page.fill('#mdp', 'senha123');
+  await expect(page.locator('#mdp')).toHaveValue('senha123');
   await page.click('#mdb');
   await expect(page.locator('#mydata')).toContainText('Exclusão agendada');
   await page.click('#mdc');

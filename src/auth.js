@@ -111,6 +111,48 @@ async function login(req, res) {
   return publicUser(u);
 }
 
+// ---------- recuperação de senha ----------
+const RESET_MIN = 30;
+// Resposta sempre igual, exista o e-mail ou não. O link vale 30 min e só uma vez; no banco fica só o hash.
+async function forgot(req) {
+  const email = String((req.body || {}).email || '').trim().toLowerCase();
+  limit('fgi:' + req.ip_, 20, 3600e3);
+  if (!U.isEmail(email)) throw U.bad('Informe um e-mail válido.');
+  let mail = true;
+  try { limit('fge:' + email, 3, 3600e3); } catch (e) { mail = false; }
+  const u = mail && await db.one('SELECT email, suspended FROM users WHERE email = ?', [email]);
+  if (u && !u.suspended) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const base = cfg.PUBLIC_URL || (req.secure_ ? 'https://' : 'http://') + (req.headers.host || 'localhost');
+    await db.write(async (t) => {
+      await t.run('DELETE FROM pwreset WHERE email = ? OR exp < ?', [email, Date.now()]);
+      await t.run('INSERT INTO pwreset (id, email, exp, used) VALUES (?,?,?,0)', [U.sha256(token), email, Date.now() + RESET_MIN * 60e3]);
+      await S.event(t, email, 'password_reset', { url: base + '/?redefinir=' + token }, { force: true });
+    });
+  }
+  return { ok: true };
+}
+async function reset(req, res) {
+  const b = req.body || {};
+  const token = String(b.token || ''); const pass = String(b.pass || '');
+  limit('rsi:' + req.ip_, 30, 3600e3);
+  if (!/^[a-f0-9]{64}$/.test(token)) throw U.bad('Este link não é válido ou já foi usado. Peça um novo.', 400, 'reset');
+  if (pass.length < 6 || pass.length > 200) throw U.bad('Crie uma senha com pelo menos 6 caracteres.');
+  const hash = await hashPass(pass);
+  const id = U.sha256(token);
+  const email = await db.write(async (t) => {
+    const r = (await t.all('SELECT email, exp, used FROM pwreset WHERE id = ?', [id]))[0];
+    if (!r || r.used || r.exp < Date.now()) throw U.bad('Este link não é válido ou já foi usado. Peça um novo.', 400, 'reset');
+    await t.run('UPDATE pwreset SET used = ? WHERE id = ?', [Date.now(), id]);
+    await t.run('UPDATE users SET pass_hash = ? WHERE email = ?', [hash, r.email]);
+    await t.run('DELETE FROM sessions WHERE email = ?', [r.email]);
+    await S.event(t, r.email, 'password_changed', {}, { force: true });
+    return r.email;
+  });
+  clearHits('loginu:' + email);
+  return { ok: true };
+}
+
 // ---------- administrador ----------
 async function ensureAdmin() {
   if (!cfg.ADMIN_EMAIL || !cfg.ADMIN_PASSWORD) return false;
@@ -146,4 +188,4 @@ async function adminChangePassword(oldp, newp) {
   await db.write((t) => t.run("UPDATE settings SET v = ? WHERE k = 'admin_hash'", [nh]));
 }
 
-module.exports = { COOKIE, hashPass, checkPass, startSession, endSession, loadSession, publicUser, register, login, ensureAdmin, adminLogin, adminChangePassword, limit };
+module.exports = { COOKIE, hashPass, checkPass, startSession, endSession, loadSession, publicUser, register, login, forgot, reset, ensureAdmin, adminLogin, adminChangePassword, limit };

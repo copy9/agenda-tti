@@ -65,6 +65,8 @@ function build() {
   // ---------- conta ----------
   app.post('/api/register', async (req, res) => res.json(200, { user: await A.register(req, res) }));
   app.post('/api/login', async (req, res) => res.json(200, { user: await A.login(req, res) }));
+  app.post('/api/forgot', async (req, res) => res.json(200, await A.forgot(req)));
+  app.post('/api/reset', async (req, res) => res.json(200, await A.reset(req, res)));
   app.post('/api/logout', async (req, res) => { await A.endSession(req, res); res.json(200, { ok: true }); });
   app.get('/api/session', (req, res) => res.json(200, { user: req.user ? A.publicUser(req.user) : null, rev: S.rev() }));
 

@@ -120,6 +120,12 @@ const TABLES = [
     created BIGINT NOT NULL,
     sent BIGINT NOT NULL DEFAULT 0
   )`,
+  `CREATE TABLE IF NOT EXISTS pwreset (
+    id CHAR(64) NOT NULL PRIMARY KEY,
+    email VARCHAR(190) NOT NULL,
+    exp BIGINT NOT NULL,
+    used BIGINT NOT NULL DEFAULT 0
+  )`,
   `CREATE TABLE IF NOT EXISTS settings (
     k VARCHAR(60) NOT NULL PRIMARY KEY,
     v LONGTEXT NOT NULL
@@ -138,6 +144,7 @@ const INDEXES = [
   ['idx_consent_email', 'consents', 'email'],
   ['idx_push_email', 'push_subs', 'email'],
   ['idx_outbox_due', 'outbox', 'status'],
+  ['idx_pwreset_email', 'pwreset', 'email'],
   ['idx_dreq_hash', 'data_requests', 'email_hash'],
 ];
 
