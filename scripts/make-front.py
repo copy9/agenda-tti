@@ -46,7 +46,7 @@ rep("$('nmw').hidden=$('waw').hidden=!su;$('lh')", "$('nmw').hidden=$('waw').hid
 rep("$('nmw').hidden=$('waw').hidden=ex;", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=ex;")
 rep("function resetLogin(){INVT=null;", "function resetLogin(){INVT=null;$('tc').checked=false;")
 rep('<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button></div></div>', '<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a></div></div>')
-rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fdata">Meus dados</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
+rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fdata">Meus dados</button><button class="fl" type="button" id="fnotif">Avisos por e-mail e push</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
 rep('<dialog id="dlg" aria-labelledby="dtt">', extra('server-extra.html') + '<dialog id="dlg" aria-labelledby="dtt">')
 rep('</style>', extra('server-extra.css') + '</style>')
 rep('const I18N_D=/*I18N_DATA*/[', 'const I18N_D=/*I18N_DATA*/' + json.dumps(json.loads(extra('server-extra.i18n.json')), ensure_ascii=False)[:-1] + ',')
@@ -144,10 +144,10 @@ async function srvGo(){
   let r;
   if(inv){
    if(inv.exists)r=await api('/api/login',{email:e,pass:p,role:'broker'});
-   else r=await api('/api/register',{role:'broker',email:e,name:nm,wa,pass:p,terms:true});
+   else r=await api('/api/register',{role:'broker',email:e,name:nm,wa,pass:p,terms:true,lang:TTI_LANG});
    SRVU=r.user;logged=true;if(SRVU.needTerms)await srvTerms();
    await api('/api/invites/accept',{token:inv.token});
-  }else if(su){r=await api('/api/register',{role:lr,email:e,name:nm,wa,pass:p,terms:true});SRVU=r.user;logged=true}
+  }else if(su){r=await api('/api/register',{role:lr,email:e,name:nm,wa,pass:p,terms:true,lang:TTI_LANG});SRVU=r.user;logged=true}
   else{r=await api('/api/login',{email:e,pass:p,role:lr});SRVU=r.user;logged=true;if(SRVU.needTerms)await srvTerms()}
   $('login').hidden=true;$('app').hidden=false;$('m').innerHTML=MO.skel('cards');
   await srvPull();
