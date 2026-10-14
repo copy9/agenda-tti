@@ -52,6 +52,10 @@ Atualizar para uma nova versão: `git pull && docker compose up -d --build` (os 
 | `DB_NAME` (+ `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`) | Liga o MySQL. Sem `DB_NAME`, usa SQLite. |
 | `SQLITE_FILE` | Local do arquivo SQLite (padrão `data/agenda-tti.db`). |
 | `SESSION_DAYS` | Duração do login (padrão 30 dias). |
+| `COMPANY_NAME`, `LEGAL_CONTACT` | Nome da empresa e contato que aparecem nos Termos e na Política de privacidade (`/termos`, `/privacidade`). |
+| `LEGAL_VERSION` | Versão dos textos. Ao mudar, todos precisam aceitar de novo. |
+| `LEGAL_REVIEWED` | Coloque `1` só depois da revisão de advogado: retira o aviso de minuta das páginas. |
+| `DELETE_GRACE_DAYS` | Carência da exclusão de conta pedida pelo usuário (padrão 7 dias). |
 
 ## 5. Cópia de segurança
 

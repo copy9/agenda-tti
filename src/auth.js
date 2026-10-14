@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const cfg = require('./config');
 const db = require('./db');
 const U = require('./util');
+const S = require('./store');
 
 const COOKIE = 'tti_sid';
 const RESERVED = new Set(['teste@teste.com', 'tester@teste.com', 'marina@demo.com', 'roberto@demo.com', 'ana@demo.com', 'carlos@demo.com', 'fernanda@demo.com', 'admin@agendatti.com']);
@@ -58,9 +59,10 @@ async function loadSession(req) {
   if (s.role === 'admin') return { role: 'admin', email: s.email, name: 'Administração', wa: '' };
   const u = await db.one('SELECT email, role, name, wa, code, suspended FROM users WHERE email = ?', [s.email]);
   if (!u || u.suspended) return null;
-  return { role: u.role, email: u.email, name: u.name, wa: u.wa, code: u.code };
+  const ok = await db.one("SELECT 1 AS x FROM consents WHERE email = ? AND kind = 'terms' AND version = ?", [s.email, cfg.LEGAL_VERSION]);
+  return { role: u.role, email: u.email, name: u.name, wa: u.wa, code: u.code, needTerms: !ok };
 }
-const publicUser = (u) => ({ role: u.role, email: u.email, name: u.name, wa: u.wa || '', code: u.code });
+const publicUser = (u) => ({ role: u.role, email: u.email, name: u.name, wa: u.wa || '', code: u.code, needTerms: !!u.needTerms });
 
 // ---------- cadastro e login ----------
 async function register(req, res) {
@@ -72,6 +74,7 @@ async function register(req, res) {
   const pass = String(b.pass || '');
   limit('reg:' + req.ip_, 12, 3600e3);
   if (!role) throw U.bad('Escolha o tipo de conta.');
+  if (b.terms !== true) throw U.bad('Aceite os Termos de uso e a Política de privacidade para criar a conta.', 400, 'terms');
   if (!U.isEmail(email)) throw U.bad('Informe um e-mail válido.');
   if (!name) throw U.bad('Informe seu nome.');
   if (wa.length < 10 || wa.length > 13) throw U.bad('Informe um WhatsApp válido, com DDD.');
@@ -83,9 +86,10 @@ async function register(req, res) {
     const ex = (await t.all('SELECT email FROM users WHERE email = ?', [email]))[0];
     if (ex) throw U.bad('Já existe uma conta com este e-mail. Use Entrar.', 409);
     await t.run('INSERT INTO users (email, role, name, wa, pass_hash, code, suspended, created) VALUES (?,?,?,?,?,?,0,?)', [email, role, name, wa, hash, code, Date.now()]);
+    await S.consent(t, email, req.ip_, cfg.LEGAL_VERSION, 'terms');
   });
   await startSession(res, email, role);
-  return { email, role, name, wa, code };
+  return { email, role, name, wa, code, needTerms: false };
 }
 
 async function login(req, res) {

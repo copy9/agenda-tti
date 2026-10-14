@@ -1,0 +1,9 @@
+/* ===== termos, privacidade e meus dados (modo servidor) ===== */
+.tcw{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;font-size:14px;line-height:1.45;cursor:pointer}
+.tcw input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--brand,#0F4C5C)}
+.tcw a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.xd{padding:0 24px 24px}.xd h3{font-size:16px;margin:22px 0 4px}.xd p{margin:6px 0;font-size:14.5px;line-height:1.55}
+.xd .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.xd input[type=password]{max-width:260px}
+.xd .lk{margin-top:22px;font-size:14px}.xd .lk a{color:inherit;text-underline-offset:2px}
+#tmod{width:min(520px,94vw)}
+.xd a.btn{text-decoration:none;display:inline-block}
