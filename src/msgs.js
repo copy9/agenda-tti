@@ -76,6 +76,14 @@ const KINDS = {
     en: ['The proposal for {house} expired', 'The proposal from {in} to {out} expired without a reply. The dates are free again.'],
     es: ['La propuesta para {house} venció', 'La propuesta del {in} al {out} venció sin respuesta. Las fechas volvieron a quedar libres.'] },
 };
+KINDS.password_reset = { grp: 'security', to: 'both',
+  pt: ['Redefinir sua senha da Agenda TTI', 'Recebemos um pedido para redefinir a sua senha. Abra o link em até 30 minutos: {url}\n\nSe não foi você, ignore este e-mail: nada muda na sua conta.'],
+  en: ['Reset your Agenda TTI password', 'We received a request to reset your password. Open the link within 30 minutes: {url}\n\nIf it was not you, ignore this email: nothing changes in your account.'],
+  es: ['Restablecer su contraseña de Agenda TTI', 'Recibimos una solicitud para restablecer su contraseña. Abra el enlace en un plazo de 30 minutos: {url}\n\nSi no fue usted, ignore este correo: su cuenta no cambia.'] };
+KINDS.password_changed = { grp: 'security', to: 'both',
+  pt: ['Sua senha da Agenda TTI foi alterada', 'A senha da sua conta acabou de ser redefinida e todos os acessos abertos foram encerrados. Se não foi você, fale com a administração agora.'],
+  en: ['Your Agenda TTI password was changed', 'Your account password was just reset and all open sessions were ended. If it was not you, contact the administration now.'],
+  es: ['Su contraseña de Agenda TTI fue cambiada', 'La contraseña de su cuenta acaba de ser restablecida y se cerraron todas las sesiones abiertas. Si no fue usted, contacte a la administración ahora.'] };
 const GROUPS = ['invite', 'proposal', 'answer', 'expiring'];
 
 const FOOT = {
