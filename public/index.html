@@ -2467,7 +2467,7 @@ function srvTerms(){
 
 /* Meus dados: baixar uma cópia e pedir a exclusão da conta (direitos do titular). */
 async function openMyData(){
- const d=$('mydata');
+ const d=$('mydata');let ACTED=false;d.oninput=()=>{ACTED=true};
  const draw=st=>{
   d.innerHTML='<div class="fh"><h2 id="mdt">'+xt('md')+'</h2><button class="fx" id="mdx" type="button" aria-label="'+xt('cl')+'">×</button></div><div class="xd"><p>'+xt('mi')+'</p>'
    +'<h3>'+xt('dl')+'</h3><p>'+xt('dlp')+'</p><div class="row"><a class="btn o" href="/api/me/export" download>'+xt('dlb')+'</a></div>'
@@ -2476,12 +2476,12 @@ async function openMyData(){
     :'<p>'+xt('delp',{n:st.grace})+'</p><div class="row"><input id="mdp" type="password" autocomplete="current-password" placeholder="'+xt('pw')+'" aria-label="'+xt('pw')+'"><button class="btn o" id="mdb" type="button">'+xt('delb')+'</button></div><div class="err" id="mde" hidden role="alert"></div>')
    +'<p class="lk"><a href="/termos" data-legal="terms">'+xt('terms')+'</a> · <a href="/privacidade" data-legal="privacy">'+xt('priv')+'</a></p></div>';
   $('mdx').onclick=()=>d.close();
-  const c=$('mdc');if(c)c.onclick=async()=>{MO.busy(c,true);try{const r=await api('/api/me/delete/cancel',{});draw(r);toast(xt('canned'))}catch(x){toast(x.message);MO.busy(c,false)}};
+  const c=$('mdc');if(c)c.onclick=async()=>{MO.busy(c,true);try{const r=await api('/api/me/delete/cancel',{});ACTED=true;draw(r);toast(xt('canned'))}catch(x){toast(x.message);MO.busy(c,false)}};
   const b=$('mdb');if(b)b.onclick=async()=>{const p=$('mdp').value;if(!p){$('mde').hidden=false;$('mde').textContent=xt('nopw');return}
-   MO.busy(b,true);try{const r=await api('/api/me/delete',{pass:p});draw(r);toast(xt('req'))}catch(x){$('mde').hidden=false;$('mde').textContent=x.message;MO.busy(b,false)}}};
+   MO.busy(b,true);try{const r=await api('/api/me/delete',{pass:p});ACTED=true;draw(r);toast(xt('req'))}catch(x){$('mde').hidden=false;$('mde').textContent=x.message;MO.busy(b,false)}}};
  draw({pending:false,grace:7});
  d.showModal();
- try{draw(await api0('/api/me/delete'))}catch(x){toast(x.message)}}
+ try{const st0=await api0('/api/me/delete');if(!ACTED)draw(st0)}catch(x){toast(x.message)}}
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#fdata'))openMyData()});
 
 /* ===== avisos por e-mail e push (#11) ===== */
