@@ -32,6 +32,8 @@ function cleanHouse(inc, prev) {
     for (const k of Object.keys(inc.rates)) { if (U.isDate(k) && n++ < 1500) rates[k] = Math.min(1e7, Math.max(0, U.num(inc.rates[k], 0))); }
   }
   d.rates = rates;
+  // Itens do check-in/check-out que o proprietário NÃO exige (o corretor só repassa os demais).
+  d.ckoff = (Array.isArray(inc.ckoff) ? inc.ckoff : (prev && prev.ckoff) || []).filter((x) => typeof x === 'string' && /^(ci|co):[tawi]\d{0,3}$/.test(x)).slice(0, 80);
   d.custom = true;
   return d;
 }
