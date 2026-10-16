@@ -34,7 +34,7 @@ rep("  onChange(f){subs.push(f)}}})();", "  load(o){Object.keys(o).forEach(k=>{m
 # 3) login / cadastro / convite / sair
 rep("$('go').onclick=()=>{const e=$('e').value.trim().toLowerCase(),p=$('p').value", "$('go').onclick=SRV?srvGo:()=>{const e=$('e').value.trim().toLowerCase(),p=$('p').value")
 rep("$('out').onclick=()=>{try{sessionStorage.removeItem('tti-auth')}catch(x){}AUTH=null;", "$('out').onclick=()=>{if(SRV)srvLogout();try{sessionStorage.removeItem('tti-auth')}catch(x){}AUTH=null;")
-rep("$('hint').hidden=r!=='owner'||su;", "$('hint').hidden=SRV||r!=='owner'||su;")
+rep("$('hint').hidden=r!=='owner'||su;$('hintb').hidden=r!=='broker'||su;", "$('hint').hidden=SRV||r!=='owner'||su;$('hintb').hidden=SRV||r!=='broker'||su;")
 rep("const ex=!!BR()[iv.email];$('nmw')", "const ex=SRV?!!iv.exists:!!BR()[iv.email];$('nmw')")
 rep("function readInvite(){const m=", "function readInvite(){if(SRV)return null;const m=")
 rep("function readPub(){try{", "function readPub(){if(SRV)return null;try{")
