@@ -426,18 +426,20 @@ button.logo{background:none;border:0;padding:0;cursor:pointer;font:800 22px 'Bri
 .ctw{font:700 20px 'Bricolage Grotesque',sans-serif;letter-spacing:-.02em}
 .ctb{display:flex;gap:8px;margin-top:4px}
 .chip{border:1px solid var(--line);background:var(--surf);border-radius:99px;padding:8px 14px;font-weight:600;cursor:pointer;color:var(--mute)}
-.chip[aria-pressed=true]{background:#FFD27A;color:#2a1c00;border-color:#E6B44C}
+.chip[aria-pressed=true]{background:var(--spc);color:#fff;border-color:var(--spc)}
 .nav .chip{width:auto;height:auto;border-radius:99px;padding:8px 14px;margin-left:6px}
 .d{overflow:hidden}
 .dt{display:flex;justify-content:space-between;align-items:flex-start;width:100%}
-.st{color:#C58B2A;font-style:normal;font-size:13px;line-height:1}
+.st{color:var(--spc);font-style:normal;font-size:15px;font-weight:800;line-height:1}
 .d em{font-style:normal;font-size:11px;color:var(--mute);font-weight:600}
 .d em.ov{color:var(--sea);font-weight:800;text-decoration:underline}
 .d.sel em{color:#fff}
-.d.spc{border-color:#E6B44C;background:color-mix(in srgb,#FFD27A 26%,var(--surf))}
+:root{--spc:#7C3AED;--spct:#4C1D95}:root[data-theme="dark"]{--spc:#A78BFA;--spct:#DDD6FE}
+.d.spc{border:2px solid var(--spc);background:color-mix(in srgb,var(--spc) 24%,var(--surf));font-weight:700}.d.spc em{color:var(--spct)}.d.spc.sel em{color:#fff}
 .d.spc.sel{background:#0B4F5C}
+.d.bl.spc{background:var(--red);color:#fff;border-color:var(--spc)}.d.bl.spc em,.d.bl.spc .st{color:#fff}
 .d.ps{outline:3px solid #E6B44C;outline-offset:-3px}
-.spl{margin-top:14px;background:color-mix(in srgb,#FFD27A 24%,var(--surf));border-radius:14px;padding:11px 14px;font-size:14px}
+.spl{margin-top:14px;background:color-mix(in srgb,var(--spc) 16%,var(--surf));border:1.5px solid var(--spc);border-radius:14px;padding:11px 14px;font-size:14px}
 .ppn{background:color-mix(in srgb,#FFD27A 22%,var(--surf));border:1.5px solid #E6B44C;border-radius:18px;padding:16px;margin-top:16px}
 .ppn input{max-width:300px}
 .refbox{background:var(--bg);border-radius:14px;padding:12px 14px;margin:12px 0 0;font-size:15px}
@@ -822,7 +824,7 @@ button,a,.d,.hc,.pr,.ci{touch-action:manipulation;-webkit-tap-highlight-color:tr
 .ovc.b{background:var(--red)}.ovc.m{background:var(--ok)}
 .ovc.p{background:repeating-linear-gradient(45deg,#D99A2B,#D99A2B 4px,#F0C45E 4px,#F0C45E 8px)}
 .ovc.x{background:#5e130c;outline:2px solid #ff8a7a;outline-offset:-2px}.ovc.x::after{content:"!";color:#fff;font-weight:800;font-size:13px}
-.ovc.past{opacity:.35}.ovc.spc::before{content:"";position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#FFD27A;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.ovc.past{opacity:.35}.ovc.spc::before{content:"";position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:50%;background:var(--spc);box-shadow:0 0 0 2px #fff}
 .ovc:hover{filter:brightness(1.12)}.ovc:focus-visible,.ovn:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
 .ovl{display:flex;gap:14px;flex-wrap:wrap;margin:12px 2px 0;font-size:13px;color:var(--mute)}.ovl span{display:inline-flex;align-items:center;gap:6px}
 .ovl i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
@@ -1391,7 +1393,7 @@ function house(h){
  ${pgBox(h)}${ckBox(h)}
  <h2 class="s">${h.ro?'Datas disponíveis':'Calendário de bloqueio'}</h2><p class="mute" style="margin:0">${h.ro?'Clique no primeiro e no último dia da estadia (a saída é no dia seguinte). Dias em vermelho estão ocupados e não podem ser escolhidos.':'Clique em uma data para bloquear. Ela fica vermelha e some para todos os corretores da sua rede. Clique de novo para liberar.'}</p>
  <div class="cal"><div class="nav"><button id="pv" aria-label="Mês anterior">‹</button><h3 id="ml"></h3><button id="nx" aria-label="Próximo mês">›</button><span style="flex:1"></span><button class="chip" id="bsp" type="button" aria-pressed="${SPEC}">★ Datas especiais</button>${h.ro?'':`<button class="chip" id="bpm" type="button" aria-pressed="${PM}">Definir preços</button>`}</div><div class="grid" id="g"></div>
- <div class="lg"><span><i style="background:var(--surf);border:1px solid var(--line)"></i>Livre</span><span><i style="background:var(--red)"></i>Bloqueado</span><span><i style="background:#FFD27A"></i>Data especial</span><span>Valor no dia = diária (k = mil reais)</span>${h.ro?'<span><i style="background:#0B4F5C"></i>Selecionado</span><span><i style="background:color-mix(in srgb,var(--brass) 40%,var(--surf));border:1px solid var(--brass)"></i>Sua proposta</span>':''}</div>
+ <div class="lg"><span><i style="background:var(--surf);border:1px solid var(--line)"></i>Livre</span><span><i style="background:var(--red)"></i>Bloqueado</span><span><i style="background:var(--spc)"></i>Data especial</span><span>Valor no dia = diária (k = mil reais)</span>${h.ro?'<span><i style="background:#0B4F5C"></i>Selecionado</span><span><i style="background:color-mix(in srgb,var(--brass) 40%,var(--surf));border:1px solid var(--brass)"></i>Sua proposta</span>':''}</div>
  <div id="spl" class="spl" hidden></div><div id="pp"></div>
  <div class="note" id="nt"></div></div>${h.ro?'<div id="pf"></div>':ICSH+INVH}`;
  $('bk').onclick=()=>{view=null;render()};
@@ -2122,7 +2124,7 @@ function ovDraw(){const el=$('ov');if(!el)return;const y=OV.getFullYear(),m=OV.g
   return `<button type="button" class="ovn" data-h="${esc(h.id)}"><img alt="" src="${h.photos&&h.photos[0]||uri(h,0)}"><span><b>${esc(h.name)}</b><small>${fr} ${fr===1?'dia livre':'dias livres'}</small></span></button>${cells}`}).join('');
  el.innerHTML=`<div class="ovnav"><button type="button" id="ovp" aria-label="Mês anterior">‹</button><h3>${OV.toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</h3><button type="button" id="ovx" aria-label="Próximo mês">›</button><button class="chip" type="button" id="ovt">Hoje</button></div>
  <div class="ovw"><div class="ovg" style="--nd:${nd}"><div class="ovh">Casa</div>${ds.map(d=>`<div class="ovd${d.w%6===0?' we':''}${d.k===today?' td':''}"><span>${W[d.w]}</span><b>${d.n}</b></div>`).join('')}${rows}</div></div>
- <div class="ovl"><span><i style="background:color-mix(in srgb,var(--ok) 20%,var(--surf))"></i>Livre</span><span><i style="background:var(--red)"></i>${own?'Bloqueado ou reservado':'Bloqueado'}</span>${own?'':'<span><i style="background:var(--ok)"></i>Sua reserva</span>'}<span><i style="background:repeating-linear-gradient(45deg,#D99A2B,#D99A2B 3px,#F0C45E 3px,#F0C45E 6px)"></i>${own?'Proposta em aberto':'Sua proposta'}</span>${own?'<span><i style="background:#5e130c"></i>Conflito de datas</span>':''}<span><i style="background:#FFD27A"></i>Data especial</span></div>`;
+ <div class="ovl"><span><i style="background:color-mix(in srgb,var(--ok) 20%,var(--surf))"></i>Livre</span><span><i style="background:var(--red)"></i>${own?'Bloqueado ou reservado':'Bloqueado'}</span>${own?'':'<span><i style="background:var(--ok)"></i>Sua reserva</span>'}<span><i style="background:repeating-linear-gradient(45deg,#D99A2B,#D99A2B 3px,#F0C45E 3px,#F0C45E 6px)"></i>${own?'Proposta em aberto':'Sua proposta'}</span>${<span><i style="background:var(--spc)"></i>Data especial</span></div>`;
  $('ovp').onclick=()=>{OV.setMonth(OV.getMonth()-1);ovDraw()};$('ovx').onclick=()=>{OV.setMonth(OV.getMonth()+1);ovDraw()};$('ovt').onclick=()=>{OV=new Date();OV.setDate(1);ovDraw()};
  el.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{view=b.dataset.h;sel={a:null,b:null};PM=false;PSEL=[];cm=new Date(OV);cm.setDate(1);render();scrollTo(0,0)})}
 const _list=list;list=function(){_list();if(!all().length)return;if(LV==='res'&&ROLE!=='owner')LV='cards';const top=$('m').querySelector('.top');if(!top)return;
