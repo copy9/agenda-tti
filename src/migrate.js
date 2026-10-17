@@ -154,5 +154,7 @@ async function migrate() {
   for (const [name, table, col] of INDEXES) {
     try { await db.run(`CREATE INDEX ${name} ON ${table} (${col})`); } catch (e) { /* já existe */ }
   }
+  // Dados opcionais do perfil do corretor (cidades, CRECI, bio), em JSON.
+  try { await db.run('ALTER TABLE users ADD COLUMN info TEXT'); } catch (e) { /* já existe */ }
 }
 module.exports = { migrate, TABLES };

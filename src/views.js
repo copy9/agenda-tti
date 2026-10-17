@@ -8,7 +8,7 @@ const ids = (a) => a.map((x) => x.id);
 const inList = (a) => a.map(() => '?').join(',');
 
 async function usersByRole(role) {
-  return db.all('SELECT email, name, wa FROM users WHERE role = ? ORDER BY name', [role]);
+  return db.all('SELECT email, name, wa, info FROM users WHERE role = ? ORDER BY name', [role]);
 }
 async function docsOf(rows) { return rows.map((r) => { const d = U.parse(r.doc, {}); d.status = r.status || d.status; return d; }); }
 
@@ -53,8 +53,10 @@ async function ownerView(user) {
   const chat = threadDocs(await db.all('SELECT * FROM threads WHERE o_email = ?', [user.email]));
   for (const c of chat) mine.add(c.b);
   const brokers = {};
-  (await usersByRole('broker')).filter((b) => mine.has(b.email)).forEach((b) => { brokers[b.email] = { name: b.name, wa: b.wa, houses: [] }; });
+  const bio = {};
+  (await usersByRole('broker')).filter((b) => mine.has(b.email)).forEach((b) => { brokers[b.email] = { name: b.name, wa: b.wa, houses: [] }; const i = U.parse(b.info, null); if (i) bio[b.email] = i; });
   return {
+    bio,
     owners: { [user.email]: { name: user.name, wa: user.wa } }, brokers, houses, blocks, props, inv, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
   };
@@ -82,7 +84,9 @@ async function brokerView(user) {
   const chat = threadDocs(await db.all('SELECT * FROM threads WHERE b_email = ?', [user.email]));
   const owners = {};
   Object.values(own).forEach((o) => { owners[o.email] = { name: o.name, wa: o.wa }; });
+  const me = await db.one('SELECT info FROM users WHERE email = ?', [user.email]);
   return {
+    bio: U.parse(me && me.info, null) ? { [user.email]: U.parse(me.info, {}) } : {},
     owners, brokers: { [user.email]: { name: user.name, wa: user.wa, houses: bh } }, houses: [], blocks, props: mine.concat(ghosts), inv: {}, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
   };
