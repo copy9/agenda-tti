@@ -1042,10 +1042,10 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .specs .sp span{display:block;font-size:12.5px;line-height:1.3;margin-top:2px}
 @media(max-width:640px){.specs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0}.specs .sp{padding:7px 9px;border-radius:10px}.specs .sp b{font-size:16px!important;overflow-wrap:anywhere}.specs .sp span{font-size:11.5px}}
 /* Avisos por casa */
-.hc .nd{position:absolute;top:12px;left:12px;z-index:2;min-width:16px;height:16px;border-radius:99px;background:var(--brass);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);animation:ndp 2s ease-in-out infinite}
-.hc .nd.lv0{background:#d23b2e}.hc .nd.lv2{background:var(--sea)}
-.hc .nd.n{min-width:22px;height:22px;display:grid;place-items:center;color:#fff;font:700 12px/1 inherit;padding:0 5px}
-@keyframes ndp{50%{box-shadow:0 0 0 6px rgba(210,59,46,.18),0 2px 6px rgba(0,0,0,.35)}}
+.hc .nd{position:absolute;top:10px;left:10px;z-index:2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#d23b2e;color:#fff;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:ndp 2.4s ease-in-out infinite}
+.hc .nd svg{width:16px;height:16px;display:block}
+.hc .nd b{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;border-radius:99px;background:#fff;color:#d23b2e;font:700 11.5px/19px inherit;text-align:center;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+@keyframes ndp{50%{box-shadow:0 0 0 6px rgba(210,59,46,.2),0 2px 8px rgba(0,0,0,.35)}}
 @media(prefers-reduced-motion:reduce){.hc .nd{animation:none}}
 #remd{width:min(520px,94vw);border:0;border-radius:20px;padding:0;background:var(--surf);color:var(--ink)}#remd::backdrop{background:rgba(7,25,31,.5)}
 #remd .fh{display:flex;justify-content:space-between;align-items:center;padding:18px 24px 0}#remd .fh h2{margin:0;font-size:1.3rem}
@@ -1054,7 +1054,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 #remd .rl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 #remd .rl li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
 #remd .rl li.nw{background:color-mix(in srgb,var(--brass) 14%,var(--surf));border-color:color-mix(in srgb,var(--brass) 50%,var(--line))}
-#remd .rl i{flex:0 0 auto;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--brass)}#remd .rl .lv0 i{background:#d23b2e}#remd .rl .lv2 i{background:var(--sea)}
+#remd .rl i{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#d23b2e center/14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.7 21a2 2 0 0 1-3.4 0'/%3E%3C/svg%3E")}
 #remd .rl div{flex:1;min-width:0}#remd .rl p{margin:0;font-size:14.5px;line-height:1.45}#remd .rl small{color:var(--mute);font-size:12.5px}
 /* Perfil do corretor: formulário e topo público */
 .nv button[hidden],.gi .fl[hidden]{display:none}
@@ -2153,7 +2153,7 @@ function remDraw(){const el=$('rem');if(el)el.innerHTML='';
  document.querySelectorAll('.hc .nd').forEach(x=>x.remove());
  document.querySelectorAll('.hc').forEach(b=>{const L=RC.filter(r=>r.hid===hidOfV(b.dataset.id));if(!L.length)return;
   const s=document.createElement('span'),t=L.length+' '+(L.length>1?L3('avisos','alerts','avisos'):L3('aviso','alert','aviso'))+' · '+L3('abra a casa para ver','open the house to see','abra la casa para ver');
-  s.className='nd lv'+Math.min(...L.map(r=>r.lv))+(L.length>1?' n':'');s.textContent=L.length>1?L.length:'';s.title=t;s.setAttribute('role','img');s.setAttribute('aria-label',t);
+  s.className='nd';s.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>'+(L.length>1?'<b>'+L.length+'</b>':'');s.title=t;s.setAttribute('role','img');s.setAttribute('aria-label',t);
   const im=b.querySelector('.im');if(im)im.appendChild(s)})}
 /* Avisos da casa: ao abrir a casa, os avisos pendentes saem em popup e passam para o histórico dela. */
 let LASTV=null;
