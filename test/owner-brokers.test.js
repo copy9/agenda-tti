@@ -75,3 +75,24 @@ test('dados opcionais do corretor (cidades, CRECI, bio) aparecem no perfil públ
   await dono.sync([{ c: 'bio', set: { 'bio-c1@x.com': { c: 'hack', r: 'hack', b: 'hack' } } }]);
   assert.equal((await new Client().get('/api/public/broker/' + code)).j.c, 'Xangri-lá, Capão da Canoa');
 });
+
+test('corretor edita o nome e envia foto; foto inválida é recusada e o perfil público mostra os dois', async () => {
+  const cor = await signup('broker', 'ft-c1@x.com', 'Nome Antigo');
+  const code = (await cor.get('/api/session')).j.user.code;
+  const foto = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+  await cor.sync([{ c: 'bio', set: { 'ft-c1@x.com': { n: 'Nome Novo', c: 'Torres', r: '', b: '', p: foto } } }]);
+  let r = await new Client().get('/api/public/broker/' + code);
+  assert.equal(r.j.bn, 'Nome Novo');
+  assert.equal(r.j.av, foto);
+  // sem o campo p, a foto atual é mantida; com p vazio, é removida
+  await cor.sync([{ c: 'bio', set: { 'ft-c1@x.com': { n: 'Nome Novo', c: 'Torres', r: '', b: '' } } }]);
+  assert.equal((await new Client().get('/api/public/broker/' + code)).j.av, foto);
+  const ruim = await cor.post('/api/sync', { ops: [{ c: 'bio', set: { 'ft-c1@x.com': { n: 'Nome Novo', p: 'data:text/html;base64,PHNjcmlwdD4=' } } }] });
+  assert.equal(ruim.status, 400);
+  const curto = await cor.post('/api/sync', { ops: [{ c: 'bio', set: { 'ft-c1@x.com': { n: 'A' } } }] });
+  assert.equal(curto.status, 400);
+  await cor.sync([{ c: 'bio', set: { 'ft-c1@x.com': { n: 'Nome Novo', p: '' } } }]);
+  r = await new Client().get('/api/public/broker/' + code);
+  assert.equal(r.j.av, '');
+  assert.equal(r.j.bn, 'Nome Novo');
+});

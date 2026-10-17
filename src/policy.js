@@ -254,15 +254,29 @@ async function prof(t, user, op) {
 }
 
 // Perfil profissional do corretor: tudo opcional. c = cidades, r = CRECI, b = bio.
-const cleanBio = (x) => {
+const PHOTO = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const cleanBio = (x, prev) => {
   const o = x && typeof x === 'object' ? x : {};
-  return { c: U.text(o.c, 160).trim(), r: U.text(o.r, 30).trim(), b: U.text(o.b, 600).trim() };
+  const out = { c: U.text(o.c, 160).trim(), r: U.text(o.r, 30).trim(), b: U.text(o.b, 600).trim() };
+  // p = foto (data URL já reduzida no navegador). Ausente: mantém a atual. Vazia: remove.
+  const p = 'p' in o ? U.text(o.p, 150000) : (prev && prev.p) || '';
+  if (p && !PHOTO.test(p)) throw U.bad('Foto inválida. Envie uma imagem JPG, PNG ou WebP.');
+  if (U.text(o.p, 150001).length > 150000) throw U.bad('A foto é muito grande.');
+  if (p) out.p = p;
+  return out;
 };
 async function bio(t, user, op) {
   if (user.role !== 'broker') return;
   const set = op.set && typeof op.set === 'object' ? op.set : {};
   if (!(user.email in set)) return;
-  await t.run('UPDATE users SET info = ? WHERE email = ?', [JSON.stringify(cleanBio(set[user.email])), user.email]);
+  const cur = await S.one(t, 'SELECT info FROM users WHERE email = ?', [user.email]);
+  const x = set[user.email];
+  await t.run('UPDATE users SET info = ? WHERE email = ?', [JSON.stringify(cleanBio(x, U.parse(cur && cur.info, null))), user.email]);
+  const n = x && typeof x === 'object' ? U.text(x.n, 120).trim() : '';
+  if (x && typeof x === 'object' && 'n' in x) {
+    if (n.length < 2) throw U.bad('Informe seu nome.');
+    await t.run('UPDATE users SET name = ? WHERE email = ?', [n, user.email]);
+  }
 }
 
 async function inv(t, user, op) {
