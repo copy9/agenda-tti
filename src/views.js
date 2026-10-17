@@ -19,7 +19,7 @@ async function notiOf(email) {
 async function ustateOf(email) {
   const r = await db.one('SELECT doc FROM ustate WHERE email = ?', [email]);
   const d = r ? U.parse(r.doc, {}) : {};
-  return { tour: d.tour || {}, remx: d.remx || {}, rems: d.rems || {} };
+  return { tour: d.tour || {}, remx: d.remx || {}, rems: d.rems || {}, remh: d.remh || {} };
 }
 const threadDocs = (rows) => rows.map((r) => { const d = U.parse(r.doc, {}); d.id = r.o_email + '|' + r.b_email; d.o = r.o_email; d.b = r.b_email; return d; });
 
@@ -117,7 +117,7 @@ async function viewFor(user) {
   if (user.role === 'admin') v = await adminView();
   else if (user.role === 'owner') v = await ownerView(user);
   else v = await brokerView(user);
-  const st = user.role === 'admin' ? { tour: {}, remx: {}, rems: {} } : await ustateOf(user.email);
+  const st = user.role === 'admin' ? { tour: {}, remx: {}, rems: {}, remh: {} } : await ustateOf(user.email);
   return Object.assign({ edits: {}, susp: {} }, v, st);
 }
 

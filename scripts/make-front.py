@@ -91,8 +91,8 @@ async function api0(path,body){const o={credentials:'same-origin',headers:{}};if
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
  if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;if(j&&j.code)e.code=j.code;if(r.status===403&&e.code==='terms')srvTerms();throw e}return j}
-const SRVK=['edits','susp','owners','brokers','houses','blocks','props','inv','chat','noti','prof','bio','tour','remx','rems'];
-const PUSHK=['houses','props','blocks','noti','chat','prof','bio','inv','tour','remx','rems'];
+const SRVK=['edits','susp','owners','brokers','houses','blocks','props','inv','chat','noti','prof','bio','tour','remx','rems','remh'];
+const PUSHK=['houses','props','blocks','noti','chat','prof','bio','inv','tour','remx','rems','remh'];
 let SREV=0,SNAP={},SDIRTY=new Set(),SBUSY=false,STMR=null,SPOLL=null,SPEND=false;
 const KEYF={houses:h=>h.id,props:p=>p.id,chat:t=>t.id,noti:n=>n.to+'|'+n.at};
 function sidx(name,val){if(KEYF[name]&&Array.isArray(val)){const m={};val.forEach(x=>{m[KEYF[name](x)]=JSON.stringify(x)});return m}
