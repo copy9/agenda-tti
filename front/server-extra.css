@@ -7,11 +7,3 @@
 .xd .lk{margin-top:22px;font-size:14px}.xd .lk a{color:inherit;text-underline-offset:2px}
 #tmod{width:min(520px,94vw)}
 .xd a.btn{text-decoration:none;display:inline-block}
-
-/* ===== perfil público do corretor ===== */
-.pf-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin:18px 0 8px}
-.pf-c{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surf);transition:transform .15s,box-shadow .15s}
-.pf-c:hover{transform:translateY(-2px);box-shadow:0 12px 28px -18px rgba(16,36,43,.45)}
-.pf-c img,.pf-i{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
-.pf-b{padding:12px 14px 14px;display:grid;gap:2px}.pf-b b{font-size:1.05rem}.pf-b span{color:var(--mute);font-size:14px}.pf-b small{color:var(--mute);font-size:12.5px;margin-top:4px}
-#profd{width:min(520px,94vw)}.xd #pfu{width:100%}
