@@ -2183,7 +2183,15 @@ function houseAlerts(){
  L.forEach(r=>{o[ME+'|'+r.k]=1;a.unshift({k:r.k,t:r.t,hid,at:now,lv:r.lv,go:r.go})});
  H[ME]=a.slice(0,60);try{DB.set('remx',o);DB.set('remh',H)}catch(e){}
  openAlerts(hid,L);remDraw()}
-function postRender(){remDraw();houseAlerts();
+/* Notificações do sino: cada uma é lida ao abrir a proposta, a conversa ou a casa a que se refere. */
+function markSeen(){if(!AUTH||!ME)return;let ids=null;
+ if(PG==='props'&&PV)ids=new Set([PV]);
+ else if(PG==='msg'&&CT)ids=new Set(['m:'+CT]);
+ else if(PG==='houses'&&view){const hid=hidOfV(view);ids=new Set(PROP.filter(x=>x.hid===hid).map(x=>x.id))}
+ if(!ids)return;let ch=false;
+ NOTI.forEach(n=>{if(n.to===ME&&!n.read&&n.pid&&ids.has(String(n.pid))){n.read=true;ch=true}});
+ if(ch){saveN();drawBell()}}
+function postRender(){markSeen();remDraw();houseAlerts();
  if(PG==='houses'&&view){const ac=document.querySelector('#m .hh .loc');
   if(ac&&!$('hav')){const n=(RH()[ME]||[]).filter(a=>a.hid===hidOfV(view)).length;
    ac.insertAdjacentHTML('afterend','<button class="btn o s" id="hav" type="button" style="margin-top:12px">'+L3('Avisos','Alerts','Avisos')+(n?' ('+n+')':'')+'</button>');
