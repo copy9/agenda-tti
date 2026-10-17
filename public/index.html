@@ -1034,6 +1034,13 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
  .sk::after{animation:none}.btn:active{transform:none}.btn[aria-busy=true]::before{animation-duration:2.4s}
  .toast{transform:translate(-50%,0)}img.lz{opacity:1}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
 }
+/* Ficha da casa compacta: cabe em poucas linhas no desktop e no celular, ainda confortável de ler */
+.specs{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:14px 0}
+.specs .sp{padding:8px 12px;border-radius:12px;box-shadow:none;border:1px solid var(--line)}
+.specs .sp.max{border-color:var(--brass);box-shadow:inset 3px 0 0 var(--brass)}
+.specs .sp b{font-size:18px!important;letter-spacing:-.01em;padding:0!important;line-height:1.2}
+.specs .sp span{display:block;font-size:12.5px;line-height:1.3;margin-top:2px}
+@media(max-width:640px){.specs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0}.specs .sp{padding:7px 9px;border-radius:10px}.specs .sp b{font-size:16px!important;overflow-wrap:anywhere}.specs .sp span{font-size:11.5px}}
 /* ===== termos, privacidade e meus dados (modo servidor) ===== */
 .tcw{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;font-size:14px;line-height:1.45;cursor:pointer}
 .tcw input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--brand,#0F4C5C)}
