@@ -17,7 +17,7 @@ def rep(old, new, count=1):
 # 0) variável de inicialização (o servidor troca "window.TTI_BOOT=null;" pelos dados da sessão)
 rep('<script>try{var _t=localStorage.getItem("tti-theme")', '<script>window.TTI_BOOT=null;</script>\n<script>try{var _t=localStorage.getItem("tti-theme")')
 # idioma da página pública /c/<slug>?lg=en
-rep("||location.search.match(/[?&]c=[^&]+&lg=(pt|en|es)/);if(_h)", "||location.search.match(/[?&]c=[^&]+&lg=(pt|en|es)/)||(/^\\/c\\//.test(location.pathname)&&location.search.match(/[?&]lg=(pt|en|es)/));if(_h)")
+rep("||location.search.match(/[?&]c=[^&]+&lg=(pt|en|es)/);if(_h)", "||location.search.match(/[?&]c=[^&]+&lg=(pt|en|es)/)||(/^\\/(c|corretor)\\//.test(location.pathname)&&location.search.match(/[?&]lg=(pt|en|es)/));if(_h)")
 
 # 1) modo servidor + dados de demonstração desligados
 rep("const $=id=>document.getElementById(id);\nconst USER=", "const $=id=>document.getElementById(id);\nconst SRV=!!(window.TTI_BOOT&&window.TTI_BOOT.api);let SRVU=SRV?(window.TTI_BOOT.user||null):null;\nconst USER=")
@@ -56,6 +56,9 @@ rep('const I18N_D=/*I18N_DATA*/[', 'const I18N_D=/*I18N_DATA*/' + json.dumps(jso
 rep("const ok=((B[v.email]||{}).houses||[]).some(x=>x.id==='r'+h.id);", "const ok=SRV?!!v.ok:((B[v.email]||{}).houses||[]).some(x=>x.id==='r'+h.id);")
 rep("function linkFor(h,email){const {id,custom,photos,...rest}=h;", "function linkFor(h,email){if(SRV){const v=(INV[h.id]||[]).find(x=>x.email===email);return location.origin+'/?convite='+(v&&v.tok||'')}const {id,custom,photos,...rest}=h;")
 rep(" const a=INV[h.id]||(INV[h.id]=[]);if(!a.some(x=>x.email===e))a.push({email:e,at:today});saveInv();\n showLink(", " if(SRV)return srvInvite(h,e);\n const a=INV[h.id]||(INV[h.id]=[]);if(!a.some(x=>x.email===e))a.push({email:e,at:today});saveInv();\n showLink(")
+
+# perfil público do corretor: botão na tela de casas (só no modo servidor)
+rep("${ROLE===\"broker\"||!all().length?'':'<button class=\"btn\" id=\"add\">Cadastrar casa</button>'}", "${ROLE===\"broker\"?(SRV&&SRVU&&SRVU.code&&all().length?'<button class=\"btn o\" id=\"myprof\" type=\"button\">Meu perfil público</button>':''):(!all().length?'':'<button class=\"btn\" id=\"add\">Cadastrar casa</button>')}")
 
 # 5) página pública da casa
 rep("const PUBBASE=()=>location.href.split('#')[0].split('?')[0];", "const PUBBASE=()=>SRV?location.origin:location.href.split('#')[0].split('?')[0];")
@@ -174,6 +177,7 @@ async function srvInvite(h,e){
  finally{MO.busy($('iv-b')||bt,false)}}
 async function srvBoot(){
  const B=window.TTI_BOOT||{},q=new URLSearchParams(location.search);
+ if(B.prof){showProfile(B.prof);return}
  if(B.slug){
   $('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
   try{const p=await api('/api/public/house/'+encodeURIComponent(B.slug)+(B.b?'?b='+encodeURIComponent(B.b):''));showPub(p,false)}

@@ -224,6 +224,20 @@ function build() {
     }
     res.json(200, out);
   });
+  // ---------- perfil público do corretor: as casas que ele gerencia (só as que o convidaram) ----------
+  app.get('/api/public/broker/:code', async (req, res) => {
+    A.limit('pubb:' + req.ip_, 240, 600e3);
+    const code = String(req.params.code);
+    const b = /^[a-f0-9]{8}$/.test(code) && await db.one("SELECT email, name, wa FROM users WHERE code = ? AND role = 'broker' AND suspended = 0", [code]);
+    if (!b) throw U.bad('Este perfil não está disponível.', 404);
+    const ids = (await db.all("SELECT house_id FROM invites WHERE broker_email = ? AND status = 'accepted'", [b.email])).map((r) => r.house_id);
+    const hs = ids.length ? (await db.all(`SELECT * FROM houses WHERE id IN (${ids.map(() => '?').join(',')})`, ids)).map(S.houseDoc) : [];
+    hs.sort((x, y) => String(x.name).localeCompare(String(y.name), 'pt'));
+    // Só o que a página pública de cada casa já mostra. Nada do proprietário nem de outros corretores.
+    res.json(200, { bn: b.name, wa: b.wa || '', hs: hs.slice(0, 60).map((h) => ({ pg: h.pg, n: h.name, l: h.loc, hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, ph: (h.photos || [])[0] || '' })) });
+  });
+  app.get('/corretor/:code', (req, res) => res.html(200, page(Object.assign(bootBase(req), { prof: req.params.code }))));
+
   const spa = (req, res) => res.html(200, page(Object.assign(bootBase(req), { slug: req.params.slug, b: req.query.b || '' })));
   app.get('/c/:slug', spa);
 

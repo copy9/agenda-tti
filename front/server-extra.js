@@ -136,3 +136,48 @@ function openReset(token){
  if(!d.open)d.showModal()}
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('#fgl');if(a){e.preventDefault();openReset(null)}});
 {const m=/[?&]redefinir=([a-f0-9]{64})/.exec(location.search);if(m)setTimeout(()=>openReset(m[1]),300)}
+
+/* ===== perfil público do corretor (#54) ===== */
+Object.assign(XT.pt,{pft:'Meu perfil público',pfi:'Uma página com todas as casas que você gerencia, para enviar ao cliente. Ela mostra seu nome, seu WhatsApp e só as casas em que você foi convidado.',pfl:'Idioma da página e da mensagem',pfc:'Copiar link e mensagem',pfv:'Ver como o cliente vê',pfd:'Link e mensagem copiados',pfw:'Seu perfil não tem WhatsApp cadastrado, então o cliente não verá o botão de contato.'});
+Object.assign(XT.en,{pft:'My public profile',pfi:'A page with all the houses you manage, to send to your client. It shows your name, your WhatsApp and only the houses you were invited to.',pfl:'Language of the page and message',pfc:'Copy link and message',pfv:'See what the client sees',pfd:'Link and message copied',pfw:'Your profile has no WhatsApp number, so the client will not see the contact button.'});
+Object.assign(XT.es,{pft:'Mi perfil público',pfi:'Una página con todas las casas que usted gestiona, para enviar al cliente. Muestra su nombre, su WhatsApp y solo las casas a las que lo invitaron.',pfl:'Idioma de la página y del mensaje',pfc:'Copiar enlace y mensaje',pfv:'Ver lo que ve el cliente',pfd:'Enlace y mensaje copiados',pfw:'Su perfil no tiene WhatsApp registrado, así que el cliente no verá el botón de contacto.'});
+const profUrl=(code,g)=>location.origin+'/corretor/'+encodeURIComponent(code)+'?lg='+g;
+const profMsg=(name,url,g)=>({pt:'*'+name+'* · Casas para alugar\n\nVeja as casas que eu gerencio, com fotos e detalhes:\n'+url,en:'*'+name+'* · Houses for rent\n\nSee the houses I manage, with photos and details:\n'+url,es:'*'+name+'* · Casas en alquiler\n\nMira las casas que gestiono, con fotos y detalles:\n'+url}[g]||'');
+async function openProfile(){
+ const d=$('profd');
+ const g0=TTI_LANG,code=SRVU&&SRVU.code;if(!code)return;
+ d.innerHTML='<div class="fh"><h2 id="pft">'+xt('pft')+'</h2><button class="fx" id="pfx" type="button" aria-label="'+xt('cl')+'">×</button></div><div class="xd"><p>'+xt('pfi')+'</p>'
+  +'<h3>'+xt('pfl')+'</h3><select id="pfg" style="width:auto"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select>'
+  +'<div class="lk" style="margin-top:14px"><input id="pfu" readonly aria-label="Link" onfocus="this.select()"></div>'
+  +'<div class="row"><button class="btn" id="pfcp" type="button">'+xt('pfc')+'</button><button class="btn o" id="pfvw" type="button">'+xt('pfv')+'</button></div>'
+  +(SRVU.wa?'':'<p class="mute">'+xt('pfw')+'</p>')+'</div>';
+ const sel=$('pfg'),inp=$('pfu');sel.value=g0;
+ const url=()=>profUrl(code,sel.value);
+ const paint=()=>{inp.value=url()};paint();sel.onchange=paint;
+ $('pfx').onclick=()=>d.close();
+ $('pfcp').onclick=()=>copyTxt(profMsg(SRVU.name||'',url(),sel.value),xt('pfd'));
+ $('pfvw').onclick=()=>window.open(url(),'_blank','noopener');
+ if(!d.open)d.showModal()}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#myprof'))openProfile()});
+
+/* Página pública do perfil: o cliente abre o link do corretor e vê as casas dele. */
+let PROFD=null;
+function drawProfile(){
+ const p=PROFD.p,code=PROFD.code,el=$('pub'),lg=TTI_LANG;
+ const wa=String(p.wa||'').replace(/\D/g,''),wan=wa&&wa.length<=11?'55'+wa:wa;
+ const card=h=>{const href='/c/'+encodeURIComponent(h.pg)+'?b='+encodeURIComponent(code)+'&lg='+lg;
+  const st=[h.q?h.q+' '+L3('quartos','bedrooms','habitaciones'):'',h.s?h.s+' '+L3('suítes','suites','suites'):'',h.lot?L3('até ','up to ','hasta ')+h.lot+' '+L3('pessoas','guests','personas'):''].filter(Boolean).join(' · ');
+  return '<a class="pf-c" href="'+esc(href)+'">'+(h.ph?'<img alt="'+esc(h.n)+'" src="'+esc(h.ph)+'" loading="lazy">':'<div class="pf-i" style="background:hsl('+(Number(h.hu)||200)+',38%,52%)"></div>')+'<div class="pf-b"><b>'+esc(h.n)+'</b><span>'+esc(h.l||'')+'</span><small>'+esc(st)+'</small></div></a>'};
+ el.innerHTML='<div class="pv"><div class="pv-top"><b>Agenda TTI</b><span style="display:flex;gap:8px;align-items:center">'+LSEL+'<button class="thm" type="button" data-thm></button></span></div>'
+  +'<h1>'+esc(p.bn)+'</h1><div class="loc">'+L3('Casas que gerencia','Houses managed','Casas que gestiona')+'</div>'
+  +(p.hs.length?'<div class="pf-g">'+p.hs.map(card).join('')+'</div>':'<p class="mute" style="margin:30px 0">'+L3('Este corretor ainda não tem casas publicadas.','This broker has no published houses yet.','Este corredor aún no tiene casas publicadas.')+'</p>')
+  +(wan?'<div class="pv-cta"><div><b style="font-size:1.15rem">'+L3('Gostou de alguma casa?','Like a house?','¿Le gustó alguna casa?')+'</b><div style="opacity:.85">'+L3('Fale com '+esc(p.bn)+' para consultar datas e valores.','Talk to '+esc(p.bn)+' to check dates and prices.','Hable con '+esc(p.bn)+' para consultar fechas y valores.')+'</div></div><a href="https://wa.me/'+wan+'?text='+encodeURIComponent(L3('Olá! Vi o seu perfil na Agenda TTI e gostaria de saber sobre datas e valores.','Hello! I saw your profile on Agenda TTI and would like to know about dates and prices.','¡Hola! Vi su perfil en Agenda TTI y me gustaría saber sobre fechas y valores.'))+'" target="_blank" rel="noopener" class="btn wa">WhatsApp</a></div>':'')
+  +'<div class="pv-ft">Agenda TTI</div></div>';
+ el.querySelectorAll('[data-lang]').forEach(x=>{x.value=lg;x.onchange=()=>{setLang(x.value);drawProfile()}});
+ el.querySelectorAll('[data-thm]').forEach(b=>b.onclick=()=>{const n=isDark()?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('tti-theme',n)}catch(e){}paintThm()});
+ paintThm();document.title=p.bn+' | Agenda TTI'}
+async function showProfile(code){
+ const el=$('pub');$('home').hidden=true;el.hidden=false;el.innerHTML=MO.skel('pub');document.body.style.overflow='hidden';
+ [...document.body.children].forEach(c=>{if(c.id!=='pub'&&c.id!=='lb'&&c.tagName!=='SCRIPT')c.inert=true});
+ try{PROFD={p:await api0('/api/public/broker/'+encodeURIComponent(code)),code};drawProfile();el.scrollTop=0}
+ catch(x){el.innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>'+L3('Este perfil não está disponível','This profile is not available','Este perfil no está disponible')+'</h1></div>'}}

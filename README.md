@@ -62,6 +62,9 @@ Atualizar para uma nova versão: `git pull && docker compose up -d --build` (os 
 ### Avisos por e-mail e push
 Convite, proposta, resposta e vencimento viram aviso por e-mail (SMTP próprio, configure `SMTP_*`) e por push no navegador (chaves VAPID geradas e guardadas no banco; service worker em `/sw.js`). Cada pessoa escolhe canal e tipos em Conta, Avisos. Os envios passam por uma fila com tentativas e espera crescente. Avisos a corretores nunca citam outro corretor. Push exige HTTPS em produção.
 
+### Perfil público do corretor
+Em Casas para alugar, o corretor abre "Meu perfil público", escolhe o idioma e copia o link com a mensagem pronta. A página `/corretor/<código>` mostra o nome e o WhatsApp dele e só as casas em que ele foi convidado (cada cartão leva à página pública da casa). Não mostra proprietário nem outros corretores. Só existe no modo servidor.
+
 ### Recuperação de senha
 Em Entrar, "Esqueci a senha" envia por e-mail um link que vale 30 minutos e uma única vez (no banco fica só o hash). A resposta é a mesma exista o e-mail ou não, há limite por e-mail e por IP, e ao redefinir todas as sessões são encerradas e a pessoa recebe um aviso. Exige `SMTP_*` configurado. A senha do administrador continua vindo de `ADMIN_PASSWORD`.
 
