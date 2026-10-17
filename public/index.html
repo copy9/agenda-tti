@@ -1043,11 +1043,10 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .specs .sp span{display:block;font-size:12.5px;line-height:1.3;margin-top:2px}
 @media(max-width:640px){.specs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0}.specs .sp{padding:7px 9px;border-radius:10px}.specs .sp b{font-size:16px!important;overflow-wrap:anywhere}.specs .sp span{font-size:11.5px}}
 /* Avisos por casa */
-.hc .nd{position:absolute;top:10px;left:10px;z-index:2;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#d23b2e;color:#fff;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:ndp 2.4s ease-in-out infinite}
-.hc .nd svg{width:16px;height:16px;display:block}
-.hc .nd b{position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;border-radius:99px;background:#fff;color:#d23b2e;font:700 11.5px/19px inherit;text-align:center;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-@keyframes ndp{50%{box-shadow:0 0 0 6px rgba(210,59,46,.2),0 2px 8px rgba(0,0,0,.35)}}
-@media(prefers-reduced-motion:reduce){.hc .nd{animation:none}}
+.hc .nd{position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;height:30px;min-width:30px;padding:0 8px;justify-content:center;border-radius:99px;background:#d6382b;color:#fff;font:700 13px/1 inherit;box-shadow:0 6px 14px -4px rgba(214,56,43,.65),inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.hc .nd svg{width:16px;height:16px;display:block;flex:0 0 auto}
+.hc .nd b{font-weight:700}
+
 #remd{width:min(520px,94vw);border:0;border-radius:20px;padding:0;background:var(--surf);color:var(--ink)}#remd::backdrop{background:rgba(7,25,31,.5)}
 #remd .fh{display:flex;justify-content:space-between;align-items:center;padding:18px 24px 0}#remd .fh h2{margin:0;font-size:1.3rem}
 #remd .fx{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:var(--mute)}
@@ -1056,7 +1055,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 #remd .rl li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
 #remd .rl li.nw{background:color-mix(in srgb,var(--brass) 14%,var(--surf));border-color:color-mix(in srgb,var(--brass) 50%,var(--line))}
 #remd .rl i{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#d23b2e center/14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.7 21a2 2 0 0 1-3.4 0'/%3E%3C/svg%3E")}
-#remd .rl div{flex:1;min-width:0}#remd .rl p{margin:0;font-size:14.5px;line-height:1.45}#remd .rl small{color:var(--mute);font-size:12.5px}
+#remd .rl div{flex:1;min-width:0}#remd .rl .ab{flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}#remd .rl p{margin:0;font-size:14.5px;line-height:1.45}#remd .rl small{color:var(--mute);font-size:12.5px}
 /* Perfil do corretor: formulário e topo público */
 .nv button[hidden],.gi .fl[hidden]{display:none}
 .btn[disabled]{opacity:.42;cursor:not-allowed;box-shadow:none;filter:grayscale(.35)}
@@ -2186,37 +2185,39 @@ function remDraw(){const el=$('rem');if(el)el.innerHTML='';
 /* Avisos da casa: ao abrir a casa, os avisos pendentes saem em popup e passam para o histórico dela. */
 let LASTV=null;
 const fdt=t=>new Date(t).toLocaleString(TTI_LANG==='en'?'en-US':TTI_LANG==='es'?'es-ES':'pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-function alertGo(g){const d=$('remd');if(d.open)d.close();PG=g.pg;PV=g.pv||null;if(g.pt)PT=g.pt;view=null;render();scrollTo(0,0)}
-function openAlerts(hid,fresh){
- const d=$('remd'),hist=(RH()[ME]||[]).filter(a=>a.hid===hid),fr=new Set(fresh.map(r=>r.k)),
-  li=(a,nw)=>'<li class="lv'+a.lv+(nw?' nw':'')+'"><i></i><div><p>'+esc(a.t)+'</p><small>'+esc(fdt(a.at))+'</small></div>'+(a.go?'<button class="btn o s" type="button" data-ag="'+esc(a.k)+'">'+L3('Abrir','Open','Abrir')+'</button>':'')+'</li>',
-  nw=hist.filter(a=>fr.has(a.k)&&a.at>=Date.now()-5e3),old=hist.filter(a=>!nw.includes(a));
+function alertDone(r){const o=RX(),H=RH(),a=H[ME]||[];o[ME+'|'+r.k]=1;
+ if(!a.some(x=>x.k===r.k))a.unshift({k:r.k,t:r.t,hid:r.hid,at:Date.now(),lv:r.lv,go:r.go});
+ H[ME]=a.slice(0,60);try{DB.set('remx',o);DB.set('remh',H)}catch(e){}remDraw()}
+function alertGo(r){const d=$('remd');alertDone(r);if(d.open)d.close();const g=r.go;PG=g.pg;PV=g.pv||null;if(g.pt)PT=g.pt;view=null;render();scrollTo(0,0)}
+/* Cada aviso da casa é resolvido um a um: o sininho só some quando o último for dispensado. */
+function openAlerts(hid){
+ const d=$('remd'),cur=RC.filter(r=>r.hid===hid),hist=(RH()[ME]||[]).filter(a=>a.hid===hid),
+  li=(a,nw)=>'<li'+(nw?' class="nw"':'')+'><i></i><div><p>'+esc(a.t)+'</p><small>'+esc(fdt(a.at||Date.now()))+'</small></div>'+(nw?'<div class="ab">'+(a.go?'<button class="btn s" type="button" data-ag="'+esc(a.k)+'">'+L3('Abrir','Open','Abrir')+'</button>':'')+'<button class="btn o s" type="button" data-ad="'+esc(a.k)+'">'+L3('Ciente','Got it','Entendido')+'</button></div>':'')+'</li>';
  d.innerHTML='<div class="fh"><h2>'+L3('Avisos desta casa','Alerts for this house','Avisos de esta casa')+'</h2><button class="fx" id="rdx" type="button" aria-label="'+L3('Fechar','Close','Cerrar')+'">×</button></div><div class="xd">'
-  +(nw.length?'<h3>'+L3('Novos','New','Nuevos')+'</h3><ul class="rl">'+nw.map(a=>li(a,1)).join('')+'</ul>':'')
-  +'<h3>'+L3('Histórico','History','Historial')+'</h3>'+(old.length?'<ul class="rl">'+old.map(a=>li(a,0)).join('')+'</ul>':'<p class="mute">'+L3('Nenhum aviso anterior.','No earlier alerts.','Ningún aviso anterior.')+'</p>')+'</div>';
- d.querySelectorAll('[data-ag]').forEach(b=>b.onclick=()=>{const a=hist.find(x=>x.k===b.dataset.ag);if(a&&a.go)alertGo(a.go)});
+  +(cur.length?'<h3>'+L3('Pendentes','Pending','Pendientes')+' ('+cur.length+')</h3><ul class="rl">'+cur.map(a=>li(a,1)).join('')+'</ul>':'')
+  +'<h3>'+L3('Histórico','History','Historial')+'</h3>'+(hist.length?'<ul class="rl">'+hist.map(a=>li(a,0)).join('')+'</ul>':'<p class="mute">'+L3('Nenhum aviso anterior.','No earlier alerts.','Ningún aviso anterior.')+'</p>')+'</div>';
+ d.querySelectorAll('[data-ag]').forEach(b=>b.onclick=()=>{const r=cur.find(x=>x.k===b.dataset.ag);if(r)alertGo(r)});
+ d.querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const r=cur.find(x=>x.k===b.dataset.ad);if(!r)return;alertDone(r);openAlerts(hid);hav()});
  $('rdx').onclick=()=>d.close();if(!d.open)d.showModal()}
+function hav(){const b=$('hav');if(!b||!view)return;const hid=hidOfV(view),p=RC.filter(r=>r.hid===hid).length,n=(RH()[ME]||[]).filter(a=>a.hid===hid).length;b.textContent=L3('Avisos','Alerts','Avisos')+(p?' ('+p+' '+L3('novos','new','nuevos')+')':n?' ('+n+')':'')}
 function houseAlerts(){
  if(PG!=='houses'||!view){LASTV=null;return}
  if(view===LASTV)return;LASTV=view;
- const hid=hidOfV(view),L=RC.filter(r=>r.hid===hid);if(!L.length)return;
- const o=RX(),H=RH(),a=H[ME]||[],now=Date.now();
- L.forEach(r=>{o[ME+'|'+r.k]=1;a.unshift({k:r.k,t:r.t,hid,at:now,lv:r.lv,go:r.go})});
- H[ME]=a.slice(0,60);try{DB.set('remx',o);DB.set('remh',H)}catch(e){}
- openAlerts(hid,L);remDraw()}
+ if(RC.some(r=>r.hid===hidOfV(view)))openAlerts(hidOfV(view))}
 /* Notificações do sino: cada uma é lida ao abrir a proposta, a conversa ou a casa a que se refere. */
 function markSeen(){if(!AUTH||!ME)return;let ids=null;
  if(PG==='props'&&PV)ids=new Set([PV]);
  else if(PG==='msg'&&CT)ids=new Set(['m:'+CT]);
- else if(PG==='houses'&&view){const hid=hidOfV(view);ids=new Set(PROP.filter(x=>x.hid===hid).map(x=>x.id))}
+
  if(!ids)return;let ch=false;
  NOTI.forEach(n=>{if(n.to===ME&&!n.read&&n.pid&&ids.has(String(n.pid))){n.read=true;ch=true}});
  if(ch){saveN();drawBell()}}
 function postRender(){seed6();markSeen();remDraw();houseAlerts();
  if(PG==='houses'&&view){const ac=document.querySelector('#m .hh .loc');
-  if(ac&&!$('hav')){const n=(RH()[ME]||[]).filter(a=>a.hid===hidOfV(view)).length;
-   ac.insertAdjacentHTML('afterend','<button class="btn o s" id="hav" type="button" style="margin-top:12px">'+L3('Avisos','Alerts','Avisos')+(n?' ('+n+')':'')+'</button>');
-   $('hav').onclick=()=>openAlerts(hidOfV(view),[])}}}
+  if(ac&&!$('hav')){
+   ac.insertAdjacentHTML('afterend','<button class="btn o s" id="hav" type="button" style="margin-top:12px"></button>');
+   $('hav').onclick=()=>openAlerts(hidOfV(view))}
+  hav()}}
 {const _r=render;render=function(){_r.apply(this,arguments);postRender()}}
 function syncRem(){if(!AUTH||!ME)return;const S=RSn();let ch=false;
  reminders().forEach(r=>{const k=ME+'|'+r.k;if(!S[k]){S[k]=1;ch=true;notify(ME,r.t,r.go&&r.go.pv||undefined)}});
