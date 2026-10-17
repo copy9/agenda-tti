@@ -319,7 +319,7 @@ async function apply(t, user, ops) {
   await run('prof', (o) => prof(t, user, o));
   await run('bio', (o) => bio(t, user, o));
   await run('inv', (o) => inv(t, user, o));
-  for (const n of ['tour', 'remx', 'rems']) await run(n, (o) => ustate(t, user, n, o));
+  for (const n of ['tour', 'remx', 'rems', 'remh']) await run(n, (o) => ustate(t, user, n, o));
 }
 
 module.exports = { apply, tid };
