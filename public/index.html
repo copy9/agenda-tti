@@ -1046,6 +1046,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .nv button[hidden],.gi .fl[hidden]{display:none}
 .pfform{display:grid;gap:14px;max-width:640px}.pfform label{display:grid;gap:6px;font-weight:600;font-size:14px}.pfform label small{font-weight:400;color:var(--mute)}
 .pfform textarea{min-height:110px;resize:vertical;font:inherit}.pfform .row{display:flex;gap:10px;flex-wrap:wrap}
+.pf-ph{display:flex;gap:16px;align-items:center}.pf-ph .row{margin-bottom:6px}.pf-ph .pf-av{width:84px;height:84px}
 .pf-hd{display:flex;gap:18px;align-items:flex-start;margin:6px 0 4px}.pf-av{flex:0 0 auto;width:76px;height:76px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:26px}
 .pf-hd h1{margin:0 0 6px}.pf-tags{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.pf-tags .tag{font-size:13px}
 .pf-bio{margin:10px 0 0;line-height:1.6;max-width:62ch;white-space:pre-line}.pf-sec{font-size:1.1rem;margin:26px 0 0}
@@ -1650,7 +1651,7 @@ function agpage(){const ow=ROLE==='owner',S=SUSP(),mine=waOf(ME);
   if(ow){const n=PROP.filter(x=>x.broker===u.e&&all().some(h=>h.id===x.hid)).length;ex=n+(n===1?' proposta enviada':' propostas enviadas')+' para as suas casas';tg=all().some(h=>(INV[h.id]||[]).some(v=>v.email===u.e))}
   else{const n=ALLH().filter(h=>h.owner===u.e).length;ex=n+(n===1?' casa na plataforma':' casas na plataforma');tg=all().some(h=>h.oe===u.e||(u.e===USER.email&&h.owner===USER.name))}
   return Object.assign({},u,{w,ex,tg})}).sort((a,b)=>(b.tg-a.tg)||a.n.localeCompare(b.n));
- const card=u=>`<div class="ct" data-q="${esc((u.n+' '+u.e).toLowerCase())}"><div class="ctp"><span class="av lg" style="background:${avc(u.n)}">${ini(u.n)}</span><div><b>${esc(u.n)}</b><small>${esc(u.e)}</small></div></div>
+ const card=u=>`<div class="ct" data-q="${esc((u.n+' '+u.e).toLowerCase())}"><div class="ctp"><span class="av lg" style="${ow&&bioOf(u.e).p?avStyle(bioOf(u.e).p):'background:'+avc(u.n)}">${ow&&bioOf(u.e).p?'':ini(u.n)}</span><div><b>${esc(u.n)}</b><small>${esc(u.e)}</small></div></div>
   <div class="ctm"><span class="tag ${ow?'b':'o'}">${ow?'Corretor':'Proprietário'}</span>${u.tg?`<span class="tag">${ow?'Convidado por você':'Casas liberadas para você'}</span>`:''}</div>
   <div class="ctw">${u.w?fw(u.w):'WhatsApp não informado'}</div><div class="mute" style="font-size:14px">${u.ex}</div>${ow&&(bioOf(u.e).r||bioOf(u.e).c)?`<div class="mute" style="font-size:13px">${esc([bioOf(u.e).r,bioOf(u.e).c].filter(Boolean).join(' · '))}</div>`:''}
   <div class="ctb">${u.w?`<a class="btn wa s" href="${waLink(u.w,L3('Olá, '+u.n.split(' ')[0]+'! Vi seu contato na Agenda TTI.','Hello, '+u.n.split(' ')[0]+'! I saw your contact on Agenda TTI.','¡Hola, '+u.n.split(' ')[0]+'! Vi tu contacto en Agenda TTI.'))}" target="_blank" rel="noopener">WhatsApp</a>`:''}<button class="btn o s" data-ch="${esc(u.e)}" data-cn="${esc(u.n)}">Mensagem</button></div></div>`;
@@ -2331,20 +2332,31 @@ function moEnter(el,key,slot){const first=key!==MO[slot];MO[slot]=key;if(first&&
 /* ===== Página do corretor: dados opcionais (WhatsApp, cidades, CRECI, bio) ===== */
 const BIO=()=>{try{return DB.get('bio',{})||{}}catch(e){return{}}};
 const bioOf=e=>BIO()[e]||{};
+const avStyle=(p,n)=>p?'background:url('+p+') center/cover':'background:'+avc(n||'?');
+function pfResize(file){return new Promise((ok,no)=>{const r=new FileReader();r.onerror=no;r.onload=()=>{const im=new Image();im.onerror=no;im.onload=()=>{const S=256,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S,S);ok(c.toDataURL('image/jpeg',.82))};im.src=r.result};r.readAsDataURL(file)})}
 function pfpage(){
  const b=bioOf(ME),wa=waOf(ME);
  $('m').innerHTML='<div class="top"><div><h1>'+L3('Meu perfil','My profile','Mi perfil')+'</h1><p class="mute" style="margin:6px 0 0;max-width:60ch">'+L3('Tudo aqui é opcional. Estes dados aparecem no topo do seu perfil público, para o cliente saber com quem está negociando.','Everything here is optional. This information appears at the top of your public profile, so the client knows who they are dealing with.','Todo esto es opcional. Estos datos aparecen en la parte superior de su perfil público, para que el cliente sepa con quién negocia.')+'</p></div></div>'
  +'<div class="cal pfform">'
- +'<label>'+L3('Nome','Name','Nombre')+'<input id="pfn" value="'+esc(bname())+'" readonly></label>'
+ +'<div class="pf-ph"><span class="pf-av" id="pfav" style="'+avStyle(b.p,bname())+'">'+(b.p?'':esc(ini(bname())))+'</span><div><div class="row"><button class="btn o s" id="pffb" type="button">'+L3('Enviar foto','Upload photo','Subir foto')+'</button><button class="btn o s" id="pfrm" type="button"'+(b.p?'':' hidden')+'>'+L3('Remover foto','Remove photo','Quitar foto')+'</button></div><small class="mute">'+L3('JPG, PNG ou WebP. A foto é recortada em quadrado.','JPG, PNG or WebP. The photo is cropped to a square.','JPG, PNG o WebP. La foto se recorta en cuadrado.')+'</small><input id="pff" type="file" accept="image/*" hidden></div></div>'
+ +'<label>'+L3('Nome','Name','Nombre')+'<input id="pfn" maxlength="120" autocomplete="name" value="'+esc(bname())+'"></label>'
  +'<label>WhatsApp<input id="pfwa" type="tel" inputmode="tel" placeholder="(51) 99999-9999" value="'+esc(fw(wa))+'"></label>'
  +'<label>'+L3('Cidades em que atua','Cities you work in','Ciudades en las que actúa')+'<input id="pfc" maxlength="160" placeholder="Xangri-lá, Capão da Canoa, Torres" value="'+esc(b.c||'')+'"></label>'
  +'<label>CRECI<input id="pfr" maxlength="30" placeholder="CRECI 12345-F" value="'+esc(b.r||'')+'"></label>'
  +'<label>'+L3('Apresentação','About you','Presentación')+'<small>'+L3('Uma bio curta, até 600 caracteres.','A short bio, up to 600 characters.','Una bio corta, hasta 600 caracteres.')+'</small><textarea id="pfb" maxlength="600" placeholder="'+esc(L3('Conte um pouco sobre sua experiência com casas de alto padrão.','Tell us a bit about your experience with high-end houses.','Cuente un poco sobre su experiencia con casas de alto nivel.'))+'">'+esc(b.b||'')+'</textarea></label>'
  +'<div class="row"><button class="btn" id="pfs" type="button">'+L3('Salvar','Save','Guardar')+'</button><button class="btn o" id="pfv" type="button">'+L3('Ver perfil público','See public profile','Ver perfil público')+'</button><button class="btn o" id="pfsh" type="button">'+L3('Compartilhar perfil','Share profile','Compartir perfil')+'</button></div></div>';
- const save=()=>{const w=$('pfwa').value.replace(/\D/g,'');
+ let ph=b.p||'';
+ const paintAv=()=>{const a=$('pfav');a.style.cssText=avStyle(ph,$('pfn').value||bname());a.textContent=ph?'':ini($('pfn').value||bname());$('pfrm').hidden=!ph};
+ $('pffb').onclick=()=>$('pff').click();
+ $('pff').onchange=async()=>{const f=$('pff').files[0];$('pff').value='';if(!f)return;if(!/^image\//.test(f.type))return toast(L3('Escolha uma imagem','Choose an image','Elija una imagen'));
+  try{ph=await pfResize(f);paintAv()}catch(e){toast(L3('Não foi possível ler a imagem','Could not read the image','No se pudo leer la imagen'))}};
+ $('pfrm').onclick=()=>{ph='';paintAv()};$('pfn').oninput=paintAv;
+ const save=()=>{const w=$('pfwa').value.replace(/\D/g,''),nn=$('pfn').value.trim();
+  if(nn.length<2){toast(L3('Informe seu nome','Enter your name','Ingrese su nombre'));return false}
   if(w&&(w.length<10||w.length>13)){toast(L3('Informe um WhatsApp válido, com DDD','Enter a valid WhatsApp number with area code','Ingrese un WhatsApp válido, con código de área'));return false}
   if(w&&w!==String(wa).replace(/\D/g,'')){const P=PROF();P[ME]=w;saveProf(P)}
-  const B=BIO();B[ME]={c:$('pfc').value.trim(),r:$('pfr').value.trim(),b:$('pfb').value.trim()};DB.set('bio',B);return true};
+  if(nn!==bname()){if(PSRV())SRVU.name=nn;else{const R=BR();if(R[ME]){R[ME].name=nn;saveBR(R)}CHAT.forEach(t=>{if(t.b===ME)t.bn=nn});saveC()}}
+  const B=BIO(),o={c:$('pfc').value.trim(),r:$('pfr').value.trim(),b:$('pfb').value.trim(),p:ph};if(PSRV())o.n=nn;B[ME]=o;DB.set('bio',B);return true};
  $('pfs').onclick=()=>{if(save())toast(L3('Perfil salvo','Profile saved','Perfil guardado'))};
  $('pfv').onclick=()=>{if(!save())return;if(PSRV())window.open(profUrl(TTI_LANG),'_blank','noopener');else showProfDemo(ME)};
  $('pfsh').onclick=()=>{if(save())openProfile()}}
@@ -2374,7 +2386,7 @@ function drawProfile(){
  const card=h=>{const st=[h.q?h.q+' '+L3('quartos','bedrooms','habitaciones'):'',h.s?h.s+' '+L3('suítes','suites','suites'):'',h.lot?L3('até ','up to ','hasta ')+h.lot+' '+L3('pessoas','guests','personas'):''].filter(Boolean).join(' · ');
   return '<a class="pf-c" href="'+esc(h.href(lg))+'">'+(h.ph?'<img alt="'+esc(h.n)+'" src="'+esc(h.ph)+'" loading="lazy">':'<div class="pf-i" style="background:hsl('+(Number(h.hu)||200)+',38%,52%)"></div>')+'<div class="pf-b"><b>'+esc(h.n)+'</b><span>'+esc(h.l||'')+'</span><small>'+esc(st)+'</small></div></a>'};
  el.innerHTML='<div class="pv"><div class="pv-top"><b>Agenda TTI</b><span style="display:flex;gap:8px;align-items:center">'+LSEL+'<button class="thm" type="button" data-thm></button></span></div>'
-  +'<div class="pf-hd"><span class="pf-av" style="background:'+avc(p.bn)+'" aria-hidden="true">'+esc(ini(p.bn))+'</span><div><h1>'+esc(p.bn)+'</h1>'
+  +'<div class="pf-hd"><span class="pf-av" style="'+avStyle(p.av,p.bn)+'" role="img" aria-label="'+esc(p.bn)+'">'+(p.av?'':esc(ini(p.bn)))+'</span><div><h1>'+esc(p.bn)+'</h1>'
   +((p.r||p.c||wan)?'<div class="pf-tags">'+(p.r?'<span class="tag b">'+esc(/creci/i.test(p.r)?p.r:'CRECI '+p.r)+'</span>':'')+(p.c?'<span class="tag">'+L3('Atua em ','Works in ','Actúa en ')+esc(p.c)+'</span>':'')+(wan?'<span class="tag">WhatsApp '+esc(fw(wa))+'</span>':'')+'</div>':'')
   +(p.bi?'<p class="pf-bio">'+esc(p.bi)+'</p>':'')+'</div></div>'
   +'<h2 class="pf-sec">'+L3('Casas que gerencia','Houses managed','Casas que gestiona')+'</h2>'
@@ -2390,7 +2402,7 @@ function showProfPage(p){PROFD=p;const el=$('pub');$('home').hidden=true;el.hidd
 function readPf(){try{const q=new URLSearchParams(location.search).get('pf');if(q)return unb64u(q).e||null}catch(e){}return null}
 function showProfDemo(e){
  const hs=((BR()[e]||{}).houses||[]).map(h=>{const b=H.find(x=>x.id===h.id.slice(1)),o=b?Object.assign({},b,OVR[b.id]||{}):CUS.find(x=>x.id===h.id.slice(1));return Object.assign({},h,o||{})});
- const bo=bioOf(e);showProfPage({bn:(BR()[e]||{}).name||e.split('@')[0],wa:waOf(e),c:bo.c||'',r:bo.r||'',bi:bo.b||'',hs:hs.map(h=>({n:h.name,l:h.loc,hu:h.hue,q:h.q,s:h.s,lot:h.lot,ph:(h.photos&&h.photos[0])||uri(h,0),href:g=>pubLink(h,g)}))})}
+ const bo=bioOf(e);showProfPage({bn:(BR()[e]||{}).name||e.split('@')[0],wa:waOf(e),av:bo.p||'',c:bo.c||'',r:bo.r||'',bi:bo.b||'',hs:hs.map(h=>({n:h.name,l:h.loc,hu:h.hue,q:h.q,s:h.s,lot:h.lot,ph:(h.photos&&h.photos[0])||uri(h,0),href:g=>pubLink(h,g)}))})}
 
 
 /* ===== observabilidade do navegador: erros e Web Vitals ===== */
@@ -2650,7 +2662,7 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 async function showProfile(code){
  $('home').hidden=true;$('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
  try{const r=await api0('/api/public/broker/'+encodeURIComponent(code));
-  showProfPage({bn:r.bn,wa:r.wa,c:r.c,r:r.r,bi:r.bi,hs:r.hs.map(h=>Object.assign({},h,{href:g=>'/c/'+encodeURIComponent(h.pg)+'?b='+encodeURIComponent(code)+'&lg='+g}))})}
+  showProfPage({bn:r.bn,wa:r.wa,av:r.av,c:r.c,r:r.r,bi:r.bi,hs:r.hs.map(h=>Object.assign({},h,{href:g=>'/c/'+encodeURIComponent(h.pg)+'?b='+encodeURIComponent(code)+'&lg='+g}))})}
  catch(x){$('pub').innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>'+L3('Este perfil não está disponível','This profile is not available','Este perfil no está disponible')+'</h1></div>'}}
 const iv0=readInvite(),pv0=readPub();
 if(SRV)srvBoot();else if(pv0)showPub(pv0,false);else if(iv0)showInvite(iv0);else try{const a=sessionStorage.getItem('tti-auth')||'';if(a.startsWith('owner:')&&(a.slice(6)===USER.email||OW()[a.slice(6)])&&!SUSP()[a.slice(6)])enter('owner',a.slice(6));else if(a.startsWith('broker:')&&BR()[a.slice(7)]&&!SUSP()[a.slice(7)])enter('broker',a.slice(7))}catch(e){}

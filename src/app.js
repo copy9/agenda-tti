@@ -235,7 +235,7 @@ function build() {
     hs.sort((x, y) => String(x.name).localeCompare(String(y.name), 'pt'));
     // Só o que a página pública de cada casa já mostra. Nada do proprietário nem de outros corretores.
     const i = U.parse(b.info, null) || {};
-    res.json(200, { bn: b.name, wa: b.wa || '', c: i.c || '', r: i.r || '', bi: i.b || '', hs: hs.slice(0, 60).map((h) => ({ pg: h.pg, n: h.name, l: h.loc, hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, ph: (h.photos || [])[0] || '' })) });
+    res.json(200, { bn: b.name, wa: b.wa || '', av: i.p || '', c: i.c || '', r: i.r || '', bi: i.b || '', hs: hs.slice(0, 60).map((h) => ({ pg: h.pg, n: h.name, l: h.loc, hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, ph: (h.photos || [])[0] || '' })) });
   });
   app.get('/corretor/:code', (req, res) => res.html(200, page(Object.assign(bootBase(req), { prof: req.params.code }))));
 
