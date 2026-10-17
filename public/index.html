@@ -760,7 +760,8 @@ button,a,.d,.hc,.pr,.ci{touch-action:manipulation;-webkit-tap-highlight-color:tr
 .pgb h2{margin:0 0 4px}.pgb .lk{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .pgb .lk input{flex:1 1 260px;min-width:0;font-size:14px}
 .pgb .ac2{display:flex;gap:8px;flex-wrap:wrap}
-.amv{margin:0 0 14px}.amv h4{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+.amw{display:grid;grid-template-columns:repeat(auto-fit,minmax(max(230px,calc((100% - 32px)/3)),1fr));gap:4px 16px;align-items:start}
+.amv{margin:0 0 10px}.amv h4{margin:0 0 6px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
 .amv ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .amv li{padding:7px 12px;border-radius:99px;background:var(--bg);border:1px solid var(--line);font-size:14px}
 .amv li::before{content:"✓ ";color:var(--ok);font-weight:700}
@@ -1940,7 +1941,7 @@ const AMN=[];AMG.forEach(([g,a])=>a.forEach(([k,n])=>AMN[k]=n));
 $('f-am').innerHTML=AMG.map(([g,a])=>`<div><h5>${g}</h5>${a.map(([k,n])=>`<label class="amc"><input type="checkbox" data-am="${k}">${n}</label>`).join('')}</div>`).join('');
 function setAm(a){const s=new Set(a);$('f-am').querySelectorAll('input').forEach(i=>i.checked=s.has(i.dataset.am))}
 function getAm(){return [...$('f-am').querySelectorAll('input:checked')].map(i=>i.dataset.am)}
-function amHTML(am){const s=new Set(am||[]),g=AMG.map(([t,a])=>[t,a.filter(([k])=>s.has(k))]).filter(x=>x[1].length);return g.length?g.map(([t,a])=>`<div class="amv"><h4>${t}</h4><ul>${a.map(([k,n])=>`<li>${n}</li>`).join('')}</ul></div>`).join(''):'<p class="mute" style="margin:0">O proprietário ainda não informou as comodidades.</p>'}
+function amHTML(am){const s=new Set(am||[]),g=AMG.map(([t,a])=>[t,a.filter(([k])=>s.has(k))]).filter(x=>x[1].length);return g.length?'<div class="amw">'+g.map(([t,a])=>`<div class="amv"><h4>${t}</h4><ul>${a.map(([k,n])=>`<li>${n}</li>`).join('')}</ul></div>`).join('')+'</div>':'<p class="mute" style="margin:0">O proprietário ainda não informou as comodidades.</p>'}
 function liveH(id){id=String(id).replace(/^r(?=[hc])/,'');const b=H.find(x=>x.id===id);if(b)return Object.assign({},b,OVR[b.id]||{});return CUS.find(x=>x.id===id)}
 function pubData(h){const o=liveH(h.id)||h,p={i:String(h.id).replace(/^r(?=[hc])/,''),n:o.name,l:o.loc,hu:o.hue,q:o.q,s:o.s,b:o.b,lot:o.lot,v:o.v,a:o.a,po:o.pool,pe:o.pets,d:o.desc,am:o.am||h.am||[],ru:o.rules||h.rules||''};if(ROLE==='broker'){p.bn=bname();const w=waOf(ME);if(w)p.wa=w}return p}
 let PLG=null;
