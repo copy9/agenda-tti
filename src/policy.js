@@ -39,7 +39,21 @@ async function blocks(t, user, op) {
   if (user.role !== 'owner') return; // o corretor nunca grava bloqueios; o servidor faz isso nas reservas
   const mine = async (id) => { const r = await S.one(t, 'SELECT owner_email FROM houses WHERE id = ?', [id]); return r && r.owner_email === user.email; };
   const up = op.up && typeof op.up === 'object' ? op.up : {};
-  for (const hid of Object.keys(up)) { if (await mine(hid)) await S.writeBlocks(t, hid, Array.isArray(up[hid]) ? up[hid] : []); }
+  for (const hid of Object.keys(up)) {
+    if (!(await mine(hid))) continue;
+    const dates = Array.isArray(up[hid]) ? up[hid] : [];
+    // Uma proposta em aberto nunca pode ficar sobre datas bloqueadas: o proprietário responde antes de bloquear.
+    const cur = new Set(await S.readBlocks(t, hid));
+    const novas = dates.filter((d) => !cur.has(d));
+    if (novas.length) {
+      const open = await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered')", [hid]);
+      for (const r of open) {
+        const d = U.parse(r.doc, {});
+        if (U.nightList(d.in, d.out).some((k) => novas.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
+      }
+    }
+    await S.writeBlocks(t, hid, dates);
+  }
   for (const hid of (op.del || [])) { if (await mine(String(hid))) await S.writeBlocks(t, String(hid), []); }
 }
 

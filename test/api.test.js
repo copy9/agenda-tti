@@ -148,6 +148,10 @@ test('PRIVACIDADE: corretor só enxerga datas seguradas, sem nomes, valores ou e
 test('proprietário vê todas as propostas e aceita: bloqueia noites e notifica', async () => {
   const v = (await owner.get('/api/sync')).j.view;
   assert.equal(v.props.length, 2);
+  // bloquear noites que estão em proposta aberta é recusado: o proprietário responde antes
+  const bloq = await owner.sync([{ c: 'blocks', up: { [hid]: [D(51)] } }]);
+  assert.equal(bloq.status, 409, bloq.txt);
+  assert.ok(!((await owner.get('/api/sync')).j.view.blocks[hid] || []).includes(D(51)));
   const r = await owner.sync([{ c: 'props', up: [{ id: 'p100000005', status: 'accepted' }] }]);
   assert.equal(r.status, 200, r.txt);
   assert.deepEqual(r.j.view.blocks[hid].sort(), [D(40), D(41), D(42)]);
