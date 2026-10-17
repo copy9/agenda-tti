@@ -141,5 +141,5 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 async function showProfile(code){
  $('home').hidden=true;$('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
  try{const r=await api0('/api/public/broker/'+encodeURIComponent(code));
-  showProfPage({bn:r.bn,wa:r.wa,hs:r.hs.map(h=>Object.assign({},h,{href:g=>'/c/'+encodeURIComponent(h.pg)+'?b='+encodeURIComponent(code)+'&lg='+g}))})}
+  showProfPage({bn:r.bn,wa:r.wa,c:r.c,r:r.r,bi:r.bi,hs:r.hs.map(h=>Object.assign({},h,{href:g=>'/c/'+encodeURIComponent(h.pg)+'?b='+encodeURIComponent(code)+'&lg='+g}))})}
  catch(x){$('pub').innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>'+L3('Este perfil não está disponível','This profile is not available','Este perfil no está disponible')+'</h1></div>'}}

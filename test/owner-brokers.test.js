@@ -58,3 +58,20 @@ test('perfil público do corretor lista só as casas em que ele foi convidado, s
   assert.equal((await new Client().get('/api/public/broker/00000000')).status, 404);
   assert.equal((await new Client().get('/api/public/broker/xx')).status, 404);
 });
+
+test('dados opcionais do corretor (cidades, CRECI, bio) aparecem no perfil público e só o próprio corretor edita', async () => {
+  const cor = await signup('broker', 'bio-c1@x.com', 'Corretor Bio');
+  const dono = await signup('owner', 'bio-d1@x.com', 'Dono Bio');
+  const code = (await cor.get('/api/session')).j.user.code;
+  const vazio = await new Client().get('/api/public/broker/' + code);
+  assert.deepEqual([vazio.j.c, vazio.j.r, vazio.j.bi], ['', '', '']);
+  await cor.sync([{ c: 'bio', set: { 'bio-c1@x.com': { c: ' Xangri-lá, Capão da Canoa ', r: 'CRECI 12345-F', b: 'x'.repeat(900) } } }]);
+  const r = await new Client().get('/api/public/broker/' + code);
+  assert.equal(r.j.c, 'Xangri-lá, Capão da Canoa');
+  assert.equal(r.j.r, 'CRECI 12345-F');
+  assert.equal(r.j.bi.length, 600);
+  assert.equal((await cor.get('/api/sync')).j.view.bio['bio-c1@x.com'].r, 'CRECI 12345-F');
+  // outro usuário não consegue gravar no perfil alheio, nem o proprietário grava como corretor
+  await dono.sync([{ c: 'bio', set: { 'bio-c1@x.com': { c: 'hack', r: 'hack', b: 'hack' } } }]);
+  assert.equal((await new Client().get('/api/public/broker/' + code)).j.c, 'Xangri-lá, Capão da Canoa');
+});

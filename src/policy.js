@@ -253,6 +253,18 @@ async function prof(t, user, op) {
   await t.run('UPDATE users SET wa = ? WHERE email = ?', [d, user.email]);
 }
 
+// Perfil profissional do corretor: tudo opcional. c = cidades, r = CRECI, b = bio.
+const cleanBio = (x) => {
+  const o = x && typeof x === 'object' ? x : {};
+  return { c: U.text(o.c, 160).trim(), r: U.text(o.r, 30).trim(), b: U.text(o.b, 600).trim() };
+};
+async function bio(t, user, op) {
+  if (user.role !== 'broker') return;
+  const set = op.set && typeof op.set === 'object' ? op.set : {};
+  if (!(user.email in set)) return;
+  await t.run('UPDATE users SET info = ? WHERE email = ?', [JSON.stringify(cleanBio(set[user.email])), user.email]);
+}
+
 async function inv(t, user, op) {
   if (user.role !== 'owner') return;
   const set = op.set && typeof op.set === 'object' ? op.set : {};
@@ -291,6 +303,7 @@ async function apply(t, user, ops) {
   await run('noti', (o) => noti(t, user, o));
   await run('chat', (o) => chat(t, user, o));
   await run('prof', (o) => prof(t, user, o));
+  await run('bio', (o) => bio(t, user, o));
   await run('inv', (o) => inv(t, user, o));
   for (const n of ['tour', 'remx', 'rems']) await run(n, (o) => ustate(t, user, n, o));
 }
