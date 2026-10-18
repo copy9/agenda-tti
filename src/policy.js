@@ -304,6 +304,12 @@ const cleanBio = (x, prev) => {
   if (p && !PHOTO.test(p)) throw U.bad('Foto inválida. Envie uma imagem JPG, PNG ou WebP.');
   if (U.text(o.p, 150001).length > 150000) throw U.bad('A foto é muito grande.');
   if (p) out.p = p;
+  // hs = casas escolhidas para o perfil público (vazio: todas); o = ordem (r mais locadas, hi maior diária, lo menor diária).
+  const hs = 'hs' in o ? (Array.isArray(o.hs) ? o.hs : []) : (prev && prev.hs) || [];
+  const ids = [...new Set(hs.map((v) => String(v)).filter((v) => /^[A-Za-z0-9]{1,40}$/.test(v)))].slice(0, 60);
+  if (ids.length) out.hs = ids;
+  const ord = 'o' in o ? o.o : prev && prev.o;
+  if (ord === 'hi' || ord === 'lo') out.o = ord;
   return out;
 };
 async function bio(t, user, op) {

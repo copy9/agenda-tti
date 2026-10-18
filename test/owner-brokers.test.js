@@ -96,3 +96,27 @@ test('corretor edita o nome e envia foto; foto inválida é recusada e o perfil 
   assert.equal(r.j.av, '');
   assert.equal(r.j.bn, 'Nome Novo');
 });
+
+test('perfil público: o corretor escolhe as casas e a ordem; sem escolha, das mais locadas para as menos', async () => {
+  const d = await signup('owner', 'sel-d@x.com', 'Dono Sel');
+  const cor = await signup('broker', 'sel-c@x.com', 'Corretor Sel');
+  await d.sync([{ c: 'houses', up: [house('hSL1', { name: 'Casa A', rate: 1000 }), house('hSL2', { name: 'Casa B', rate: 3000 }), house('hSL3', { name: 'Casa C', rate: 2000 })] }]);
+  for (const hid of ['hSL1', 'hSL2', 'hSL3']) {
+    await d.post('/api/invites', { hid, email: 'sel-c@x.com' });
+    const tok = (await d.get('/api/sync')).j.view.inv[hid].find((i) => i.email === 'sel-c@x.com').tok;
+    assert.equal((await cor.post('/api/invites/accept', { token: tok })).status, 200);
+  }
+  const code = (await cor.get('/api/session')).j.user.code;
+  const nomes = async () => (await new Client().get('/api/public/broker/' + code)).j.hs.map((h) => h.n);
+  // Casa C tem uma locação aceita: vai primeiro.
+  const agora = Date.now();
+  await cor.sync([{ c: 'props', up: [{ id: 'p910000001', hid: 'rhSL3', house: 'Casa C', broker: 'sel-c@x.com', bname: 'Corretor Sel', in: '2031-03-10', out: '2031-03-13', value: 6000, guest: 'G', pax: 2, msg: '', status: 'pending', at: '2026-10-18', log: [], exp: agora + 864e5 }] }]);
+  await d.sync([{ c: 'props', up: [{ id: 'p910000001', status: 'accepted', final: 6000 }] }]);
+  assert.deepEqual(await nomes(), ['Casa C', 'Casa A', 'Casa B']);
+  await cor.sync([{ c: 'bio', set: { 'sel-c@x.com': { o: 'hi' } } }]);
+  assert.deepEqual(await nomes(), ['Casa B', 'Casa C', 'Casa A']);
+  await cor.sync([{ c: 'bio', set: { 'sel-c@x.com': { o: 'lo', hs: ['hSL2', 'hSL1', 'lixo!', 'hOUTRA'] } } }]);
+  assert.deepEqual(await nomes(), ['Casa A', 'Casa B']);
+  await cor.sync([{ c: 'bio', set: { 'sel-c@x.com': { hs: [] } } }]);
+  assert.deepEqual(await nomes(), ['Casa A', 'Casa C', 'Casa B'], 'sem casas marcadas, aparecem todas');
+});

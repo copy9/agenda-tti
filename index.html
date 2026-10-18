@@ -1063,6 +1063,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .ovi{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}
 .ovi div{flex:1;min-width:200px}.ovi b{display:block}.ovi span{color:var(--mute);font-size:14px}
 .ovc.pk{outline:2.5px solid var(--sea);outline-offset:-2px;position:relative;z-index:1}
+.pfhs{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.pfhs label{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surf);cursor:pointer}.pfhs input{margin-top:3px}.pfhs span{display:grid;gap:2px}.pfhs small{color:var(--mute)}
 .sti{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;margin-bottom:8px}.sfm{display:grid;gap:10px}.sf{display:grid;gap:4px;font-size:14px}.sf span{color:var(--mute)}.sf input,.sf textarea{width:100%}.sg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:480px){.sg2{grid-template-columns:1fr}}
 .slk input{width:100%}.stw{padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--line);margin:16px 0}.sth{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}.sth span,.stf span{display:block;color:var(--mute);font-size:13px}.sth b{font-size:17px}
 .stg{display:grid;gap:10px}.stf{padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line);display:grid;gap:4px}.stf b{font-size:18px;word-break:break-word}.stf .btn{justify-self:start;margin-top:6px}
@@ -2537,6 +2538,11 @@ const BIO=()=>{try{return DB.get('bio',{})||{}}catch(e){return{}}};
 const bioOf=e=>BIO()[e]||{};
 const avStyle=(p,n)=>p?'background:url('+p+') center/cover':'background:'+avc(n||'?');
 function pfResize(file){return new Promise((ok,no)=>{const r=new FileReader();r.onerror=no;r.onload=()=>{const im=new Image();im.onerror=no;im.onload=()=>{const S=256,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S,S);ok(c.toDataURL('image/jpeg',.82))};im.src=r.result};r.readAsDataURL(file)})}
+const rentCount=hid=>PROP.filter(x=>x.broker===ME&&x.status==='accepted'&&String(x.hid).replace(/^r/,'')===hid).length;
+function pfHouses(b){const hs=all().filter(h=>h.name),sel=new Set(b.hs||[]);if(!hs.length)return '';
+ return '<div class="pfhs-w"><h3 style="margin:18px 0 4px;font-size:17px">'+L3('Casas no perfil público','Houses on the public profile','Casas en el perfil público')+'</h3><small class="mute">'+L3('Marque as casas que o cliente verá. Sem nenhuma marcada, aparecem todas as casas que você gerencia.','Check the houses the client will see. With none checked, all the houses you manage are shown.','Marque las casas que verá el cliente. Sin ninguna marcada, aparecen todas las casas que gestiona.')+'</small>'
+ +'<label style="margin-top:10px">'+L3('Ordem','Order','Orden')+'<select id="pfo"><option value="r"'+(!b.o?' selected':'')+'>'+L3('Mais locadas primeiro (padrão)','Most rented first (default)','Más alquiladas primero (predeterminado)')+'</option><option value="hi"'+(b.o==='hi'?' selected':'')+'>'+L3('Maior valor da diária','Highest daily rate','Mayor valor de la tarifa')+'</option><option value="lo"'+(b.o==='lo'?' selected':'')+'>'+L3('Menor valor da diária','Lowest daily rate','Menor valor de la tarifa')+'</option></select></label>'
+ +'<ul class="pfhs" id="pfhs">'+hs.map(h=>{const id=String(h.id).replace(/^r(?=[hc])/,''),n=rentCount(id);return '<li><label><input type="checkbox" data-h="'+esc(id)+'"'+(sel.has(id)?' checked':'')+'><span><b>'+esc(h.name)+'</b><small>'+(Number(h.rate)?brl(Number(h.rate))+' '+L3('/ diária','/ night','/ noche')+' · ':'')+n+' '+L3(n===1?'locação':'locações',n===1?'rental':'rentals',n===1?'alquiler':'alquileres')+'</small></span></label></li>'}).join('')+'</ul></div>'}
 function pfpage(){
  const b=bioOf(ME),wa=waOf(ME);
  $('m').innerHTML='<div class="top"><div><h1>'+L3('Meu perfil','My profile','Mi perfil')+'</h1><p class="mute" style="margin:6px 0 0;max-width:60ch">'+L3('Tudo aqui é opcional. Estes dados aparecem no topo do seu perfil público, para o cliente saber com quem está negociando.','Everything here is optional. This information appears at the top of your public profile, so the client knows who they are dealing with.','Todo esto es opcional. Estos datos aparecen en la parte superior de su perfil público, para que el cliente sepa con quién negocia.')+'</p></div></div>'
@@ -2547,6 +2553,7 @@ function pfpage(){
  +'<label>'+L3('Cidades em que atua','Cities you work in','Ciudades en las que actúa')+'<input id="pfc" maxlength="160" placeholder="Xangri-lá, Capão da Canoa, Torres" value="'+esc(b.c||'')+'"></label>'
  +'<label>CRECI<input id="pfr" maxlength="30" placeholder="CRECI 12345-F" value="'+esc(b.r||'')+'"></label>'
  +'<label>'+L3('Apresentação','About you','Presentación')+'<small>'+L3('Uma bio curta, até 600 caracteres.','A short bio, up to 600 characters.','Una bio corta, hasta 600 caracteres.')+'</small><textarea id="pfb" maxlength="600" placeholder="'+esc(L3('Conte um pouco sobre sua experiência com casas de alto padrão.','Tell us a bit about your experience with high-end houses.','Cuente un poco sobre su experiencia con casas de alto nivel.'))+'">'+esc(b.b||'')+'</textarea></label>'
+ +pfHouses(b)
  +'<div class="row"><button class="btn" id="pfs" type="button">'+L3('Salvar','Save','Guardar')+'</button><button class="btn o" id="pfv" type="button">'+L3('Ver perfil público','See public profile','Ver perfil público')+'</button><button class="btn o" id="pfsh" type="button">'+L3('Compartilhar perfil','Share profile','Compartir perfil')+'</button></div></div>';
  let ph=b.p||'';
  const paintAv=()=>{const a=$('pfav');a.style.cssText=avStyle(ph,$('pfn').value||bname());a.textContent=ph?'':ini($('pfn').value||bname());$('pfrm').hidden=!ph};
@@ -2559,7 +2566,7 @@ function pfpage(){
   if(w&&(w.length<10||w.length>13)){toast(L3('Informe um WhatsApp válido, com DDD','Enter a valid WhatsApp number with area code','Ingrese un WhatsApp válido, con código de área'));return false}
   if(w&&w!==String(wa).replace(/\D/g,'')){const P=PROF();P[ME]=w;saveProf(P)}
   if(nn!==bname()){if(PSRV())SRVU.name=nn;else{const R=BR();if(R[ME]){R[ME].name=nn;saveBR(R)}CHAT.forEach(t=>{if(t.b===ME)t.bn=nn});saveC()}}
-  const B=BIO(),o={c:$('pfc').value.trim(),r:$('pfr').value.trim(),b:$('pfb').value.trim(),p:ph};if(PSRV())o.n=nn;B[ME]=o;DB.set('bio',B);return true};
+  const B=BIO(),o={c:$('pfc').value.trim(),r:$('pfr').value.trim(),b:$('pfb').value.trim(),p:ph,hs:[...document.querySelectorAll('#pfhs input[data-h]:checked')].map(i=>i.dataset.h),o:($('pfo')||{}).value||'r'};if(PSRV())o.n=nn;B[ME]=o;DB.set('bio',B);return true};
  $('pfs').onclick=()=>{if(save())toast(L3('Perfil salvo','Profile saved','Perfil guardado'))};
  $('pfv').onclick=()=>{if(!save())return;if(PSRV())window.open(profUrl(TTI_LANG),'_blank','noopener');else showProfDemo(ME)};
  $('pfsh').onclick=()=>{if(save())openProfile()}}
@@ -2605,7 +2612,9 @@ function showProfPage(p){PROFD=p;const el=$('pub');$('home').hidden=true;el.hidd
 function readPf(){try{const q=new URLSearchParams(location.search).get('pf');if(q)return unb64u(q).e||null}catch(e){}return null}
 function showProfDemo(e){
  const hs=((BR()[e]||{}).houses||[]).map(h=>{const b=H.find(x=>x.id===h.id.slice(1)),o=b?Object.assign({},b,OVR[b.id]||{}):CUS.find(x=>x.id===h.id.slice(1));return Object.assign({},h,o||{})});
- const bo=bioOf(e);showProfPage({bn:(BR()[e]||{}).name||e.split('@')[0],wa:waOf(e),av:bo.p||'',c:bo.c||'',r:bo.r||'',bi:bo.b||'',hs:hs.map(h=>({n:h.name,l:h.loc,hu:h.hue,q:h.q,s:h.s,lot:h.lot,ph:(h.photos&&h.photos[0])||uri(h,0),href:g=>pubLink(h,g)}))})}
+ const bo=bioOf(e);reload();const pk=new Set(bo.hs||[]),idn=h=>String(h.id).replace(/^r(?=[hc])/,''),cn=h=>PROP.filter(x=>x.broker===e&&x.status==='accepted'&&String(x.hid).replace(/^r/,'')===idn(h)).length,rt=h=>Number(h.rate)||0;
+ let hs2=pk.size&&hs.some(h=>pk.has(idn(h)))?hs.filter(h=>pk.has(idn(h))):hs;hs2=hs2.slice().sort((a,b)=>(bo.o==='hi'?rt(b)-rt(a):bo.o==='lo'?rt(a)-rt(b):cn(b)-cn(a))||String(a.name).localeCompare(String(b.name),'pt'));
+ showProfPage({bn:(BR()[e]||{}).name||e.split('@')[0],wa:waOf(e),av:bo.p||'',c:bo.c||'',r:bo.r||'',bi:bo.b||'',hs:hs2.map(h=>({n:h.name,l:h.loc,hu:h.hue,q:h.q,s:h.s,lot:h.lot,ph:(h.photos&&h.photos[0])||uri(h,0),href:g=>pubLink(h,g)}))})}
 
 const iv0=readInvite(),pv0=readPub();
 const sv0=readStayQ();
