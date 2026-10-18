@@ -1063,7 +1063,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .ovi{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}
 .ovi div{flex:1;min-width:200px}.ovi b{display:block}.ovi span{color:var(--mute);font-size:14px}
 .ovc.pk{outline:2.5px solid var(--sea);outline-offset:-2px;position:relative;z-index:1}
-.pfhs{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.pfhs label{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surf);cursor:pointer}.pfhs input{margin-top:3px}.pfhs span{display:grid;gap:2px}.pfhs small{color:var(--mute)}
+.pfhs{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.pfform .pfhs label{display:flex;gap:12px;align-items:center;font-weight:400;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surf);cursor:pointer}.pfhs input{margin:0;width:20px;height:20px;flex:0 0 auto}.pfhs b{font-size:15px}.pfhs span{display:grid;gap:2px}.pfhs small{color:var(--mute)}
 .sti{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;margin-bottom:8px}.sfm{display:grid;gap:10px}.sf{display:grid;gap:4px;font-size:14px}.sf span{color:var(--mute)}.sf input,.sf textarea{width:100%}.sg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:480px){.sg2{grid-template-columns:1fr}}
 .slk input{width:100%}.stw{padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--line);margin:16px 0}.sth{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}.sth span,.stf span{display:block;color:var(--mute);font-size:13px}.sth b{font-size:17px}
 .stg{display:grid;gap:10px}.stf{padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line);display:grid;gap:4px}.stf b{font-size:18px;word-break:break-word}.stf .btn{justify-self:start;margin-top:6px}
@@ -1079,6 +1079,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 /* Perfil do corretor: formulário e topo público */
 .nv button[hidden],.gi .fl[hidden]{display:none}
 .btn[disabled]{opacity:.42;cursor:not-allowed;box-shadow:none;filter:grayscale(.35)}
+.pfgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start;max-width:1120px;margin-top:16px}.pfgrid .cal{margin:0}.pfr .pfhs-w h3{margin-top:0!important}@media(max-width:860px){.pfgrid{grid-template-columns:1fr}}
 .pfform{display:grid;gap:14px;max-width:640px}.pfform label{display:grid;gap:6px;font-weight:600;font-size:14px}.pfform label small{font-weight:400;color:var(--mute)}
 .pfform textarea{min-height:110px;resize:vertical;font:inherit}.pfform .row{display:flex;gap:10px;flex-wrap:wrap}
 .pf-ph{display:flex;gap:16px;align-items:center}.pf-ph .row{margin-bottom:6px}.pf-ph .pf-av{width:84px;height:84px}
@@ -2546,15 +2547,15 @@ function pfHouses(b){const hs=all().filter(h=>h.name),sel=new Set(b.hs||[]);if(!
 function pfpage(){
  const b=bioOf(ME),wa=waOf(ME);
  $('m').innerHTML='<div class="top"><div><h1>'+L3('Meu perfil','My profile','Mi perfil')+'</h1><p class="mute" style="margin:6px 0 0;max-width:60ch">'+L3('Tudo aqui é opcional. Estes dados aparecem no topo do seu perfil público, para o cliente saber com quem está negociando.','Everything here is optional. This information appears at the top of your public profile, so the client knows who they are dealing with.','Todo esto es opcional. Estos datos aparecen en la parte superior de su perfil público, para que el cliente sepa con quién negocia.')+'</p></div></div>'
- +'<div class="cal pfform">'
+ +'<div class="pfgrid"><div class="cal pfform">'
  +'<div class="pf-ph"><span class="pf-av" id="pfav" style="'+avStyle(b.p,bname())+'">'+(b.p?'':esc(ini(bname())))+'</span><div><div class="row"><button class="btn o s" id="pffb" type="button">'+L3('Enviar foto','Upload photo','Subir foto')+'</button><button class="btn o s" id="pfrm" type="button"'+(b.p?'':' hidden')+'>'+L3('Remover foto','Remove photo','Quitar foto')+'</button></div><small class="mute">'+L3('JPG, PNG ou WebP. A foto é recortada em quadrado.','JPG, PNG or WebP. The photo is cropped to a square.','JPG, PNG o WebP. La foto se recorta en cuadrado.')+'</small><input id="pff" type="file" accept="image/*" hidden></div></div>'
  +'<label>'+L3('Nome','Name','Nombre')+'<input id="pfn" maxlength="120" autocomplete="name" value="'+esc(bname())+'"></label>'
  +'<label>WhatsApp<input id="pfwa" type="tel" inputmode="tel" placeholder="(51) 99999-9999" value="'+esc(fw(wa))+'"></label>'
  +'<label>'+L3('Cidades em que atua','Cities you work in','Ciudades en las que actúa')+'<input id="pfc" maxlength="160" placeholder="Xangri-lá, Capão da Canoa, Torres" value="'+esc(b.c||'')+'"></label>'
  +'<label>CRECI<input id="pfr" maxlength="30" placeholder="CRECI 12345-F" value="'+esc(b.r||'')+'"></label>'
  +'<label>'+L3('Apresentação','About you','Presentación')+'<small>'+L3('Uma bio curta, até 600 caracteres.','A short bio, up to 600 characters.','Una bio corta, hasta 600 caracteres.')+'</small><textarea id="pfb" maxlength="600" placeholder="'+esc(L3('Conte um pouco sobre sua experiência com casas de alto padrão.','Tell us a bit about your experience with high-end houses.','Cuente un poco sobre su experiencia con casas de alto nivel.'))+'">'+esc(b.b||'')+'</textarea></label>'
- +pfHouses(b)
- +'<div class="row"><button class="btn" id="pfs" type="button">'+L3('Salvar','Save','Guardar')+'</button><button class="btn o" id="pfv" type="button">'+L3('Ver perfil público','See public profile','Ver perfil público')+'</button><button class="btn o" id="pfsh" type="button">'+L3('Compartilhar perfil','Share profile','Compartir perfil')+'</button></div></div>';
+ +'</div><div class="cal pfform pfr">'+(pfHouses(b)||'<p class="mute" style="margin:0">'+L3('Quando você tiver casas liberadas, escolha aqui quais aparecem no perfil público.','When you have houses available, choose here which ones appear on the public profile.','Cuando tenga casas disponibles, elija aquí cuáles aparecen en el perfil público.')+'</p>')
+ +'<div class="row"><button class="btn" id="pfs" type="button">'+L3('Salvar','Save','Guardar')+'</button><button class="btn o" id="pfv" type="button">'+L3('Ver perfil público','See public profile','Ver perfil público')+'</button><button class="btn o" id="pfsh" type="button">'+L3('Compartilhar perfil','Share profile','Compartir perfil')+'</button></div></div></div>';
  let ph=b.p||'';
  const paintAv=()=>{const a=$('pfav');a.style.cssText=avStyle(ph,$('pfn').value||bname());a.textContent=ph?'':ini($('pfn').value||bname());$('pfrm').hidden=!ph};
  $('pffb').onclick=()=>$('pff').click();
