@@ -1047,17 +1047,18 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .hc .nd b{font-weight:700}
 
 #remd{width:min(520px,94vw);border:0;border-radius:20px;padding:0;background:var(--surf);color:var(--ink)}#remd::backdrop{background:rgba(7,25,31,.5)}
-#remd .fh{display:flex;justify-content:space-between;align-items:center;padding:18px 24px 0}#remd .fh h2{margin:0;font-size:1.3rem}
+#remd .fh{display:flex;justify-content:space-between;align-items:flex-start;padding:20px 24px 4px}#remd .fh h2{margin:0;font-size:1.35rem;line-height:1.2}#remd .fh h2 small{display:block;margin-top:4px;font:500 14px/1.3 inherit;color:var(--mute)}
 #remd .fx{border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:var(--mute)}
-#remd .xd{padding:0 24px 22px;max-height:70vh;overflow:auto}#remd h3{font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin:18px 0 8px}
-#remd .rl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-#remd .rl li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
-#remd .rl li.nw{background:color-mix(in srgb,var(--brass) 14%,var(--surf));border-color:color-mix(in srgb,var(--brass) 50%,var(--line))}
-#remd .rl i{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#d23b2e center/14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.7 21a2 2 0 0 1-3.4 0'/%3E%3C/svg%3E")}
-#remd .rl div{flex:1;min-width:0}#remd .rl .ab{flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}#remd .rl p{margin:0;font-size:14.5px;line-height:1.45}#remd .rl small{color:var(--mute);font-size:12.5px}
-.okb{display:flex;gap:14px;align-items:center;padding:16px 18px;margin:0 0 12px;border-radius:16px;background:color-mix(in srgb,var(--ok) 14%,var(--surf));border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line))}
-.okb .oki{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--ok);color:#fff;font-weight:700}
-.okb b{display:block;font-size:1.05rem}.okb span:not(.oki){color:var(--mute);font-size:14.5px}
+#remd .xd{padding:12px 24px 22px;max-height:70vh;overflow:auto}
+#remd .rl{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+#remd .rl li{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px}
+#remd .rl li.nw{background:color-mix(in srgb,var(--brass) 12%,var(--surf));border-color:color-mix(in srgb,var(--brass) 45%,var(--line))}
+#remd .rl i{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#d6382b center/14px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.7 21a2 2 0 0 1-3.4 0'/%3E%3C/svg%3E")}
+#remd .rl li.old i{background-color:var(--mute);opacity:.6}
+#remd .rl .tx{flex:1;min-width:0;display:grid;gap:2px}#remd .rl .tx b{font-size:15.5px}#remd .rl .tx span{color:var(--mute);font-size:14px}#remd .rl .tx small{color:var(--mute);font-size:12.5px}
+#remd .rl .ab{flex:0 0 auto;display:flex;gap:6px}
+#remd .rhd{margin-top:14px}#remd .rhd summary{cursor:pointer;font-weight:600;color:var(--mute);padding:6px 0}#remd .rhd .rl{margin-top:8px}
+@media(max-width:520px){#remd .rl li{flex-wrap:wrap}#remd .rl .ab{width:100%}#remd .rl .ab .btn{flex:1}}
 /* Calendário geral: detalhe do dia */
 .ovi{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}
 .ovi div{flex:1;min-width:200px}.ovi b{display:block}.ovi span{color:var(--mute);font-size:14px}
@@ -1613,14 +1614,12 @@ function pdetail(x){if(!x){PV=null;return plist2()}
  const dsp=pkd.map(t=>`<p class="pkd">${t}</p>`).join('')+(ow&&conf.length?`<p class="pkd">${conf.length+(conf.length>1?' outras propostas disputam':' outra proposta disputa')+' essas datas'}: ${conf.map(y=>esc(y.bname)+' · '+brl(y.value)).join(', ')}</p>`:'');
  $('m').innerHTML=`<button class="back" id="pb">‹ Voltar às propostas</button>
  <div class="top" style="margin-bottom:12px"><div><h1 style="font-size:clamp(26px,6vw,34px)">${esc(x.house)}</h1><div class="mute">${ow?'Proposta de '+esc(x.bname)+' · recebida':'Sua proposta · enviada'} em ${D(x.at).toLocaleDateString(LOC())}${(x.status==='pending'||c)&&x.exp?' · expira em '+Math.max(0,Math.ceil((x.exp-Date.now())/36e5))+'h':''}</div></div><span class="tag${tcl(x)}">${stl(x)}</span></div>
-${x.status==='accepted'?(()=>{const ci=nights(today,x.in),co=nights(today,x.out),t=ci>1?L3('Check-in em '+ci+' dias','Check-in in '+ci+' days','Check-in en '+ci+' días'):ci===1?L3('Check-in amanhã','Check-in tomorrow','Check-in mañana'):ci===0?L3('Check-in hoje','Check-in today','Check-in hoy'):co>=0?L3('Hóspedes na casa · saída '+(co?'amanhã':'hoje'),'Guests in the house · check-out '+(co?'tomorrow':'today'),'Huéspedes en la casa · salida '+(co?'mañana':'hoy')):L3('Estadia concluída','Stay completed','Estadía concluida');
- return `<div class="okb"><span class="oki">✓</span><div><b>${L3('Reserva confirmada','Booking confirmed','Reserva confirmada')}</b><span>${t} · ${fl(x.in)}</span></div></div>`})():''}
- <div class="pds"><div class="pdh"><div class="pdv"><small>${x.status==='accepted'?L3('Valor fechado','Agreed amount','Valor acordado'):sp[0][1]}</small><b>${brl(v)}</b></div>${ref&&isOpen(x)?`<div class="pdr"><b class="df ${v>=ref?'up':'dn'}">${(v>=ref?'+':'−')+Math.abs(dif)+'%'}</b><small>Valor de referência</small><span>${brl(ref)}</span></div>`:''}</div>
+<div class="pds"><div class="pdh"><div class="pdv"><small>${sp[0][1]}</small><b>${brl(v)}</b></div>${ref?`<div class="pdr"><b class="df ${v>=ref?'up':'dn'}">${(v>=ref?'+':'−')+Math.abs(dif)+'%'}</b><small>Valor de referência</small><span>${brl(ref)}</span></div>`:''}</div>
  <div class="pdg"><div><small>Entrada</small><b>${fl(x.in)}</b></div><div><small>Saída</small><b>${fl(x.out)}</b></div><div><small>Noites</small><b>${n}</b></div><div><small>Hóspedes e lotação</small><b>${x.pax+' de '+h.lot}</b></div></div>
  <div class="pdl"><span>Média por noite <b>${brl(v/n)}</b></span><span>Adiantamento <b>${pct?pct+'% · '+brl(v*pct/100):'0%'}</b></span></div>
  <p class="pdp"><b>${esc(x.guest)}</b> <span class="mute">· ${ow?esc(x.bname):esc(h.owner||'Não informado')}</span></p>${x.msg?`<p class="pdq">“${esc(x.msg)}”</p>`:''}
- ${isOpen(x)?`<ul class="pks">${pk(fr,'Datas livres','Datas bloqueadas')}${pk(okp,'Lotação ok','Acima da lotação')}${pk(n>=mn,'Mínimo de noites ok','Abaixo do mínimo')}${pk(!pb,'Pets ok','Cita pets, casa não aceita')}${ow?pk(!conf.length,'Sem disputa','Em disputa com outras propostas'):''}</ul>${dsp}`:''}</div>
- ${x.status==='accepted'?'':`<div class="cal" data-id="${x.id}" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:8px">${ow?'Sua decisão':'Próximo passo'}</h3>${dec}</div>`}
+ <ul class="pks">${pk(fr,'Datas livres','Datas bloqueadas')}${pk(okp,'Lotação ok','Acima da lotação')}${pk(n>=mn,'Mínimo de noites ok','Abaixo do mínimo')}${pk(!pb,'Pets ok','Cita pets, casa não aceita')}${ow?pk(!conf.length,'Sem disputa','Em disputa com outras propostas'):''}</ul>${dsp}</div>
+ <div class="cal" data-id="${x.id}" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:8px">${ow?'Sua decisão':'Próximo passo'}</h3>${dec}</div>
 ${x.status==='accepted'?`<div class="cal" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:8px">Contrato e adiantamento</h3><p class="mute" style="margin:0 0 12px">${pct?`Adiantamento de ${pct}%: <b>${brl(sinal)}</b> · ${x.paid?'recebido':'pendente'}. Restante de <b>${brl(v-sinal)}</b> na saída.`:`Sem adiantamento. O valor integral (<b>${brl(v)}</b>) é pago na saída.`}</p><div class="inv"><button class="btn o" id="ct">Baixar contrato</button>${ow&&pct?`<button class="btn o" id="sg">${x.paid?'Desmarcar adiantamento':'Marcar adiantamento como recebido'}</button>`:''}</div></div>`:''}
  <details class="pdd" id="dc"${PDO.c?' open':''}><summary>Conversa${(x.chat||[]).length?` <span class="bd">${x.chat.length}</span>`:''}</summary><div><div class="chat" id="ch">${(x.chat||[]).length?x.chat.map(m=>`<div class="bb${m.f===ROLE?' me':''}"><small>${m.f===ROLE?'Você':esc(ow?x.bname:(h.owner||'Proprietário'))} · ${new Date(m.at).toLocaleString(LOC(),{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</small>${esc(m.t)}</div>`).join(''):'<span class="mute">Nenhuma mensagem ainda. Tire dúvidas aqui, como pets, limpeza ou horário de entrada.</span>'}</div><div class="cs"><input id="cm" aria-label="Mensagem" placeholder="Escreva uma mensagem" autocomplete="off"><button class="btn" id="cb">Enviar</button></div></div></details>
  <details class="pdd" id="dh"${PDO.h?' open':''}><summary>Histórico desta proposta</summary><ul class="tl">${ev.map(e=>`<li><span>${fd(e.d)}</span>${e.t} · <b>${brl(e.v)}</b></li>`).join('')}</ul></details>`;
@@ -2178,14 +2177,27 @@ function alertDone(r){const o=RX(),H=RH(),a=H[ME]||[];o[ME+'|'+r.k]=1;
  H[ME]=a.slice(0,60);try{DB.set('remx',o);DB.set('remh',H)}catch(e){}remDraw()}
 function alertGo(r){const d=$('remd');alertDone(r);if(d.open)d.close();const g=r.go;PG=g.pg;PV=g.pv||null;if(g.pt)PT=g.pt;view=null;render();scrollTo(0,0)}
 /* Cada aviso da casa é resolvido um a um: o sininho só some quando o último for dispensado. */
+function alertShort(r){const [kd,id,n]=String(r.k).split(':'),x=PROP.find(q=>q.id===id);if(!x)return{h:r.t,d:''};
+ const own=ROLE==='owner',pct=pctOf(x),v=x.final||x.value,sn=Math.round(v*pct)/100,who=(own?x.bname:x.guest)||'',dt=fd(x.in)+' → '+fd(x.out),j=a=>a.filter(Boolean).join(' · ');
+ if(kd==='ex'){const hh=Math.max(1,Math.round(((x.exp||0)-Date.now())/36e5));return{h:L3('Proposta expira em '+hh+'h','Proposal expires in '+hh+'h','La propuesta vence en '+hh+' h'),d:j([who,dt])}}
+ if(kd==='aw')return{h:L3('Responda a proposta','Reply to the proposal','Responda la propuesta'),d:j([who,dt,L3('há '+n+(n>1?' dias':' dia'),n+' day(s) ago','hace '+n+' día(s)')])};
+ if(kd==='nr')return{h:L3('Proposta sem resposta','Proposal unanswered','Propuesta sin respuesta'),d:j([dt,L3('há '+n+' dias',n+' days','hace '+n+' días')])};
+ if(kd==='ci'){const w=n==0?L3('hoje','today','hoy'):n==1?L3('amanhã','tomorrow','mañana'):L3('em '+n+' dias','in '+n+' days','en '+n+' días');return{h:L3('Check-in '+w,'Check-in '+w,'Check-in '+w),d:j([x.guest,dt])}}
+ if(kd==='co'){const w=n==0?L3('hoje','today','hoy'):L3('amanhã','tomorrow','mañana');return{h:L3('Saída '+w,'Check-out '+w,'Salida '+w),d:j([x.guest,dt])}}
+ if(kd==='ad')return{h:L3('Adiantamento pendente','Advance payment pending','Anticipo pendiente'),d:j([brl(sn),who,fd(x.in)])};
+ return{h:r.t,d:''}}
+function alertDone(r){const o=RX(),H=RH(),a=H[ME]||[];o[ME+'|'+r.k]=1;
+ if(!a.some(x=>x.k===r.k)){const s=alertShort(r);a.unshift({k:r.k,t:r.t,h:s.h,d:s.d,hid:r.hid,at:Date.now(),lv:r.lv,go:r.go})}
+ H[ME]=a.slice(0,60);try{DB.set('remx',o);DB.set('remh',H)}catch(e){}remDraw()}
+function alertGo(r){const d=$('remd');alertDone(r);if(d.open)d.close();const g=r.go;PG=g.pg;PV=g.pv||null;if(g.pt)PT=g.pt;view=null;render();scrollTo(0,0)}
 function openAlerts(hid){
- const d=$('remd'),cur=RC.filter(r=>r.hid===hid),hist=(RH()[ME]||[]).filter(a=>a.hid===hid),
-  li=(a,nw)=>'<li'+(nw?' class="nw"':'')+'><i></i><div><p>'+esc(a.t)+'</p><small>'+esc(fdt(a.at||Date.now()))+'</small></div>'+(nw?'<div class="ab">'+(a.go?'<button class="btn s" type="button" data-ag="'+esc(a.k)+'">'+L3('Abrir','Open','Abrir')+'</button>':'')+'<button class="btn o s" type="button" data-ad="'+esc(a.k)+'">'+L3('Ciente','Got it','Entendido')+'</button></div>':'')+'</li>';
- d.innerHTML='<div class="fh"><h2>'+L3('Avisos desta casa','Alerts for this house','Avisos de esta casa')+'</h2><button class="fx" id="rdx" type="button" aria-label="'+L3('Fechar','Close','Cerrar')+'">×</button></div><div class="xd">'
-  +(cur.length?'<h3>'+L3('Pendentes','Pending','Pendientes')+' ('+cur.length+')</h3><ul class="rl">'+cur.map(a=>li(a,1)).join('')+'</ul>':'')
-  +'<h3>'+L3('Histórico','History','Historial')+'</h3>'+(hist.length?'<ul class="rl">'+hist.map(a=>li(a,0)).join('')+'</ul>':'<p class="mute">'+L3('Nenhum aviso anterior.','No earlier alerts.','Ningún aviso anterior.')+'</p>')+'</div>';
+ const d=$('remd'),cur=RC.filter(r=>r.hid===hid),hist=(RH()[ME]||[]).filter(a=>a.hid===hid),hn=((all().find(q=>hidOfV(q.id)===hid))||{}).name||'',
+  row=(a,nw)=>{const s=nw?alertShort(a):{h:a.h||a.t,d:a.d||''};return '<li class="'+(nw?'nw':'old')+'"><i></i><div class="tx"><b>'+esc(s.h)+'</b>'+(s.d?'<span>'+esc(s.d)+'</span>':'')+(nw?'':'<small>'+esc(fdt(a.at))+'</small>')+'</div>'+(nw?'<div class="ab">'+(a.go?'<button class="btn s" type="button" data-ag="'+esc(a.k)+'">'+L3('Abrir','Open','Abrir')+'</button>':'')+'<button class="btn o s" type="button" data-ad="'+esc(a.k)+'">'+L3('Ciente','Got it','Entendido')+'</button></div>':'')+'</li>'};
+ d.innerHTML='<div class="fh"><h2>'+(cur.length?L3(cur.length>1?cur.length+' avisos':'1 aviso',cur.length>1?cur.length+' alerts':'1 alert',cur.length>1?cur.length+' avisos':'1 aviso'):L3('Sem avisos novos','No new alerts','Sin avisos nuevos'))+'<small>'+esc(hn)+'</small></h2><button class="fx" id="rdx" type="button" aria-label="'+L3('Fechar','Close','Cerrar')+'">×</button></div><div class="xd">'
+  +(cur.length?'<ul class="rl">'+cur.map(a=>row(a,1)).join('')+'</ul>':'<p class="mute" style="margin:6px 0 0">'+L3('Tudo em dia nesta casa.','All caught up on this house.','Todo al día en esta casa.')+'</p>')
+  +(hist.length?'<details class="rhd"><summary>'+L3('Histórico','History','Historial')+' ('+hist.length+')</summary><ul class="rl">'+hist.map(a=>row(a,0)).join('')+'</ul></details>':'')+'</div>';
  d.querySelectorAll('[data-ag]').forEach(b=>b.onclick=()=>{const r=cur.find(x=>x.k===b.dataset.ag);if(r)alertGo(r)});
- d.querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const r=cur.find(x=>x.k===b.dataset.ad);if(!r)return;alertDone(r);openAlerts(hid);hav()});
+ d.querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>{const r=cur.find(x=>x.k===b.dataset.ad);if(!r)return;alertDone(r);openAlerts(hid);hav();if(!RC.some(q=>q.hid===hid))setTimeout(()=>{if($('remd').open)$('remd').close()},450)});
  $('rdx').onclick=()=>d.close();if(!d.open)d.showModal()}
 function hav(){const b=$('hav');if(!b||!view)return;const hid=hidOfV(view),p=RC.filter(r=>r.hid===hid).length,n=(RH()[ME]||[]).filter(a=>a.hid===hid).length;b.textContent=L3('Avisos','Alerts','Avisos')+(p?' ('+p+' '+L3('novos','new','nuevos')+')':n?' ('+n+')':'')}
 function houseAlerts(){
