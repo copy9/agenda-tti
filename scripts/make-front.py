@@ -17,7 +17,7 @@ def rep(old, new, count=1):
 # 0) variável de inicialização (o servidor troca "window.TTI_BOOT=null;" pelos dados da sessão)
 rep('<script>try{var _t=localStorage.getItem("tti-theme")', '<script>window.TTI_BOOT=null;</script>\n<script>try{var _t=localStorage.getItem("tti-theme")')
 # idioma da página pública /c/<slug>?lg=en
-rep("||location.search.match(/[?&](?:c|pf)=[^&]+&lg=(pt|en|es)/);if(_h)", "||location.search.match(/[?&](?:c|pf)=[^&]+&lg=(pt|en|es)/)||(/^\\/(c|corretor)\\//.test(location.pathname)&&location.search.match(/[?&]lg=(pt|en|es)/));if(_h)")
+rep("||location.search.match(/[?&](?:c|pf|s)=[^&]+&lg=(pt|en|es)/);if(_h)", "||location.search.match(/[?&](?:c|pf|s)=[^&]+&lg=(pt|en|es)/)||(/^\\/(c|corretor|hospedagem)\\//.test(location.pathname)&&location.search.match(/[?&]lg=(pt|en|es)/));if(_h)")
 
 # 1) modo servidor + dados de demonstração desligados
 rep("const $=id=>document.getElementById(id);\nconst USER=", "const $=id=>document.getElementById(id);\nconst SRV=!!(window.TTI_BOOT&&window.TTI_BOOT.api);let SRVU=SRV?(window.TTI_BOOT.user||null):null;\nconst USER=")
@@ -175,6 +175,7 @@ async function srvInvite(h,e){
 async function srvBoot(){
  const B=window.TTI_BOOT||{},q=new URLSearchParams(location.search);
  if(B.prof){showProfile(B.prof);return}
+ if(B.stay){showStayPage(B.stay);return}
  if(B.slug){
   $('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
   try{const p=await api('/api/public/house/'+encodeURIComponent(B.slug)+(B.b?'?b='+encodeURIComponent(B.b):''));showPub(p,false)}
