@@ -1257,6 +1257,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
       <div class="w3"><label for="f-acc">Como chegar e pegar as chaves</label><textarea id="f-acc" style="min-height:70px" placeholder="Ex.: Retirar as chaves com o zelador na portaria"></textarea></div>
       <div class="w2"><label for="f-wfn">Nome do Wi-Fi</label><input id="f-wfn"></div>
       <div><label for="f-wfp">Senha do Wi-Fi</label><input id="f-wfp"></div>
+      <div class="w3"><label for="f-tel">Telefones úteis para a família (zelador, limpeza, emergência)</label><textarea id="f-tel" style="min-height:80px" maxlength="600" placeholder="Um por linha. Ex.: Zelador: (51) 99999-0000"></textarea></div>
       <div class="w3"><label for="f-ci">Checklist de check-in (o corretor envia ao cliente)</label><textarea id="f-ci" style="min-height:120px" placeholder="Um item por linha. Em branco, usa o modelo padrão."></textarea></div>
       <div class="w3"><label for="f-co">Checklist de check-out (o corretor envia ao cliente)</label><textarea id="f-co" style="min-height:120px" placeholder="Um item por linha. Em branco, usa o modelo padrão."></textarea></div>
       <div class="w3"><button type="button" class="btn o s" id="f-ckt">Carregar modelo padrão</button></div>
@@ -1550,7 +1551,7 @@ function pbind(root){root.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>
  else if(a==='bno'){x.status='declined';toast('Contraproposta recusada')}
  else if(a==='bx'){x.status='cancelled';toast('Proposta cancelada')}
 const ow=ROLE==='owner',M={ok:'aceitou a sua proposta para',no:'rejeitou a sua proposta para',cs:'enviou uma nova proposta para',bok:'aceitou a contraproposta de',bno:'recusou a contraproposta de',bx:'cancelou a proposta de'};
- if(M[a])notify(ow?x.broker:(x.oe||USER.email),(ow?oname():bname())+' '+M[a]+' '+x.house,x.id);
+ if(M[a])notify(ow?x.broker:(x.oe||USER.email),(ow?oname():bname())+' '+M[a]+' '+x.house+(a==='ok'&&pctOf(x)>0?'. Próximo passo: pague o adiantamento de '+brl(Math.round((x.final||x.value)*pctOf(x))/100)+' ao proprietário e informe o pagamento na reserva.':''),x.id);
  (x.log=x.log||[]).push({d:today,s:x.status,v:x.status==='countered'?x.counter:(x.final||x.value)});
  saveP();render()})}
 function ownerBanner(){const k=mineP().filter(needs).length,hs=$('m').querySelector('.houses');if(!k||!hs)return;
@@ -1648,7 +1649,7 @@ ${x.status==='accepted'?stayCard(x,ow):''}
 const STAYQ=x=>(typeof SRV!=='undefined'&&SRV&&x.tok)?location.origin+'/hospedagem/'+x.tok:PUBBASE()+'?s='+encodeURIComponent(x.id);
 const stayLink=(x,g)=>STAYQ(x)+(STAYQ(x).includes('?')?'&':'?')+'lg='+(g||PLG||TTI_LANG);
 const ownEmail=x=>x.oe||USER.email,ownName=e=>e===USER.email?USER.name:((OW()[e]||{}).name||'');
-function stayDef(x){const hh=liveH(x.hid)||{},k=ckOf(hh),oe=ownEmail(x),ph=[[ownName(oe)||L3('Proprietário','Owner','Propietario'),waOf(oe)],[x.bname||L3('Corretor','Broker','Corredor'),waOf(x.broker)]].filter(a=>a[1]).map(a=>a[0]+': '+a[1]).join('\n');
+function stayDef(x){const hh=liveH(x.hid)||{},k=ckOf(hh),oe=ownEmail(x),ph=[(hh.ph||'').trim(),...[[ownName(oe)||L3('Proprietário','Owner','Propietario'),waOf(oe)],[x.bname||L3('Corretor','Broker','Corredor'),waOf(x.broker)]].filter(a=>a[1]).map(a=>a[0]+': '+a[1])].filter(Boolean).join('\n');
  return{t:k.cit,k:k.cot,a:k.acc,w:k.wfn,p:k.wfp,ph,n:''}}
 function stayForm(x){const c=Object.assign(stayDef(x),Object.fromEntries(Object.entries(x.ck||{}).filter(([a,b])=>a!=='s'&&b!==undefined&&b!=='')));if(x.ck&&x.ck.s){['ph','n'].forEach(k=>{c[k]=x.ck[k]||''})}
  const f=(i,l,v,ex)=>`<label class="sf"><span>${l}</span><input id="${i}" value="${esc(v||'')}" ${ex||''}></label>`,sent=!!(x.ck&&x.ck.s);
@@ -1904,7 +1905,7 @@ function openForm(h){$('hf').reset();EDIT=h?h.id:null;$('dtt').textContent=h?'Ed
  if(h){const v=(i,x)=>$(i).value=x;v('f-name',h.name);v('f-loc',h.loc);v('f-a',parseInt(h.a)||'');v('f-q',h.q);v('f-s',h.s);v('f-b',h.b);v('f-lot',h.lot);v('f-v',h.v);v('f-adv',advOf(h));v('f-rate',h.rate||'');v('f-min',h.minN||1);v('f-minsp',h.minSp||'');v('f-pool',h.pool==='Não informado'?'':h.pool);v('f-desc',h.desc==='Sem descrição.'?'':h.desc);
   if([...$('f-pets').options].some(o=>o.value===h.pets))v('f-pets',h.pets)}
  thumbs();setAm(h?h.am||[]:[]);$('f-rules').value=h?(h.rules||''):tx(RULES0);
- $('f-cit').value=h?(h.cit||''):'';$('f-cot').value=h?(h.cot||''):'';$('f-acc').value=h?(h.acc||''):'';$('f-wfn').value=h?(h.wfn||''):'';$('f-wfp').value=h?(h.wfp||''):'';$('f-ci').value=h?(h.ci||''):'';$('f-co').value=h?(h.co||''):'';$('fe').hidden=true;dlg.showModal()}
+ $('f-cit').value=h?(h.cit||''):'';$('f-cot').value=h?(h.cot||''):'';$('f-acc').value=h?(h.acc||''):'';$('f-wfn').value=h?(h.wfn||''):'';$('f-wfp').value=h?(h.wfp||''):'';$('f-tel').value=h?(h.ph||''):'';$('f-ci').value=h?(h.ci||''):'';$('f-co').value=h?(h.co||''):'';$('fe').hidden=true;dlg.showModal()}
 function syncBr(id,f){const B=BR();let ch=false;for(const e in B)(B[e].houses||[]).forEach(x=>{if(x.id==='r'+id){const {photos,...r}=f;Object.assign(x,r);ch=true}});if(ch)saveBR(B)}
 const shrink=f=>new Promise(r=>{const im=new Image(),u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',.72))};im.onerror=()=>r(null);im.src=u});
 $('f-ph').onchange=async e=>{const fs=[...e.target.files].slice(0,8-pics.length);thumbs();const ph=fs.map(()=>{const d=document.createElement('div');d.className='sk';d.setAttribute('aria-busy','true');$('th').appendChild(d);return d});MO.bar.start();try{for(let i=0;i<fs.length;i++){const u=await shrink(fs[i]);if(u)pics.push(u);ph[i].remove()}}finally{MO.bar.end();e.target.value='';thumbs()}};
@@ -1918,7 +1919,7 @@ $('fs').onclick=()=>{const v=id=>$(id).value.trim(),n=id=>Math.max(0,parseInt($(
  if(n('f-lot')<1)return bad('A lotação máxima precisa ser de pelo menos 1 pessoa.');
  if(n('f-s')>n('f-q'))return bad('O número de suítes não pode ser maior que o de quartos.');
  if(v('f-adv')!==''&&!(parseInt(v('f-adv'))>=0&&parseInt(v('f-adv'))<=100))return bad('O adiantamento deve ficar entre 0% e 100%.');
- const h={id:'c'+Date.now(),custom:true,owner:ME,name:v('f-name'),loc:v('f-loc'),hue:Math.floor(Math.random()*360),q:n('f-q'),s:n('f-s'),b:n('f-b'),lot:n('f-lot'),v:n('f-v'),rate:Math.max(0,parseFloat(v('f-rate').replace(',','.'))||0),minN:Math.max(1,parseInt(v('f-min'))||1),minSp:Math.max(0,parseInt(v('f-minsp'))||0),adv:v('f-adv')===''?50:Math.min(100,Math.max(0,parseInt(v('f-adv'))||0)),a:v('f-a')?v('f-a')+' m²':'Não informada',pool:v('f-pool')||'Não informado',pets:$('f-pets').value,desc:v('f-desc')||'Sem descrição.',am:getAm(),rules:$('f-rules').value.trim(),cit:v('f-cit'),cot:v('f-cot'),acc:$('f-acc').value.trim(),wfn:v('f-wfn'),wfp:v('f-wfp'),ci:$('f-ci').value.trim(),co:$('f-co').value.trim(),photos:pics.slice()};
+ const h={id:'c'+Date.now(),custom:true,owner:ME,name:v('f-name'),loc:v('f-loc'),hue:Math.floor(Math.random()*360),q:n('f-q'),s:n('f-s'),b:n('f-b'),lot:n('f-lot'),v:n('f-v'),rate:Math.max(0,parseFloat(v('f-rate').replace(',','.'))||0),minN:Math.max(1,parseInt(v('f-min'))||1),minSp:Math.max(0,parseInt(v('f-minsp'))||0),adv:v('f-adv')===''?50:Math.min(100,Math.max(0,parseInt(v('f-adv'))||0)),a:v('f-a')?v('f-a')+' m²':'Não informada',pool:v('f-pool')||'Não informado',pets:$('f-pets').value,desc:v('f-desc')||'Sem descrição.',am:getAm(),rules:$('f-rules').value.trim(),cit:v('f-cit'),cot:v('f-cot'),acc:$('f-acc').value.trim(),wfn:v('f-wfn'),wfp:v('f-wfp'),ph:$('f-tel').value.trim(),ci:$('f-ci').value.trim(),co:$('f-co').value.trim(),photos:pics.slice()};
  if(EDIT){const {id,custom,hue,owner,...f}=h,ex=all().find(x=>x.id===EDIT);let ok;
   f.cap=pics.length===((ex&&ex.photos)||[]).length&&pics.every((u,i)=>u===ex.photos[i])?((ex&&ex.cap)||[]):[];
   if(ex&&ex.custom){const i=CUS.findIndex(x=>x.id===EDIT);const same=ex._d&&pics.length===(ex.photos||[]).length&&pics.every((u,k)=>u===ex.photos[k]);if(same){delete f.photos;delete f.cap}CUS[i]=Object.assign(CUS[i],f);if(!same)delete CUS[i]._d;ok=persist()}else{OVR[EDIT]=Object.assign({},OVR[EDIT]||{},f);ok=saveOvr()}
@@ -2273,7 +2274,7 @@ function reminders(){const R=[],now=Date.now(),own=ROLE==='owner';
    if(ci<0&&co>=0&&co<=1)R.push({hid:x.hid,k:'co:'+x.id+':'+co,lv:co?1:2,t:co?(own?`Check-out amanhã de ${x.bname} em ${x.house}. Confira se a lista de check-out foi enviada ao cliente e combine a limpeza.`:`Check-out amanhã de ${x.guest||'seu cliente'} em ${x.house}. Envie a lista de check-out ao cliente.`):`Saída hoje em ${x.house}.`+(own?' Combine a limpeza.':''),go:{pg:'props',pv:x.id},lb:co?'Ver lista':'Abrir'});
    if(pct===0||x.paid){if(!(x.ck&&x.ck.s)&&ci>=-30&&co>=0)R.push(own?{hid:x.hid,k:'fc:'+x.id,lv:ci<=3?0:1,t:`Preencha a página de check-in de ${x.guest||'seu cliente'} em ${x.house} e envie ao corretor.`,go:{pg:'props',pv:x.id},lb:'Preencher'}:{hid:x.hid,k:'wc:'+x.id,lv:1,t:`Aguardando a página de check-in de ${x.guest||'seu cliente'} em ${x.house}. O proprietário foi avisado.`,go:{pg:'props',pv:x.id},lb:'Abrir'})}
    if(own&&pct>0&&x.pay&&!x.paid)R.push({hid:x.hid,k:'pc:'+x.id,lv:0,t:`${x.bname} informou o pagamento do adiantamento de ${brl(sn)} em ${x.house}. Confira e confirme.`,go:{pg:'props',pv:x.id},lb:'Confirmar'});
-   else if(pct>0&&!x.paid&&!x.pay&&ci<=7&&ci>=-30){const u=ci<=2;R.push({hid:x.hid,k:'ad:'+x.id+':'+(u?'u':'n'),lv:u?0:1,t:own?`O adiantamento de ${brl(sn)} de ${x.bname} em ${x.house} ainda não foi pago.`:`O adiantamento de ${brl(sn)} para ${x.house} ainda está pendente. Pague e informe o pagamento.`,go:{pg:'props',pv:x.id},lb:own?'Abrir':'Informar pagamento'})}}});
+   else if(pct>0&&!x.paid&&!x.pay&&(!own||ci<=7)&&ci>=-30){const u=ci<=2;R.push({hid:x.hid,k:'ad:'+x.id+':'+(u?'u':'n'),lv:u?0:1,t:own?`O adiantamento de ${brl(sn)} de ${x.bname} em ${x.house} ainda não foi pago.`:`O adiantamento de ${brl(sn)} para ${x.house} ainda está pendente. Pague e informe o pagamento.`,go:{pg:'props',pv:x.id},lb:own?'Abrir':'Informar pagamento'})}}});
  return R.sort((a,b)=>a.lv-b.lv)}
 const RH=()=>{try{return DB.get('remh',{})||{}}catch(e){return{}}};
 const hidOfV=id=>ROLE==='broker'?String(id).slice(1):id;
