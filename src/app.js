@@ -232,10 +232,17 @@ function build() {
     if (!b) throw U.bad('Este perfil não está disponível.', 404);
     const ids = (await db.all("SELECT house_id FROM invites WHERE broker_email = ? AND status = 'accepted'", [b.email])).map((r) => r.house_id);
     const hs = ids.length ? (await db.all(`SELECT * FROM houses WHERE id IN (${ids.map(() => '?').join(',')})`, ids)).map(S.houseDoc) : [];
-    hs.sort((x, y) => String(x.name).localeCompare(String(y.name), 'pt'));
     // Só o que a página pública de cada casa já mostra. Nada do proprietário nem de outros corretores.
     const i = U.parse(b.info, null) || {};
-    res.json(200, { bn: b.name, wa: b.wa || '', av: i.p || '', c: i.c || '', r: i.r || '', bi: i.b || '', hs: hs.slice(0, 60).map((h) => ({ pg: h.pg, n: h.name, l: h.loc, hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, ph: (h.photos || [])[0] || '' })) });
+    // O corretor escolhe as casas (vazio: todas). Ordem: mais locadas por ele (padrão), maior ou menor diária.
+    const pick = new Set(Array.isArray(i.hs) ? i.hs : []);
+    const shown = pick.size && hs.some((h) => pick.has(h.id)) ? hs.filter((h) => pick.has(h.id)) : hs;
+    const cnt = {};
+    for (const r of await db.all("SELECT house_id, COUNT(*) AS n FROM proposals WHERE broker_email = ? AND status = 'accepted' GROUP BY house_id", [b.email])) cnt[r.house_id] = Number(r.n);
+    const rate = (h) => Number(h.rate) || 0;
+    const by = i.o === 'hi' ? (x, y) => rate(y) - rate(x) : i.o === 'lo' ? (x, y) => rate(x) - rate(y) : (x, y) => (cnt[y.id] || 0) - (cnt[x.id] || 0);
+    shown.sort((x, y) => by(x, y) || String(x.name).localeCompare(String(y.name), 'pt'));
+    res.json(200, { bn: b.name, wa: b.wa || '', av: i.p || '', c: i.c || '', r: i.r || '', bi: i.b || '', hs: shown.slice(0, 60).map((h) => ({ pg: h.pg, n: h.name, l: h.loc, hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, ph: (h.photos || [])[0] || '' })) });
   });
   // ---------- página de check-in da família: só abre com o código da reserva e depois que o proprietário enviou ----------
   app.get('/api/public/stay/:tok', async (req, res) => {
