@@ -66,6 +66,12 @@ test('fluxo da reserva: adiantamento informado e confirmado, página de check-in
   const txt = JSON.stringify(pub.j);
   for (const n of ['st-d@x.com', 'st-c@x.com', 'st-o@x.com', 'Outro Corretor']) assert.ok(!txt.includes(n), 'vazou ' + n);
 
+  // telefones úteis: sem o que o proprietário digitou, vale o cadastro da casa
+  await dono.sync([{ c: 'houses', up: [house('hST1', { name: 'Casa da Estadia', cit: '14:00', acc: 'Chaves com o zelador', ph: 'Zelador da casa: (51) 98888-0000' })] }]);
+  assert.equal((await dono.sync([{ c: 'props', up: [{ id: 'p900000001', ck: Object.assign({}, ck, { k: '12:00', s: 1, ph: '' }) }] }])).status, 200);
+  pub = await new Client().get('/api/public/stay/' + tok);
+  assert.equal(pub.j.ph, 'Zelador da casa: (51) 98888-0000');
+
   // código inválido ou de reserva não aceita
   assert.equal((await new Client().get('/api/public/stay/0000000000000000')).status, 404);
   assert.equal((await new Client().get('/api/public/stay/xx')).status, 404);

@@ -259,7 +259,7 @@ function build() {
     if (!ck.s) return res.json(200, Object.assign(base, { ready: false }));
     res.json(200, Object.assign(base, {
       ready: true, on: ow.name || '', ow: ow.wa || '', v: d.final || d.value, pc: d.adv == null ? 50 : d.adv, id: d.id,
-      t: ck.t || h.cit || '15:00', k: ck.k || h.cot || '11:00', a: ck.a || h.acc || '', w: ck.w || h.wfn || '', p: ck.p || h.wfp || '', ph: ck.ph || '', nt: ck.n || '',
+      t: ck.t || h.cit || '15:00', k: ck.k || h.cot || '11:00', a: ck.a || h.acc || '', w: ck.w || h.wfn || '', p: ck.p || h.wfp || '', ph: ck.ph || h.ph || '', nt: ck.n || '',
       ci: h.ci || '', co: h.co || '', off: h.ckoff || [], am: h.am || [], ru: h.rules || '', im: (h.photos || [])[0] || '', hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, loc: h.loc,
     }));
   });

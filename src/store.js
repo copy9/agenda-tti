@@ -18,7 +18,7 @@ const safe = (v, max) => U.text(v, max).replace(/[<>"`]/g, '');
 
 // ---------- casas ----------
 const NUMS = { q: [0, 60], s: [0, 60], b: [0, 60], lot: [1, 200], v: [0, 60], rate: [0, 1e7], minN: [1, 60], minSp: [0, 60], adv: [0, 100], hue: [0, 360] };
-const STRS = { name: 120, loc: 160, a: 30, pool: 200, pets: 40, desc: 3000, rules: 4000, cit: 10, cot: 10, acc: 600, wfn: 80, wfp: 80, ci: 3000, co: 3000 };
+const STRS = { name: 120, loc: 160, a: 30, pool: 200, pets: 40, desc: 3000, rules: 4000, cit: 10, cot: 10, acc: 600, wfn: 80, wfp: 80, ph: 600, ci: 3000, co: 3000 };
 
 function cleanHouse(inc, prev) {
   const d = {};
