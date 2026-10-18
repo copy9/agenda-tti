@@ -1,5 +1,6 @@
 'use strict';
 const db = require('./db');
+const crypto = require('node:crypto');
 
 // SQL simples, compatível com MySQL e SQLite.
 const TABLES = [
@@ -156,5 +157,13 @@ async function migrate() {
   }
   // Dados opcionais do perfil do corretor (cidades, CRECI, bio), em JSON.
   try { await db.run('ALTER TABLE users ADD COLUMN info TEXT'); } catch (e) { /* já existe */ }
+  // Código público da reserva (página de check-in do hóspede).
+  try { await db.run('ALTER TABLE proposals ADD COLUMN tok VARCHAR(40)'); } catch (e) { /* já existe */ }
+  try { await db.run('CREATE INDEX idx_prop_tok ON proposals (tok)'); } catch (e) { /* já existe */ }
+  for (const r of await db.all("SELECT id, doc FROM proposals WHERE status = 'accepted' AND tok IS NULL")) {
+    const d = (() => { try { return JSON.parse(r.doc); } catch { return null; } })(); if (!d) continue;
+    d.tok = crypto.randomBytes(8).toString('hex');
+    await db.run('UPDATE proposals SET tok = ?, doc = ? WHERE id = ?', [d.tok, JSON.stringify(d), r.id]);
+  }
 }
 module.exports = { migrate, TABLES };

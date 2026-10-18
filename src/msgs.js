@@ -84,6 +84,18 @@ KINDS.password_changed = { grp: 'security', to: 'both',
   pt: ['Sua senha da Agenda TTI foi alterada', 'A senha da sua conta acabou de ser redefinida e todos os acessos abertos foram encerrados. Se não foi você, fale com a administração agora.'],
   en: ['Your Agenda TTI password was changed', 'Your account password was just reset and all open sessions were ended. If it was not you, contact the administration now.'],
   es: ['Su contraseña de Agenda TTI fue cambiada', 'La contraseña de su cuenta acaba de ser restablecida y se cerraron todas las sesiones abiertas. Si no fue usted, contacte a la administración ahora.'] };
+KINDS.advance_informed = { grp: 'proposal', to: 'owner',
+  pt: ['{broker} informou o pagamento do adiantamento', 'O adiantamento de {house}, de {in} a {out}, foi informado como pago. Confira o recebimento e confirme na Agenda TTI.'],
+  en: ['{broker} reported the advance payment', 'The advance for {house}, from {in} to {out}, was reported as paid. Check that you received it and confirm on Agenda TTI.'],
+  es: ['{broker} informó el pago del anticipo', 'El anticipo de {house}, del {in} al {out}, fue informado como pagado. Verifique que lo recibió y confirme en Agenda TTI.'] };
+KINDS.advance_confirmed = { grp: 'answer', to: 'broker',
+  pt: ['Casa liberada: adiantamento confirmado', 'O proprietário confirmou o adiantamento de {house}, de {in} a {out}. Agora aguarde a página de check-in da família.'],
+  en: ['House released: advance confirmed', 'The owner confirmed the advance for {house}, from {in} to {out}. Now wait for the guest check-in page.'],
+  es: ['Casa liberada: anticipo confirmado', 'El propietario confirmó el anticipo de {house}, del {in} al {out}. Ahora espere la página de check-in de la familia.'] };
+KINDS.checkin_ready = { grp: 'answer', to: 'broker',
+  pt: ['A página de check-in de {house} está pronta', 'O proprietário preencheu a página de check-in de {in} a {out}. Abra a reserva, copie o link e envie ao cliente.'],
+  en: ['The check-in page for {house} is ready', 'The owner filled in the check-in page for {in} to {out}. Open the booking, copy the link and send it to your client.'],
+  es: ['La página de check-in de {house} está lista', 'El propietario completó la página de check-in del {in} al {out}. Abra la reserva, copie el enlace y envíelo al cliente.'] };
 const GROUPS = ['invite', 'proposal', 'answer', 'expiring'];
 
 const FOOT = {
