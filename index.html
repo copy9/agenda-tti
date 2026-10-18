@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Agenda TTI | Área do proprietário</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<script>try{var _t=localStorage.getItem("tti-theme");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}var TTI_LANG="pt";try{var _l=localStorage.getItem("tti-lang");if(_l==="en"||_l==="es")TTI_LANG=_l;var _h=location.hash.match(/casa=[^&]+&lg=(pt|en|es)/)||location.search.match(/[?&](?:c|pf)=[^&]+&lg=(pt|en|es)/);if(_h)TTI_LANG=_h[1]}catch(e){}function LOC(){return"pt-BR"}document.documentElement.lang={pt:"pt-BR",en:"en",es:"es"}[TTI_LANG];</script>
+<script>try{var _t=localStorage.getItem("tti-theme");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}var TTI_LANG="pt";try{var _l=localStorage.getItem("tti-lang");if(_l==="en"||_l==="es")TTI_LANG=_l;var _h=location.hash.match(/casa=[^&]+&lg=(pt|en|es)/)||location.search.match(/[?&](?:c|pf|s)=[^&]+&lg=(pt|en|es)/);if(_h)TTI_LANG=_h[1]}catch(e){}function LOC(){return"pt-BR"}document.documentElement.lang={pt:"pt-BR",en:"en",es:"es"}[TTI_LANG];</script>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>:root{--bg:#F5F2EC;--surf:#fff;--ink:#14262E;--mute:#5C6B70;--line:#E6E1D6;--sea:#0F4C5C;--sea-ink:#fff;--bad:#C0392B;--badbg:#FBE9E6;--ok:#2F7D5B;--okbg:#E4F2EB;--brass:#B58A3C;--red:#C0392B;--deep:#0B3641;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -1063,6 +1063,11 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .ovi{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}
 .ovi div{flex:1;min-width:200px}.ovi b{display:block}.ovi span{color:var(--mute);font-size:14px}
 .ovc.pk{outline:2.5px solid var(--sea);outline-offset:-2px;position:relative;z-index:1}
+.sti{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;margin-bottom:8px}.sfm{display:grid;gap:10px}.sf{display:grid;gap:4px;font-size:14px}.sf span{color:var(--mute)}.sf input,.sf textarea{width:100%}.sg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:480px){.sg2{grid-template-columns:1fr}}
+.slk input{width:100%}.stw{padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--line);margin:16px 0}.sth{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}.sth span,.stf span{display:block;color:var(--mute);font-size:13px}.sth b{font-size:17px}
+.stg{display:grid;gap:10px}.stf{padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line);display:grid;gap:4px}.stf b{font-size:18px;word-break:break-word}.stf .btn{justify-self:start;margin-top:6px}
+.stp{list-style:none;margin:0;padding:0;display:grid;gap:8px}.stp li{padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line)}.sl{margin-left:8px;font-weight:600}
+.stbs{display:grid;gap:12px}.stb h3{margin:0 0 6px;font-size:16px}.stc{list-style:none;margin:0;padding:0;display:grid;gap:6px}.stc label{display:flex;gap:10px;align-items:flex-start}
 .stp2 ol{list-style:none;margin:0;padding:0;display:grid;gap:0}
 .stp2 li{display:flex;gap:14px;padding:0 0 18px;position:relative}.stp2 li:last-child{padding-bottom:0}
 .stp2 li::before{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:2px;background:var(--line)}.stp2 li:last-child::before{display:none}
@@ -1637,6 +1642,67 @@ ${x.status==='accepted'?stayCard(x,ow):''}
  $('cb').onclick=send;$('cm').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
  if($('ct'))$('ct').onclick=()=>dl('contrato-'+slug(x.house)+'-'+x.in+'.html',new Blob([trDoc(contract(x,h))],{type:'text/html'}));
  stayBind(x)}
+/* ===== Página de check-in da família ===== */
+const STAYQ=x=>(typeof SRV!=='undefined'&&SRV&&x.tok)?location.origin+'/hospedagem/'+x.tok:PUBBASE()+'?s='+encodeURIComponent(x.id);
+const stayLink=(x,g)=>STAYQ(x)+(STAYQ(x).includes('?')?'&':'?')+'lg='+(g||PLG||TTI_LANG);
+const ownEmail=x=>x.oe||USER.email,ownName=e=>e===USER.email?USER.name:((OW()[e]||{}).name||'');
+function stayDef(x){const hh=liveH(x.hid)||{},k=ckOf(hh),oe=ownEmail(x),ph=[[ownName(oe)||L3('Proprietário','Owner','Propietario'),waOf(oe)],[x.bname||L3('Corretor','Broker','Corredor'),waOf(x.broker)]].filter(a=>a[1]).map(a=>a[0]+': '+a[1]).join('\n');
+ return{t:k.cit,k:k.cot,a:k.acc,w:k.wfn,p:k.wfp,ph,n:''}}
+function stayForm(x){const c=Object.assign(stayDef(x),Object.fromEntries(Object.entries(x.ck||{}).filter(([a,b])=>a!=='s'&&b!==undefined&&b!=='')));if(x.ck&&x.ck.s){['ph','n'].forEach(k=>{c[k]=x.ck[k]||''})}
+ const f=(i,l,v,ex)=>`<label class="sf"><span>${l}</span><input id="${i}" value="${esc(v||'')}" ${ex||''}></label>`,sent=!!(x.ck&&x.ck.s);
+ return `<div class="sfm"><p class="mute" style="margin:0 0 10px;font-size:14px">${L3('Já vem preenchido com o que você cadastrou na casa. Só o que estiver vazio ou errado precisa de ajuste.','Pre-filled from your house settings. Only fix what is empty or wrong.','Ya viene completado con lo que registró en la casa. Solo ajuste lo vacío o incorrecto.')}</p>
+ <div class="sg2">${f('sk-t',L3('Horário de entrada','Check-in time','Hora de entrada'),c.t,'type="time"')}${f('sk-k',L3('Horário de saída','Check-out time','Hora de salida'),c.k,'type="time"')}</div>
+ ${f('sk-a',L3('Como entrar (chaves, portaria, código)','How to get in (keys, gate, code)','Cómo entrar (llaves, portería, código)'),c.a,'maxlength="300"')}
+ <div class="sg2">${f('sk-w',L3('Rede Wi-Fi','Wi-Fi network','Red Wi-Fi'),c.w,'maxlength="60"')}${f('sk-p',L3('Senha do Wi-Fi','Wi-Fi password','Contraseña Wi-Fi'),c.p,'maxlength="80"')}</div>
+ <label class="sf"><span>${L3('Telefones úteis (um por linha)','Useful phones (one per line)','Teléfonos útiles (uno por línea)')}</span><textarea id="sk-ph" rows="3" maxlength="400" placeholder="${L3('Zelador: (11) 99999-0000','Caretaker: (11) 99999-0000','Cuidador: (11) 99999-0000')}">${esc(c.ph)}</textarea></label>
+ <label class="sf"><span>${L3('Observações para a família (opcional)','Notes for the family (optional)','Notas para la familia (opcional)')}</span><textarea id="sk-n" rows="3" maxlength="800">${esc(c.n)}</textarea></label>
+ <p class="mute" style="margin:0 0 10px;font-size:14px">${L3('O check-in, o check-out e o que a casa oferece vêm da página da casa. O contrato também já está na página.','Check-in, check-out lists and amenities come from the house page. The contract is already included.','Las listas, lo que ofrece la casa y el contrato ya vienen incluidos.')}</p>
+ <div class="inv"><button class="btn" type="button" data-s="ksend">${sent?L3('Salvar e reenviar ao corretor','Save and resend to the broker','Guardar y reenviar al corredor'):L3('Enviar ao corretor','Send to the broker','Enviar al corredor')}</button><button class="btn o" type="button" data-s="kview">${L3('Ver a página','Preview page','Ver la página')}</button></div></div>`}
+function stayLinkBox(x){const g=PLG||TTI_LANG;return `<div class="sfm"><div class="slk"><input readonly id="sl-u" value="${esc(stayLink(x,g))}" aria-label="Link"></div>
+ <div class="inv" style="margin-top:8px"><button class="btn" type="button" data-s="kcopy">${L3('Copiar link','Copy link','Copiar enlace')}</button><button class="btn wa" type="button" data-s="kwa">${L3('Enviar pelo WhatsApp','Send by WhatsApp','Enviar por WhatsApp')}</button><button class="btn o" type="button" data-s="kview">${L3('Ver a página','Preview page','Ver la página')}</button></div>
+ ${(typeof SRV!=='undefined'&&SRV)?'':`<p class="mute" style="margin:8px 0 0;font-size:13px">${L3('Na demonstração, o link só abre neste navegador.','In the demo, the link only opens in this browser.','En la demostración, el enlace solo abre en este navegador.')}</p>`}</div>`}
+function stayMsg(x,g){const X=LX(g),hn=(liveH(x.hid)||{}).name||x.house;return X(`Olá! Aqui está a página da sua hospedagem em *${hn}*: horários, como entrar, Wi-Fi, telefones úteis, contrato e checklists.\n${stayLink(x,g)}`,`Hello! Here is your stay page for *${hn}*: times, how to get in, Wi-Fi, useful phones, contract and checklists.\n${stayLink(x,g)}`,`¡Hola! Aquí está la página de su estadía en *${hn}*: horarios, cómo entrar, Wi-Fi, teléfonos útiles, contrato y listas.\n${stayLink(x,g)}`)}
+function stayOf(x){const hh=liveH(x.hid)||{},k=ckOf(hh),c=x.ck||{},oe=ownEmail(x);
+ return{hn:hh.name||x.house,hl:hh.loc||'',g:x.guest,in:x.in,out:x.out,pax:x.pax,bn:x.bname,bw:waOf(x.broker),ready:!!c.s,on:ownName(oe),ow:waOf(oe),v:x.final||x.value,pc:pctOf(x),id:x.id,t:c.t||k.cit,k:c.k||k.cot,a:c.a||k.acc,w:c.w||k.wfn,p:c.p||k.wfp,ph:c.ph||'',nt:c.n||'',ci:k.ci,co:k.co,off:hh.ckoff||[],am:hh.am||[],ru:hh.rules||'',im:(hh.photos||[])[0]||'',hu:hh.hue,q:hh.q,s:hh.s,b:hh.b,lot:hh.lot,loc:hh.loc}}
+function contractS(s){const dt=t=>D(t).toLocaleDateString('pt-BR'),pc=s.pc,sn=Math.round(s.v*pc)/100;
+ return `<!DOCTYPE html><html lang="pt-BR"><meta charset="utf-8"><title>Contrato de locação por temporada</title><body style="font:16px/1.6 Georgia,serif;max-width:720px;margin:40px auto;padding:0 20px;color:#111"><h1 style="font-size:24px">Contrato de locação por temporada</h1>
+<p><b>Locador:</b> ${esc(s.on||'Proprietário')}<br><b>Corretor intermediador:</b> ${esc(s.bn||'')}<br><b>Locatário (hóspede):</b> ${esc(s.g||'')}</p>
+<p><b>Imóvel:</b> ${esc(s.hn)}${s.hl?', '+esc(s.hl):''}</p>
+<p><b>Período:</b> entrada em ${dt(s.in)} e saída em ${dt(s.out)} (${nights(s.in,s.out)} noites)<br><b>Hóspedes:</b> ${s.pax} (lotação máxima do imóvel: ${s.lot||'-'})</p>
+<p><b>Valor total:</b> ${brl(s.v)}<br>${pc?`<b>Adiantamento (${pc}%):</b> ${brl(sn)}<br><b>Restante:</b> ${brl(s.v-sn)}, pago na saída`:`<b>Pagamento:</b> valor integral na saída, sem adiantamento`}</p>
+${s.ru?`<p><b>Regras da casa:</b></p><p style="white-space:pre-wrap">${esc(s.ru)}</p>`:''}
+<p>O locatário se compromete a respeitar a lotação máxima e as regras da casa, respondendo por danos causados durante a estadia.</p>
+<p style="margin-top:60px">______________________________ Locador<br><br>______________________________ Locatário</p></body></html>`}
+function showStay(s){const el=$('pub'),g=TTI_LANG,off=new Set(s.off||[]),on=(w,k)=>!off.has(w+':'+k),tel=t=>{const d=String(t).replace(/\D/g,'');return d.length>=8?d:''};
+ $('home').hidden=true;el.hidden=false;document.title=s.hn+' | Agenda TTI';
+ const wan=n=>{const d=tel(n);return d?(d.length<=11?'55'+d:d):''};
+ const lines=(t)=>String(t||'').split('\n').map(x=>x.trim()).filter(Boolean);
+ const phs=lines(s.ph).map(l=>{const d=tel(l);return`<li>${esc(l)}${d?` <a class="sl" href="tel:+${d.length<=11?'55'+d:d}">${L3('Ligar','Call','Llamar')}</a> <a class="sl" target="_blank" rel="noopener" href="https://wa.me/${d.length<=11?'55'+d:d}">WhatsApp</a>`:''}</li>`}).join('');
+ const head=`<div class="pv"><div class="pv-top"><b>Agenda TTI</b><span style="display:flex;gap:8px;align-items:center">${LSEL}<button class="thm" type="button" data-thm></button></span></div>`;
+ if(!s.ready){el.innerHTML=head+`<h1>${esc(s.hn)}</h1><div class="loc">${esc(s.hl||'')}${s.g?' · '+esc(s.g):''} · ${fd(s.in)} → ${fd(s.out)}</div><div class="stw"><h2 style="margin-top:0">${L3('Estamos preparando a sua página','We are preparing your page','Estamos preparando su página')}</h2><p class="pd">${L3('O proprietário ainda vai concluir os horários, o acesso e o Wi-Fi. Volte em breve ou fale com '+esc(s.bn||'seu corretor')+'.','The owner is still finishing the times, access and Wi-Fi. Come back soon or contact '+esc(s.bn||'your broker')+'.','El propietario aún está completando los horarios, el acceso y el Wi-Fi. Vuelva pronto o hable con '+esc(s.bn||'su corredor')+'.')}</p>${wan(s.bw)?`<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${wan(s.bw)}">WhatsApp</a>`:''}</div></div>`}
+ else{
+  const cit=ckItems(s.ci||CI0).filter((x,i)=>on('ci','i'+i)),cot=ckItems(s.co||CO0).filter((x,i)=>on('co','i'+i)),box=(t,its)=>its.length?`<div class="stb"><h3>${t}</h3><ul class="stc">${its.map(x=>`<li><label><input type="checkbox"><span>${esc(trL(x,g))}</span></label></li>`).join('')}</ul></div>`:'';
+  const fact=(l,v,ex)=>v?`<div class="stf"><span>${l}</span><b>${esc(v)}</b>${ex||''}</div>`:'';
+  el.innerHTML=head+`${s.im?`<img class="sti" alt="${esc(s.hn)}" src="${s.im}">`:''}<h1>${esc(s.hn)}</h1><div class="loc">${esc(s.hl||'')}</div>
+ <div class="stw"><div class="sth">${s.g?`<div><span>${L3('Hóspede','Guest','Huésped')}</span><b>${esc(s.g)}</b></div>`:''}<div><span>${L3('Chegada','Arrival','Llegada')}</span><b>${fd(s.in)}</b></div><div><span>${L3('Saída','Departure','Salida')}</span><b>${fd(s.out)}</b></div><div><span>${L3('Hóspedes','Guests','Huéspedes')}</span><b>${s.pax}</b></div></div></div>
+ <h2>${L3('Chegada e saída','Arrival and departure','Llegada y salida')}</h2><div class="stg">${fact(L3('Entrada a partir das','Check-in from','Entrada desde las'),s.t)}${fact(L3('Saída até as','Check-out by','Salida hasta las'),s.k)}${fact(L3('Como entrar','How to get in','Cómo entrar'),trL(s.a,g))}</div>
+ ${(s.w||s.p)?`<h2>Wi-Fi</h2><div class="stg">${fact(L3('Rede','Network','Red'),s.w)}${fact(L3('Senha','Password','Contraseña'),s.p,s.p?`<button class="btn o s" type="button" data-cp="${esc(s.p)}">${L3('Copiar senha','Copy password','Copiar contraseña')}</button>`:'')}</div>`:''}
+ ${phs?`<h2>${L3('Telefones úteis','Useful phones','Teléfonos útiles')}</h2><ul class="stp">${phs}</ul>`:''}
+ ${s.nt?`<h2>${L3('Recados do proprietário','Notes from the owner','Notas del propietario')}</h2><div class="rules">${esc(s.nt)}</div>`:''}
+ ${(s.am||[]).length?`<h2>${L3('O que a casa oferece','What the house offers','Lo que ofrece la casa')}</h2>${amHTML(s.am)}`:''}
+ ${s.ru?`<h2>${L3('Regras da casa','House rules','Reglas de la casa')}</h2><div class="rules">${esc(s.ru)}</div>`:''}
+ ${(cit.length||cot.length)?`<h2>Checklists</h2><div class="stbs">${box(L3('Ao chegar','On arrival','Al llegar'),cit)}${box(L3('Antes de sair','Before leaving','Antes de salir'),cot)}</div>`:''}
+ <h2>${L3('Contrato','Contract','Contrato')}</h2><button class="btn o" type="button" id="stc">${L3('Baixar contrato','Download contract','Descargar contrato')}</button>
+ ${wan(s.bw)||wan(s.ow)?`<div class="pv-cta"><div><b style="font-size:1.15rem">${L3('Precisa de ajuda?','Need help?','¿Necesita ayuda?')}</b><div style="opacity:.85">${L3('Fale com o seu corretor','Talk to your broker','Hable con su corredor')}${s.bn?' · '+esc(s.bn):''}</div></div>${wan(s.bw)?`<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${wan(s.bw)}">WhatsApp</a>`:''}</div>`:''}
+ <div class="pv-ft">${L3('Página da hospedagem','Stay page','Página de la estadía')} · Agenda TTI</div></div>`;
+  if($('stc'))$('stc').onclick=()=>dl('contrato-'+slug(s.hn)+'-'+s.in+'.html',new Blob([trDoc(contractS(s))],{type:'text/html'}));
+  el.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>copyTxt(b.dataset.cp,L3('Senha copiada','Password copied','Contraseña copiada')))}
+ el.scrollTop=0;document.body.style.overflow='hidden';
+ el.querySelectorAll('[data-lang]').forEach(x=>{x.value=TTI_LANG;x.onchange=()=>setLang(x.value)});
+ el.querySelectorAll('[data-thm]').forEach(b=>b.onclick=()=>{const n=isDark()?'light':'dark';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('tti-theme',n)}catch(e){}paintThm()});paintThm();
+ [...document.body.children].forEach(c=>{if(c.id!=='pub'&&c.id!=='lb'&&c.tagName!=='SCRIPT')c.inert=true})}
+function readStayQ(){try{return window.TTI_BOOT?null:new URLSearchParams(location.search).get('s')}catch(e){return null}}
+function showStayDemo(id){reload();const x=PROP.find(q=>q.id===id&&q.status==='accepted');if(!x){$('home').hidden=true;$('pub').hidden=false;$('pub').innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>'+L3('Esta página não está disponível','This page is not available','Esta página no está disponible')+'</h1><p class="loc">'+L3('Na demonstração, abra o link no mesmo navegador em que a reserva foi criada.','In the demo, open the link in the same browser where the booking was created.','En la demostración, abra el enlace en el mismo navegador donde se creó la reserva.')+'</p></div>';return}showStay(stayOf(x))}
 /* ===== Etapas da reserva: aceite → adiantamento → página de check-in → check-out → histórico ===== */
 const stayOk=x=>pctOf(x)===0||!!x.paid;
 function stayCard(x,ow){const pct=pctOf(x),v=x.final||x.value,sn=Math.round(v*pct)/100,co=nights(today,x.out),dt=t=>t?new Date(t).toLocaleDateString(LOC(),{day:'2-digit',month:'short'}):'',S=[];
@@ -1647,8 +1713,8 @@ function stayCard(x,ow){const pct=pctOf(x),v=x.final||x.value,sn=Math.round(v*pc
  else S.push({s:ow?'wait':'now',t:L3('Adiantamento pendente','Advance payment pending','Anticipo pendiente'),d:ow?L3(brl(sn)+' · aguardando o corretor informar o pagamento.',brl(sn)+' · waiting for the broker to report the payment.',brl(sn)+' · esperando que el corredor informe el pago.'):L3(brl(sn)+' · pague ao proprietário e informe aqui.',brl(sn)+' · pay the owner and report it here.',brl(sn)+' · pague al propietario e infórmelo aquí.'),
   a:ow?'<button class="btn o s" type="button" data-s="cf">'+L3('Já recebi, confirmar','Already received, confirm','Ya lo recibí, confirmar')+'</button>':'<div class="pyr"><input id="payref" maxlength="120" aria-label="'+L3('Comprovante ou observação','Receipt or note','Comprobante u observación')+'" placeholder="'+L3('Comprovante ou observação (opcional)','Receipt or note (optional)','Comprobante u observación (opcional)')+'"><button class="btn" type="button" data-s="py">'+L3('Informei o pagamento','I made the payment','Informé el pago')+'</button></div>'});
  const rel=stayOk(x),ck=x.ck||{};
- S.push(rel?(ck.s?{s:'ok',t:L3('Página de check-in enviada','Check-in page sent','Página de check-in enviada'),d:ow?L3('O corretor já pode enviar o link ao cliente.','The broker can now send the link to the client.','El corredor ya puede enviar el enlace al cliente.'):L3('Copie o link e envie ao cliente.','Copy the link and send it to your client.','Copie el enlace y envíelo al cliente.')}
-  :{s:ow?'now':'wait',t:ow?L3('Preencha a página de check-in','Fill in the check-in page','Complete la página de check-in'):L3('Aguardando a página de check-in','Waiting for the check-in page','Esperando la página de check-in'),d:ow?L3('Horários, acesso e telefones úteis. O resto já vem da casa.','Times, access and useful phones. The rest comes from the house.','Horarios, acceso y teléfonos útiles. Lo demás viene de la casa.'):L3('O proprietário vai preencher e avisar você.','The owner will fill it in and notify you.','El propietario la completará y le avisará.')})
+ S.push(rel?(ck.s?{s:'ok',t:L3('Página de check-in enviada','Check-in page sent','Página de check-in enviada'),d:ow?L3('O corretor já pode enviar o link ao cliente.','The broker can now send the link to the client.','El corredor ya puede enviar el enlace al cliente.'):L3('Copie o link e envie ao cliente.','Copy the link and send it to your client.','Copie el enlace y envíelo al cliente.'),a:ow?stayForm(x):stayLinkBox(x)}
+  :{s:ow?'now':'wait',t:ow?L3('Preencha a página de check-in','Fill in the check-in page','Complete la página de check-in'):L3('Aguardando a página de check-in','Waiting for the check-in page','Esperando la página de check-in'),d:ow?L3('Horários, acesso e telefones úteis. O resto já vem da casa.','Times, access and useful phones. The rest comes from the house.','Horarios, acceso y teléfonos útiles. Lo demás viene de la casa.'):L3('O proprietário vai preencher e avisar você.','The owner will fill it in and notify you.','El propietario la completará y le avisará.'),a:ow?stayForm(x):''})
   :{s:'wait',t:L3('Página de check-in','Check-in page','Página de check-in'),d:L3('Libera depois que o adiantamento for confirmado.','Unlocks after the advance is confirmed.','Se libera cuando se confirme el anticipo.')});
  S.push({s:co<0?'ok':co<=1?'now':'wait',t:L3('Check-out','Check-out','Check-out'),d:co<0?L3('Saída concluída.','Check-out done.','Salida concluida.'):L3('A lista de saída é enviada ao cliente na véspera ('+fd(x.out)+').','The check-out list goes to the client the day before ('+fd(x.out)+').','La lista de salida se envía al cliente la víspera ('+fd(x.out)+').')});
  S.push({s:co<0?'ok':'wait',t:L3('Histórico de locações','Rental history','Historial de alquileres'),d:L3('Depois da saída, a reserva fica guardada em Reservas para consulta.','After check-out, the booking is kept under Bookings for reference.','Tras la salida, la reserva queda guardada en Reservas para consulta.')});
@@ -1660,6 +1726,14 @@ function stayBind(x){const m=$('m'),pct=pctOf(x),v=x.final||x.value,sn=Math.roun
   notify(oe,bname()+' informou o pagamento do adiantamento de '+brl(sn)+' em '+x.house+'. Confira e confirme.',x.id);toast(L3('Pagamento informado ao proprietário','Payment reported to the owner','Pago informado al propietario'));done()});
  m.querySelectorAll('[data-s=cf]').forEach(b=>b.onclick=()=>{x.paid=true;x.paidAt=Date.now();(x.log=x.log||[]).push({d:today,s:'paid',v:sn});
   notify(x.broker,'Casa liberada: '+oname()+' confirmou o adiantamento de '+brl(sn)+' em '+x.house+'. Agora aguarde a página de check-in.',x.id);toast(L3('Recebimento confirmado. Casa liberada','Payment confirmed. House released','Recepción confirmada. Casa liberada'));done()});
+ const rd=k=>(($(k)||{}).value||'').trim(),pv=()=>{showStay(stayOf(x));const el=$('pub'),b=document.createElement('button');b.type='button';b.className='btn';b.textContent=L3('Fechar pré-visualização','Close preview','Cerrar vista previa');b.style='position:fixed;right:14px;bottom:14px;z-index:9999';b.onclick=()=>{b.remove();el.hidden=true;el.innerHTML='';document.title='Agenda TTI';document.body.style.overflow='';[...document.body.children].forEach(c=>{c.inert=false});render()};document.body.appendChild(b)};
+ m.querySelectorAll('[data-s=ksend]').forEach(b=>b.onclick=()=>{const t=rd('sk-t'),k=rd('sk-k');if(!/^\d\d:\d\d$/.test(t))return toast(L3('Informe o horário de entrada','Enter the check-in time','Indique la hora de entrada'));
+  const first=!(x.ck&&x.ck.s);x.ck={t,k:/^\d\d:\d\d$/.test(k)?k:'',a:rd('sk-a'),w:rd('sk-w'),p:rd('sk-p'),ph:rd('sk-ph'),n:rd('sk-n'),s:(x.ck&&x.ck.s)||Date.now()};
+  if(first)notify(x.broker,'Página de check-in pronta: '+oname()+' preencheu a hospedagem de '+(x.guest||'seu cliente')+' em '+x.house+'. Copie o link e envie ao cliente.',x.id);
+  toast(first?L3('Página enviada ao corretor','Page sent to the broker','Página enviada al corredor'):L3('Página atualizada','Page updated','Página actualizada'));done()});
+ m.querySelectorAll('[data-s=kview]').forEach(b=>b.onclick=pv);
+ m.querySelectorAll('[data-s=kcopy]').forEach(b=>b.onclick=()=>copyTxt(stayMsg(x,PLG||TTI_LANG),L3('Mensagem e link copiados','Message and link copied','Mensaje y enlace copiados')));
+ m.querySelectorAll('[data-s=kwa]').forEach(b=>b.onclick=()=>waOpen(CLW,stayMsg(x,PLG||TTI_LANG)));
  m.querySelectorAll('[data-s=un]').forEach(b=>b.onclick=()=>{x.paid=false;delete x.paidAt;(x.log=x.log||[]).push({d:today,s:'unpaid',v:sn});notify(x.broker,oname()+' desfez a confirmação do adiantamento de '+brl(sn)+' em '+x.house,x.id);done()})}
 const saveC=()=>{try{DB.set('chat',CHAT)}catch(e){}};
 const myRole=()=>ROLE==='owner'?'o':'b';
@@ -2189,6 +2263,7 @@ function reminders(){const R=[],now=Date.now(),own=ROLE==='owner';
   if(x.status==='accepted'){const ci=nights(today,x.in),co=nights(today,x.out),pct=x.adv==null?50:Number(x.adv),v=x.final||x.value,sn=Math.round(v*pct)/100,when=ci===0?'hoje':ci===1?'amanhã':'em '+ci+' dias';
    if(ci>=0&&ci<=3)R.push({hid:x.hid,k:'ci:'+x.id+':'+ci,lv:2,t:own?`Check-in em ${x.house} ${when} (${fd(x.in)}), reserva de ${x.bname}.`:`Check-in de ${x.guest||'seu cliente'} em ${x.house} ${when} (${fd(x.in)}).`,go:{pg:'props',pv:x.id},lb:'Abrir'});
    if(ci<0&&co>=0&&co<=1)R.push({hid:x.hid,k:'co:'+x.id+':'+co,lv:2,t:`Saída ${co?'amanhã':'hoje'} em ${x.house}.`+(own?' Combine a limpeza.':''),go:{pg:'props',pv:x.id},lb:'Abrir'});
+   if(pct===0||x.paid){if(!(x.ck&&x.ck.s)&&ci>=-30&&co>=0)R.push(own?{hid:x.hid,k:'fc:'+x.id,lv:ci<=3?0:1,t:`Preencha a página de check-in de ${x.guest||'seu cliente'} em ${x.house} e envie ao corretor.`,go:{pg:'props',pv:x.id},lb:'Preencher'}:{hid:x.hid,k:'wc:'+x.id,lv:1,t:`Aguardando a página de check-in de ${x.guest||'seu cliente'} em ${x.house}. O proprietário foi avisado.`,go:{pg:'props',pv:x.id},lb:'Abrir'})}
    if(own&&pct>0&&x.pay&&!x.paid)R.push({hid:x.hid,k:'pc:'+x.id,lv:0,t:`${x.bname} informou o pagamento do adiantamento de ${brl(sn)} em ${x.house}. Confira e confirme.`,go:{pg:'props',pv:x.id},lb:'Confirmar'});
    else if(pct>0&&!x.paid&&!x.pay&&ci<=7&&ci>=-30){const u=ci<=2;R.push({hid:x.hid,k:'ad:'+x.id+':'+(u?'u':'n'),lv:u?0:1,t:own?`O adiantamento de ${brl(sn)} de ${x.bname} em ${x.house} ainda não foi pago.`:`O adiantamento de ${brl(sn)} para ${x.house} ainda está pendente. Pague e informe o pagamento.`,go:{pg:'props',pv:x.id},lb:own?'Abrir':'Informar pagamento'})}}});
  return R.sort((a,b)=>a.lv-b.lv)}
@@ -2217,6 +2292,8 @@ function alertShort(r){const [kd,id,n]=String(r.k).split(':'),x=PROP.find(q=>q.i
  if(kd==='ci'){const w=n==0?L3('hoje','today','hoy'):n==1?L3('amanhã','tomorrow','mañana'):L3('em '+n+' dias','in '+n+' days','en '+n+' días');return{h:L3('Check-in '+w,'Check-in '+w,'Check-in '+w),d:j([x.guest,dt])}}
  if(kd==='co'){const w=n==0?L3('hoje','today','hoy'):L3('amanhã','tomorrow','mañana');return{h:L3('Saída '+w,'Check-out '+w,'Salida '+w),d:j([x.guest,dt])}}
  if(kd==='ad')return{h:L3('Adiantamento pendente','Advance payment pending','Anticipo pendiente'),d:j([brl(sn),who,fd(x.in)])};
+ if(kd==='fc')return{h:L3('Preencha a página de check-in','Fill in the check-in page','Complete la página de check-in'),d:j([who,dt])};
+ if(kd==='wc')return{h:L3('Aguardando página de check-in','Waiting for the check-in page','Esperando la página de check-in'),d:j([x.guest,dt])};
  if(kd==='pc')return{h:L3('Confirme o adiantamento','Confirm the advance','Confirme el anticipo'),d:j([brl(sn),who,L3('pagamento informado','payment reported','pago informado')])};
  return{h:r.t,d:''}}
 function alertDone(r){const o=RX(),H=RH(),a=H[ME]||[];o[ME+'|'+r.k]=1;
@@ -2525,7 +2602,8 @@ function showProfDemo(e){
  const bo=bioOf(e);showProfPage({bn:(BR()[e]||{}).name||e.split('@')[0],wa:waOf(e),av:bo.p||'',c:bo.c||'',r:bo.r||'',bi:bo.b||'',hs:hs.map(h=>({n:h.name,l:h.loc,hu:h.hue,q:h.q,s:h.s,lot:h.lot,ph:(h.photos&&h.photos[0])||uri(h,0),href:g=>pubLink(h,g)}))})}
 
 const iv0=readInvite(),pv0=readPub();
-if(pv0)showPub(pv0,false);else if(iv0)showInvite(iv0);else try{const a=sessionStorage.getItem('tti-auth')||'';if(a.startsWith('owner:')&&(a.slice(6)===USER.email||OW()[a.slice(6)])&&!SUSP()[a.slice(6)])enter('owner',a.slice(6));else if(a.startsWith('broker:')&&BR()[a.slice(7)]&&!SUSP()[a.slice(7)])enter('broker',a.slice(7))}catch(e){}
+const sv0=readStayQ();
+if(sv0)showStayDemo(sv0);else if(pv0)showPub(pv0,false);else if(iv0)showInvite(iv0);else try{const a=sessionStorage.getItem('tti-auth')||'';if(a.startsWith('owner:')&&(a.slice(6)===USER.email||OW()[a.slice(6)])&&!SUSP()[a.slice(6)])enter('owner',a.slice(6));else if(a.startsWith('broker:')&&BR()[a.slice(7)]&&!SUSP()[a.slice(7)])enter('broker',a.slice(7))}catch(e){}
 if(!pv0&&!iv0&&readPf()&&!window.TTI_BOOT)showProfDemo(readPf());
 </script>
 </body>

@@ -138,6 +138,10 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 {const m=/[?&]redefinir=([a-f0-9]{64})/.exec(location.search);if(m)setTimeout(()=>openReset(m[1]),300)}
 
 /* Perfil público do corretor (#54): a tela e o diálogo são compartilhados com a demonstração (source.html); aqui só a busca no servidor. */
+async function showStayPage(tok){
+ $('home').hidden=true;$('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
+ try{showStay(await api0('/api/public/stay/'+encodeURIComponent(tok)))}
+ catch(x){$('pub').innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>'+L3('Esta página não está disponível','This page is not available','Esta página no está disponible')+'</h1></div>'}}
 async function showProfile(code){
  $('home').hidden=true;$('pub').hidden=false;$('pub').innerHTML=MO.skel('pub');
  try{const r=await api0('/api/public/broker/'+encodeURIComponent(code));
