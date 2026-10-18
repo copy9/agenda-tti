@@ -237,6 +237,26 @@ function build() {
     const i = U.parse(b.info, null) || {};
     res.json(200, { bn: b.name, wa: b.wa || '', av: i.p || '', c: i.c || '', r: i.r || '', bi: i.b || '', hs: hs.slice(0, 60).map((h) => ({ pg: h.pg, n: h.name, l: h.loc, hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, ph: (h.photos || [])[0] || '' })) });
   });
+  // ---------- página de check-in da família: só abre com o código da reserva e depois que o proprietário enviou ----------
+  app.get('/api/public/stay/:tok', async (req, res) => {
+    A.limit('stay:' + req.ip_, 240, 600e3);
+    const tok = String(req.params.tok);
+    const r = /^[a-f0-9]{16}$/.test(tok) && await db.one("SELECT * FROM proposals WHERE tok = ? AND status = 'accepted'", [tok]);
+    const hr = r && await db.one('SELECT * FROM houses WHERE id = ?', [r.house_id]);
+    if (!r || !hr) throw U.bad('Esta página não está disponível.', 404);
+    const d = U.parse(r.doc, {}); const h = S.houseDoc(hr);
+    const ow = await db.one('SELECT name, wa FROM users WHERE email = ?', [r.owner_email]) || {};
+    const br = await db.one('SELECT name, wa FROM users WHERE email = ?', [r.broker_email]) || {};
+    const ck = d.ck || {};
+    const base = { hn: h.name, hl: h.loc, g: d.guest, in: d.in, out: d.out, pax: d.pax, bn: br.name || '', bw: br.wa || '' };
+    if (!ck.s) return res.json(200, Object.assign(base, { ready: false }));
+    res.json(200, Object.assign(base, {
+      ready: true, on: ow.name || '', ow: ow.wa || '', v: d.final || d.value, pc: d.adv == null ? 50 : d.adv, id: d.id,
+      t: ck.t || h.cit || '15:00', k: ck.k || h.cot || '11:00', a: ck.a || h.acc || '', w: ck.w || h.wfn || '', p: ck.p || h.wfp || '', ph: ck.ph || '', nt: ck.n || '',
+      ci: h.ci || '', co: h.co || '', off: h.ckoff || [], am: h.am || [], ru: h.rules || '', im: (h.photos || [])[0] || '', hu: h.hue, q: h.q, s: h.s, b: h.b, lot: h.lot, loc: h.loc,
+    }));
+  });
+  app.get('/hospedagem/:tok', (req, res) => res.html(200, page(Object.assign(bootBase(req), { stay: req.params.tok }))));
   app.get('/corretor/:code', (req, res) => res.html(200, page(Object.assign(bootBase(req), { prof: req.params.code }))));
 
   const spa = (req, res) => res.html(200, page(Object.assign(bootBase(req), { slug: req.params.slug, b: req.query.b || '' })));

@@ -110,7 +110,18 @@ async function createProposal(t, user, inc, post) {
   await S.event(t, hrow.owner_email, 'proposal_new', { house: house.name, broker: user.name, in: a, out: b, value, pid: id });
 }
 
-const LOGS = new Set(['pending', 'accepted', 'rejected', 'countered', 'declined', 'cancelled', 'expired', 'paid', 'unpaid']);
+// Dados da página de check-in. t/k = horários, a = acesso, w/p = Wi-Fi, ph = telefones úteis, n = observações, s = envio ao corretor.
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+const cleanStay = (x, prev) => {
+  const o = x && typeof x === 'object' ? x : {};
+  const hm = (v) => (HHMM.test(String(v || '')) ? String(v) : '');
+  const sent = o.s ? ((prev && prev.s) || Date.now()) : 0;
+  const out = { t: hm(o.t), k: hm(o.k), a: U.text(o.a, 600).trim(), w: U.text(o.w, 60).trim(), p: U.text(o.p, 60).trim(), ph: U.text(o.ph, 500).trim(), n: U.text(o.n, 800).trim() };
+  if (sent) out.s = sent;
+  return out;
+};
+
+const LOGS = new Set(['pending', 'accepted', 'rejected', 'countered', 'declined', 'cancelled', 'expired', 'paid', 'unpaid', 'informed']);
 
 async function updateProposal(t, user, row, inc, post) {
   const doc = U.parse(row.doc, {});
@@ -151,10 +162,22 @@ async function updateProposal(t, user, row, inc, post) {
       else throw stale();
     }
   }
+  // Adiantamento: o corretor informa que pagou; o proprietário confere e confirma.
+  if (inc.pay && !doc.pay) {
+    if (!(isBroker && next.status === 'accepted' && !doc.paid)) throw forbid();
+    next.pay = Date.now(); next.payRef = U.text(inc.payRef, 120).trim();
+  }
   if (typeof inc.paid === 'boolean' && inc.paid !== !!doc.paid) {
     if (!(isOwner && next.status === 'accepted')) throw forbid();
     next.paid = inc.paid;
+    if (inc.paid) next.paidAt = Date.now(); else delete next.paidAt;
   }
+  // Página de check-in da família: só o proprietário preenche e envia ao corretor.
+  if (inc.ck && typeof inc.ck === 'object') {
+    if (!(isOwner && next.status === 'accepted')) throw forbid();
+    next.ck = cleanStay(inc.ck, doc.ck);
+  }
+  if (next.status === 'accepted' && !next.tok) next.tok = U.rid(8);
   // histórico e conversa só crescem: aceita entradas novas, com a data carimbada pelo servidor
   if (Array.isArray(inc.log) && inc.log.length > (doc.log || []).length) {
     next.log = (doc.log || []).concat(inc.log.slice((doc.log || []).length, (doc.log || []).length + 5).map((l) => ({ d: U.today(), s: LOGS.has(l && l.s) ? l.s : 'pending', v: U.num(l && l.v, 0) })));
@@ -164,6 +187,10 @@ async function updateProposal(t, user, row, inc, post) {
   }
   if (JSON.stringify(next) !== JSON.stringify(doc)) await S.saveProposal(t, next, row.house_id, row.broker_email, row.owner_email);
   if (next.status !== s0) await announce(t, user, row, next, { isOwner, isBroker });
+  const base = { house: next.house, in: next.in, out: next.out, pid: next.id };
+  if (next.pay && !doc.pay) await S.event(t, row.owner_email, 'advance_informed', Object.assign({ broker: user.name }, base));
+  if (next.paid && !doc.paid) await S.event(t, row.broker_email, 'advance_confirmed', base);
+  if (next.ck && next.ck.s && !(doc.ck && doc.ck.s)) await S.event(t, row.broker_email, 'checkin_ready', base);
 }
 
 // Avisos por e-mail e push das mudanças de estado. Aviso ao corretor nunca cita outro corretor; só o do proprietário traz o nome de quem propôs.

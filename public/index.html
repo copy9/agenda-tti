@@ -1064,6 +1064,13 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 .ovi{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}
 .ovi div{flex:1;min-width:200px}.ovi b{display:block}.ovi span{color:var(--mute);font-size:14px}
 .ovc.pk{outline:2.5px solid var(--sea);outline-offset:-2px;position:relative;z-index:1}
+.stp2 ol{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.stp2 li{display:flex;gap:14px;padding:0 0 18px;position:relative}.stp2 li:last-child{padding-bottom:0}
+.stp2 li::before{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:2px;background:var(--line)}.stp2 li:last-child::before{display:none}
+.stp2 .n{flex:0 0 auto;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;border:2px solid var(--line);color:var(--mute);background:var(--surf);position:relative;z-index:1}
+.stp2 li.ok .n{background:var(--ok);border-color:var(--ok);color:#fff}.stp2 li.now .n{background:var(--brass);border-color:var(--brass);color:#fff}
+.stp2 li>div{flex:1;min-width:0;display:grid;gap:3px;align-content:start}.stp2 li b{font-size:16px}.stp2 li>div>span{color:var(--mute);font-size:14.5px;line-height:1.45}
+.stp2 li.wait b{color:var(--mute)}.stp2 .sa{margin-top:8px}.stp2 .pyr{display:flex;gap:8px;flex-wrap:wrap}.stp2 .pyr input{flex:1;min-width:200px}
 /* Perfil do corretor: formulário e topo público */
 .nv button[hidden],.gi .fl[hidden]{display:none}
 .btn[disabled]{opacity:.42;cursor:not-allowed;box-shadow:none;filter:grayscale(.35)}
@@ -1638,7 +1645,7 @@ function pdetail(x){if(!x){PV=null;return plist2()}
  <p class="pdp"><b>${esc(x.guest)}</b> <span class="mute">· ${ow?esc(x.bname):esc(h.owner||'Não informado')}</span></p>${x.msg?`<p class="pdq">“${esc(x.msg)}”</p>`:''}
  <ul class="pks">${pk(fr,'Datas livres','Datas bloqueadas')}${pk(okp,'Lotação ok','Acima da lotação')}${pk(n>=mn,'Mínimo de noites ok','Abaixo do mínimo')}${pk(!pb,'Pets ok','Cita pets, casa não aceita')}${ow?pk(!conf.length,'Sem disputa','Em disputa com outras propostas'):''}</ul>${dsp}</div>
  <div class="cal" data-id="${x.id}" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:8px">${ow?'Sua decisão':'Próximo passo'}</h3>${dec}</div>
-${x.status==='accepted'?`<div class="cal" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:8px">Contrato e adiantamento</h3><p class="mute" style="margin:0 0 12px">${pct?`Adiantamento de ${pct}%: <b>${brl(sinal)}</b> · ${x.paid?'recebido':'pendente'}. Restante de <b>${brl(v-sinal)}</b> na saída.`:`Sem adiantamento. O valor integral (<b>${brl(v)}</b>) é pago na saída.`}</p><div class="inv"><button class="btn o" id="ct">Baixar contrato</button>${ow&&pct?`<button class="btn o" id="sg">${x.paid?'Desmarcar adiantamento':'Marcar adiantamento como recebido'}</button>`:''}</div></div>`:''}
+${x.status==='accepted'?stayCard(x,ow):''}
  <details class="pdd" id="dc"${PDO.c?' open':''}><summary>Conversa${(x.chat||[]).length?` <span class="bd">${x.chat.length}</span>`:''}</summary><div><div class="chat" id="ch">${(x.chat||[]).length?x.chat.map(m=>`<div class="bb${m.f===ROLE?' me':''}"><small>${m.f===ROLE?'Você':esc(ow?x.bname:(h.owner||'Proprietário'))} · ${new Date(m.at).toLocaleString(LOC(),{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</small>${esc(m.t)}</div>`).join(''):'<span class="mute">Nenhuma mensagem ainda. Tire dúvidas aqui, como pets, limpeza ou horário de entrada.</span>'}</div><div class="cs"><input id="cm" aria-label="Mensagem" placeholder="Escreva uma mensagem" autocomplete="off"><button class="btn" id="cb">Enviar</button></div></div></details>
  <details class="pdd" id="dh"${PDO.h?' open':''}><summary>Histórico desta proposta</summary><ul class="tl">${ev.map(e=>`<li><span>${fd(e.d)}</span>${e.t} · <b>${brl(e.v)}</b></li>`).join('')}</ul></details>`;
  $('dc').ontoggle=()=>{PDO.c=$('dc').open};$('dh').ontoggle=()=>{PDO.h=$('dh').open};
@@ -1647,7 +1654,31 @@ ${x.status==='accepted'?`<div class="cal" style="margin-top:12px"><h3 style="fon
  const send=()=>{const t=$('cm').value.trim();if(!t)return;(x.chat=x.chat||[]).push({f:ROLE,t,at:Date.now()});notify(ow?x.broker:(x.oe||USER.email),(ow?oname():bname())+' enviou uma mensagem sobre '+x.house,x.id);PDO.c=true;saveP();render();$('cm').focus()};
  $('cb').onclick=send;$('cm').addEventListener('keydown',e=>{if(e.key==='Enter')send()});
  if($('ct'))$('ct').onclick=()=>dl('contrato-'+slug(x.house)+'-'+x.in+'.html',new Blob([trDoc(contract(x,h))],{type:'text/html'}));
- if($('sg'))$('sg').onclick=()=>{x.paid=!x.paid;(x.log=x.log||[]).push({d:today,s:x.paid?'paid':'unpaid',v:sinal});notify(x.broker,oname()+(x.paid?' confirmou o recebimento do adiantamento de ':' desmarcou o adiantamento de ')+brl(sinal)+' em '+x.house,x.id);saveP();render()}}
+ stayBind(x)}
+/* ===== Etapas da reserva: aceite → adiantamento → página de check-in → check-out → histórico ===== */
+const stayOk=x=>pctOf(x)===0||!!x.paid;
+function stayCard(x,ow){const pct=pctOf(x),v=x.final||x.value,sn=Math.round(v*pct)/100,co=nights(today,x.out),dt=t=>t?new Date(t).toLocaleDateString(LOC(),{day:'2-digit',month:'short'}):'',S=[];
+ S.push({s:'ok',t:L3('Reserva aceita','Booking accepted','Reserva aceptada'),d:L3('As datas estão bloqueadas para toda a rede.','The dates are blocked for the whole network.','Las fechas están bloqueadas para toda la red.')});
+ if(!pct)S.push({s:'ok',t:L3('Sem adiantamento','No advance payment','Sin anticipo'),d:L3('O valor integral ('+brl(v)+') é pago na saída.','The full amount ('+brl(v)+') is paid at check-out.','El valor total ('+brl(v)+') se paga en la salida.')});
+ else if(x.paid)S.push({s:'ok',t:L3('Adiantamento confirmado','Advance confirmed','Anticipo confirmado'),d:brl(sn)+' · '+dt(x.paidAt||x.pay)+(x.paidAt?'':''),a:ow?'<button class="btn o s" type="button" data-s="un">'+L3('Desfazer confirmação','Undo confirmation','Deshacer confirmación')+'</button>':''});
+ else if(x.pay)S.push({s:ow?'now':'wait',t:L3('Pagamento informado','Payment reported','Pago informado'),d:ow?L3('O corretor informou que pagou '+brl(sn)+(x.payRef?' ('+x.payRef+')':'')+'. Confira o recebimento.','The broker reported paying '+brl(sn)+(x.payRef?' ('+x.payRef+')':'')+'. Check that you received it.','El corredor informó que pagó '+brl(sn)+(x.payRef?' ('+x.payRef+')':'')+'. Verifique que lo recibió.'):L3('Aguardando o proprietário conferir o recebimento.','Waiting for the owner to check the payment.','Esperando que el propietario verifique el pago.'),a:ow?'<button class="btn" type="button" data-s="cf">'+L3('Confirmar recebimento','Confirm payment received','Confirmar recepción')+'</button>':''});
+ else S.push({s:ow?'wait':'now',t:L3('Adiantamento pendente','Advance payment pending','Anticipo pendiente'),d:ow?L3(brl(sn)+' · aguardando o corretor informar o pagamento.',brl(sn)+' · waiting for the broker to report the payment.',brl(sn)+' · esperando que el corredor informe el pago.'):L3(brl(sn)+' · pague ao proprietário e informe aqui.',brl(sn)+' · pay the owner and report it here.',brl(sn)+' · pague al propietario e infórmelo aquí.'),
+  a:ow?'<button class="btn o s" type="button" data-s="cf">'+L3('Já recebi, confirmar','Already received, confirm','Ya lo recibí, confirmar')+'</button>':'<div class="pyr"><input id="payref" maxlength="120" aria-label="'+L3('Comprovante ou observação','Receipt or note','Comprobante u observación')+'" placeholder="'+L3('Comprovante ou observação (opcional)','Receipt or note (optional)','Comprobante u observación (opcional)')+'"><button class="btn" type="button" data-s="py">'+L3('Informei o pagamento','I made the payment','Informé el pago')+'</button></div>'});
+ const rel=stayOk(x),ck=x.ck||{};
+ S.push(rel?(ck.s?{s:'ok',t:L3('Página de check-in enviada','Check-in page sent','Página de check-in enviada'),d:ow?L3('O corretor já pode enviar o link ao cliente.','The broker can now send the link to the client.','El corredor ya puede enviar el enlace al cliente.'):L3('Copie o link e envie ao cliente.','Copy the link and send it to your client.','Copie el enlace y envíelo al cliente.')}
+  :{s:ow?'now':'wait',t:ow?L3('Preencha a página de check-in','Fill in the check-in page','Complete la página de check-in'):L3('Aguardando a página de check-in','Waiting for the check-in page','Esperando la página de check-in'),d:ow?L3('Horários, acesso e telefones úteis. O resto já vem da casa.','Times, access and useful phones. The rest comes from the house.','Horarios, acceso y teléfonos útiles. Lo demás viene de la casa.'):L3('O proprietário vai preencher e avisar você.','The owner will fill it in and notify you.','El propietario la completará y le avisará.')})
+  :{s:'wait',t:L3('Página de check-in','Check-in page','Página de check-in'),d:L3('Libera depois que o adiantamento for confirmado.','Unlocks after the advance is confirmed.','Se libera cuando se confirme el anticipo.')});
+ S.push({s:co<0?'ok':co<=1?'now':'wait',t:L3('Check-out','Check-out','Check-out'),d:co<0?L3('Saída concluída.','Check-out done.','Salida concluida.'):L3('A lista de saída é enviada ao cliente na véspera ('+fd(x.out)+').','The check-out list goes to the client the day before ('+fd(x.out)+').','La lista de salida se envía al cliente la víspera ('+fd(x.out)+').')});
+ S.push({s:co<0?'ok':'wait',t:L3('Histórico de locações','Rental history','Historial de alquileres'),d:L3('Depois da saída, a reserva fica guardada em Reservas para consulta.','After check-out, the booking is kept under Bookings for reference.','Tras la salida, la reserva queda guardada en Reservas para consulta.')});
+ return `<div class="cal stp2" style="margin-top:12px"><h3 style="font-size:19px;margin-bottom:12px">${L3('Etapas da reserva','Booking steps','Etapas de la reserva')}</h3><ol>${S.map((s,i)=>`<li class="${s.s}"><span class="n">${s.s==='ok'?'✓':i+1}</span><div><b>${s.t}</b><span>${s.d||''}</span>${s.a?`<div class="sa">${s.a}</div>`:''}</div></li>`).join('')}</ol>
+ <div class="inv" style="margin-top:14px"><button class="btn o" id="ct" type="button">${L3('Baixar contrato','Download contract','Descargar contrato')}</button></div></div>`}
+function stayBind(x){const m=$('m'),pct=pctOf(x),v=x.final||x.value,sn=Math.round(v*pct)/100,own=ROLE==='owner',oe=x.oe||USER.email;
+ const done=()=>{saveP();render()};
+ m.querySelectorAll('[data-s=py]').forEach(b=>b.onclick=()=>{x.pay=Date.now();x.payRef=(($('payref')||{}).value||'').trim();(x.log=x.log||[]).push({d:today,s:'informed',v:sn});
+  notify(oe,bname()+' informou o pagamento do adiantamento de '+brl(sn)+' em '+x.house+'. Confira e confirme.',x.id);toast(L3('Pagamento informado ao proprietário','Payment reported to the owner','Pago informado al propietario'));done()});
+ m.querySelectorAll('[data-s=cf]').forEach(b=>b.onclick=()=>{x.paid=true;x.paidAt=Date.now();(x.log=x.log||[]).push({d:today,s:'paid',v:sn});
+  notify(x.broker,'Casa liberada: '+oname()+' confirmou o adiantamento de '+brl(sn)+' em '+x.house+'. Agora aguarde a página de check-in.',x.id);toast(L3('Recebimento confirmado. Casa liberada','Payment confirmed. House released','Recepción confirmada. Casa liberada'));done()});
+ m.querySelectorAll('[data-s=un]').forEach(b=>b.onclick=()=>{x.paid=false;delete x.paidAt;(x.log=x.log||[]).push({d:today,s:'unpaid',v:sn});notify(x.broker,oname()+' desfez a confirmação do adiantamento de '+brl(sn)+' em '+x.house,x.id);done()})}
 const saveC=()=>{try{DB.set('chat',CHAT)}catch(e){}};
 const myRole=()=>ROLE==='owner'?'o':'b';
 function tFor(o,b,on,bn){const id=o+'|'+b;let t=CHAT.find(x=>x.id===id);if(!t){t={id,o,b,on,bn,m:[],s:{o:0,b:0}};CHAT.push(t);saveC()}return t}
@@ -2179,7 +2210,8 @@ function reminders(){const R=[],now=Date.now(),own=ROLE==='owner';
   if(x.status==='accepted'){const ci=nights(today,x.in),co=nights(today,x.out),pct=x.adv==null?50:Number(x.adv),v=x.final||x.value,sn=Math.round(v*pct)/100,when=ci===0?'hoje':ci===1?'amanhã':'em '+ci+' dias';
    if(ci>=0&&ci<=3)R.push({hid:x.hid,k:'ci:'+x.id+':'+ci,lv:2,t:own?`Check-in em ${x.house} ${when} (${fd(x.in)}), reserva de ${x.bname}.`:`Check-in de ${x.guest||'seu cliente'} em ${x.house} ${when} (${fd(x.in)}).`,go:{pg:'props',pv:x.id},lb:'Abrir'});
    if(ci<0&&co>=0&&co<=1)R.push({hid:x.hid,k:'co:'+x.id+':'+co,lv:2,t:`Saída ${co?'amanhã':'hoje'} em ${x.house}.`+(own?' Combine a limpeza.':''),go:{pg:'props',pv:x.id},lb:'Abrir'});
-   if(pct>0&&!x.paid&&ci<=7&&ci>=-30){const u=ci<=2;R.push({hid:x.hid,k:'ad:'+x.id+':'+(u?'u':'n'),lv:u?0:1,t:own?`O adiantamento de ${brl(sn)} de ${x.bname} em ${x.house} ainda não foi marcado como recebido.`:`O adiantamento de ${brl(sn)} para ${x.house} ainda está pendente.`,go:{pg:'props',pv:x.id},lb:'Abrir'})}}});
+   if(own&&pct>0&&x.pay&&!x.paid)R.push({hid:x.hid,k:'pc:'+x.id,lv:0,t:`${x.bname} informou o pagamento do adiantamento de ${brl(sn)} em ${x.house}. Confira e confirme.`,go:{pg:'props',pv:x.id},lb:'Confirmar'});
+   else if(pct>0&&!x.paid&&!x.pay&&ci<=7&&ci>=-30){const u=ci<=2;R.push({hid:x.hid,k:'ad:'+x.id+':'+(u?'u':'n'),lv:u?0:1,t:own?`O adiantamento de ${brl(sn)} de ${x.bname} em ${x.house} ainda não foi pago.`:`O adiantamento de ${brl(sn)} para ${x.house} ainda está pendente. Pague e informe o pagamento.`,go:{pg:'props',pv:x.id},lb:own?'Abrir':'Informar pagamento'})}}});
  return R.sort((a,b)=>a.lv-b.lv)}
 const RH=()=>{try{return DB.get('remh',{})||{}}catch(e){return{}}};
 const hidOfV=id=>ROLE==='broker'?String(id).slice(1):id;
@@ -2206,6 +2238,7 @@ function alertShort(r){const [kd,id,n]=String(r.k).split(':'),x=PROP.find(q=>q.i
  if(kd==='ci'){const w=n==0?L3('hoje','today','hoy'):n==1?L3('amanhã','tomorrow','mañana'):L3('em '+n+' dias','in '+n+' days','en '+n+' días');return{h:L3('Check-in '+w,'Check-in '+w,'Check-in '+w),d:j([x.guest,dt])}}
  if(kd==='co'){const w=n==0?L3('hoje','today','hoy'):L3('amanhã','tomorrow','mañana');return{h:L3('Saída '+w,'Check-out '+w,'Salida '+w),d:j([x.guest,dt])}}
  if(kd==='ad')return{h:L3('Adiantamento pendente','Advance payment pending','Anticipo pendiente'),d:j([brl(sn),who,fd(x.in)])};
+ if(kd==='pc')return{h:L3('Confirme o adiantamento','Confirm the advance','Confirme el anticipo'),d:j([brl(sn),who,L3('pagamento informado','payment reported','pago informado')])};
  return{h:r.t,d:''}}
 function alertDone(r){const o=RX(),H=RH(),a=H[ME]||[];o[ME+'|'+r.k]=1;
  if(!a.some(x=>x.k===r.k)){const s=alertShort(r);a.unshift({k:r.k,t:r.t,h:s.h,d:s.d,hid:r.hid,at:Date.now(),lv:r.lv,go:r.go})}

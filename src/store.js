@@ -156,8 +156,9 @@ async function consent(t, email, ip, version, kind) {
 const isOpen = (s) => s === 'pending' || s === 'countered';
 async function saveProposal(t, doc, houseId, broker, owner) {
   const j = JSON.stringify(doc);
-  const r = await t.run('UPDATE proposals SET status = ?, doc = ?, updated = ? WHERE id = ?', [doc.status, j, Date.now(), doc.id]);
-  if (!r.changes) await t.run('INSERT INTO proposals (id, house_id, broker_email, owner_email, status, doc, updated) VALUES (?,?,?,?,?,?,?)', [doc.id, houseId, broker, owner, doc.status, j, Date.now()]);
+  const tok = doc.tok || null;
+  const r = await t.run('UPDATE proposals SET status = ?, doc = ?, updated = ?, tok = ? WHERE id = ?', [doc.status, j, Date.now(), tok, doc.id]);
+  if (!r.changes) await t.run('INSERT INTO proposals (id, house_id, broker_email, owner_email, status, doc, updated, tok) VALUES (?,?,?,?,?,?,?,?)', [doc.id, houseId, broker, owner, doc.status, j, Date.now(), tok]);
 }
 
 // Marca como expiradas as propostas em aberto com prazo vencido (48h).
