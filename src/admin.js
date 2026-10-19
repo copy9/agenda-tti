@@ -29,6 +29,7 @@ async function deleteUser(email) {
     await t.run('DELETE FROM sessions WHERE email = ?', [email]);
     await t.run('DELETE FROM ustate WHERE email = ?', [email]);
     await t.run('DELETE FROM consents WHERE email = ?', [email]);
+    await t.run('DELETE FROM subs WHERE email = ?', [email]);
     await t.run('DELETE FROM users WHERE email = ?', [email]);
   });
 }

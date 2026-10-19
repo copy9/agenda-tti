@@ -56,6 +56,10 @@ module.exports = {
   PUSH_HOSTS: (e.PUSH_HOSTS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean),
   PUSH_ALLOW_INSECURE: e.PUSH_ALLOW_INSECURE === '1',
   OUTBOX_MAX_ATTEMPTS: Math.max(1, Number(e.OUTBOX_MAX_ATTEMPTS) || 5),
+  // Mensalidade da plataforma (Mercado Pago). Sem MP_ACCESS_TOKEN a cobrança fica desligada e ninguém é bloqueado.
+  MP_ACCESS_TOKEN: e.MP_ACCESS_TOKEN || '',
+  MP_WEBHOOK_SECRET: e.MP_WEBHOOK_SECRET || '',
+  MP_API_BASE: (e.MP_API_BASE || 'https://api.mercadopago.com').replace(/\/+$/, ''),
   MAX_PHOTO_BYTES: 1.5 * 1024 * 1024,
   MAX_HOUSES_PER_OWNER: 60,
 };

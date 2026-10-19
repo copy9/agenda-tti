@@ -5,6 +5,7 @@ const db = require('./db');
 const U = require('./util');
 const S = require('./store');
 const ADM = require('./admin');
+const B = require('./billing');
 const V = require('./views');
 const { UI, TEXTS } = require('./legal-texts');
 
@@ -88,6 +89,7 @@ async function processDue() {
   const rows = await db.all("SELECT id, email FROM data_requests WHERE kind = 'delete' AND status = 'pending' AND due <= ?", [Date.now()]);
   let n = 0;
   for (const r of rows) {
+    try { await B.cancelRemote(r.email); } catch (e) { /* o cancelamento da assinatura não impede a exclusão */ }
     try { await ADM.deleteUser(r.email); } catch (e) { if (e.status !== 404) throw e; }
     await db.write((t) => t.run("UPDATE data_requests SET status = 'done', email = '', done = ? WHERE id = ?", [Date.now(), r.id]));
     n++;
