@@ -127,6 +127,15 @@ const TABLES = [
     exp BIGINT NOT NULL,
     used BIGINT NOT NULL DEFAULT 0
   )`,
+  `CREATE TABLE IF NOT EXISTS subs (
+    email VARCHAR(190) NOT NULL PRIMARY KEY,
+    ref VARCHAR(24) NOT NULL,
+    mp_id VARCHAR(80) NOT NULL DEFAULT '',
+    status VARCHAR(20) NOT NULL DEFAULT 'none',
+    paid_until BIGINT NOT NULL DEFAULT 0,
+    free INT NOT NULL DEFAULT 0,
+    updated BIGINT NOT NULL DEFAULT 0
+  )`,
   `CREATE TABLE IF NOT EXISTS settings (
     k VARCHAR(60) NOT NULL PRIMARY KEY,
     v LONGTEXT NOT NULL
@@ -134,6 +143,8 @@ const TABLES = [
 ];
 const INDEXES = [
   ['idx_houses_owner', 'houses', 'owner_email'],
+  ['idx_subs_mp', 'subs', 'mp_id'],
+  ['idx_subs_ref', 'subs', 'ref'],
   ['idx_prop_house', 'proposals', 'house_id'],
   ['idx_prop_broker', 'proposals', 'broker_email'],
   ['idx_prop_owner', 'proposals', 'owner_email'],

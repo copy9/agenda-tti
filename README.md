@@ -57,6 +57,7 @@ Atualizar para uma nova versão: `git pull && docker compose up -d --build` (os 
 | `COMPANY_NAME`, `LEGAL_CONTACT` | Nome da empresa e contato que aparecem nos Termos e na Política de privacidade (`/termos`, `/privacidade`). |
 | `LEGAL_VERSION` | Versão dos textos. Ao mudar, todos precisam aceitar de novo. |
 | `LEGAL_REVIEWED` | Coloque `1` só depois da revisão de advogado: retira o aviso de minuta das páginas. |
+| `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | Mensalidade pelo Mercado Pago (ver abaixo). Sem o token a cobrança fica desligada. |
 | `DELETE_GRACE_DAYS` | Carência da exclusão de conta pedida pelo usuário (padrão 7 dias). |
 
 ### Avisos por e-mail e push
@@ -64,6 +65,16 @@ Convite, proposta, resposta e vencimento viram aviso por e-mail (SMTP próprio, 
 
 ### Perfil público do corretor
 Em Casas para alugar, o corretor abre "Meu perfil público", escolhe o idioma e copia o link com a mensagem pronta. A página `/corretor/<código>` mostra o nome e o WhatsApp dele e só as casas em que ele foi convidado (cada cartão leva à página pública da casa). Não mostra proprietário nem outros corretores. Só existe no modo servidor.
+
+### Mensalidade da plataforma (Mercado Pago)
+É o único pagamento dentro do software. Cada conta (proprietário e corretor) tem **7 dias grátis** e depois paga **R$ 10,00 por mês**, por assinatura recorrente do Mercado Pago. Valor, dias grátis, quem paga (todos, só proprietários ou só corretores) e a chave geral "Cobrança ligada" ficam em **Painel de administração > Configurações > Mensalidade**, junto com a lista de contas e a opção de isentar uma conta (cortesia). O novo valor vale para as próximas assinaturas; as já ativas continuam no valor em que foram criadas. Mudar os dias grátis vale para todos na hora.
+
+Para ligar:
+1. Em mercadopago.com.br/developers, crie uma aplicação e copie o **Access Token de produção** para `MP_ACCESS_TOKEN`.
+2. Em Webhooks da aplicação, cadastre `https://SEU-DOMINIO/api/billing/webhook` com o evento **Assinaturas** (planos e assinaturas, pagamentos recorrentes) e copie a assinatura secreta para `MP_WEBHOOK_SECRET`.
+3. `PUBLIC_URL` precisa ser `https://...`: é para onde a pessoa volta depois de pagar.
+
+Sem `MP_ACCESS_TOKEN` a cobrança fica desligada e ninguém é bloqueado. Conta com o teste vencido e sem assinatura fica bloqueada (a API responde 402), mas continuam abertas: assinar, baixar os próprios dados, excluir a conta e todas as páginas públicas (casa, perfil do corretor e página de check-in da família). Cancelar a assinatura mantém o acesso até o fim do período pago, e excluir a conta cancela a assinatura. O e-mail da pessoa não vai para o Mercado Pago: o vínculo é um código interno.
 
 ### Recuperação de senha
 Em Entrar, "Esqueci a senha" envia por e-mail um link que vale 30 minutos e uma única vez (no banco fica só o hash). A resposta é a mesma exista o e-mail ou não, há limite por e-mail e por IP, e ao redefinir todas as sessões são encerradas e a pessoa recebe um aviso. Exige `SMTP_*` configurado. A senha do administrador continua vindo de `ADMIN_PASSWORD`.
@@ -93,6 +104,7 @@ src/views.js         o que cada perfil enxerga (privacidade)
 src/auth.js          cadastro, login, sessões, administrador
 src/store.js         casas, fotos, avisos, expiração de propostas
 src/migrate.js       criação das tabelas
+src/billing.js       mensalidade (período grátis, assinatura no Mercado Pago, painel)
 public/index.html    o site (front)
 test/api.test.js     testes da API
 scripts/check-db.js  confere a conexão com o banco

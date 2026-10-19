@@ -9,6 +9,7 @@ const A = require('./auth');
 const V = require('./views');
 const P = require('./policy');
 const ADM = require('./admin');
+const B = require('./billing');
 const L = require('./legal');
 const N = require('./notifier');
 const PUSH = require('./push');
@@ -21,11 +22,16 @@ function build() {
   const app = createApp();
 
   // Sessão carregada em toda requisição.
-  app.hooks.before.push(async (req) => { req.user = await A.loadSession(req); });
+  app.hooks.before.push(async (req) => {
+    req.user = await A.loadSession(req);
+    // Mensalidade: situação da conta (período grátis, assinatura ou vencida) segue junto com a sessão.
+    if (req.user && req.user.role !== 'admin') req.user.pay = B.publicState(await B.stateOf(req.user));
+  });
   const need = (req, ...roles) => {
     if (!req.user) throw U.bad('Sessão expirada. Entre de novo.', 401);
     if (roles.length && !roles.includes(req.user.role)) throw U.bad('Você não tem permissão para essa ação.', 403);
     if (req.user.needTerms) throw U.bad('Leia e aceite os Termos de uso e a Política de privacidade atualizados para continuar.', 403, 'terms');
+    if (req.user.pay && req.user.pay.blocked) throw U.bad('Seu período grátis terminou. Assine para continuar usando a Agenda TTI.', 402, 'billing');
   };
   // Para ações permitidas mesmo antes de aceitar os termos novos (aceitar, baixar os próprios dados, pedir exclusão).
   const needLogin = (req) => {
@@ -40,7 +46,8 @@ function build() {
     const json = JSON.stringify(boot || {}).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, '');
     return htmlCache.replace('window.TTI_BOOT=null;', 'window.TTI_BOOT=' + json + ';');
   }
-  const bootBase = (req) => ({ api: true, user: req.user ? A.publicUser(req.user) : null, terms: cfg.LEGAL_VERSION });
+  const pubUser = (u) => Object.assign(A.publicUser(u), { pay: u.pay || null });
+  const bootBase = (req) => ({ api: true, user: req.user ? pubUser(req.user) : null, terms: cfg.LEGAL_VERSION });
 
   app.get('/', (req, res) => res.html(200, page(bootBase(req))));
 
@@ -68,7 +75,7 @@ function build() {
   app.post('/api/forgot', async (req, res) => res.json(200, await A.forgot(req)));
   app.post('/api/reset', async (req, res) => res.json(200, await A.reset(req, res)));
   app.post('/api/logout', async (req, res) => { await A.endSession(req, res); res.json(200, { ok: true }); });
-  app.get('/api/session', (req, res) => res.json(200, { user: req.user ? A.publicUser(req.user) : null, rev: S.rev() }));
+  app.get('/api/session', (req, res) => res.json(200, { user: req.user ? pubUser(req.user) : null, rev: S.rev() }));
 
   // ---------- termos, privacidade e direitos do titular ----------
   const legalPage = (kind) => (req, res) => res.html(200, L.page(kind, req.query.lg));
@@ -94,6 +101,29 @@ function build() {
   });
   app.post('/api/me/delete/cancel', async (req, res) => { needLogin(req); res.json(200, await L.cancelDelete(req.user)); });
   app.get('/api/health', async (req, res) => { await db.one('SELECT 1 AS ok'); res.json(200, { ok: true, db: db.dialect }); });
+
+  // ---------- mensalidade da plataforma (Mercado Pago) ----------
+  // Ficam liberadas mesmo com a conta vencida: é por aqui que a pessoa paga.
+  app.get('/api/billing', async (req, res) => { needLogin(req); res.json(200, { pay: req.user.pay }); });
+  app.post('/api/billing/subscribe', async (req, res) => {
+    needLogin(req);
+    A.limit('bsub:' + req.user.email, 20, 3600e3);
+    res.json(200, await B.subscribe(req.user));
+  });
+  app.post('/api/billing/refresh', async (req, res) => {
+    needLogin(req);
+    A.limit('bref:' + req.user.email, 60, 3600e3);
+    res.json(200, { pay: B.publicState(await B.refresh(req.user)) });
+  });
+  app.post('/api/billing/cancel', async (req, res) => {
+    needLogin(req);
+    A.limit('bcan:' + req.user.email, 10, 3600e3);
+    res.json(200, { pay: B.publicState(await B.cancel(req.user)) });
+  });
+  app.post('/api/billing/webhook', async (req, res) => {
+    A.limit('mpwh:' + req.ip_, 600, 600e3);
+    res.json(200, await B.webhook(req));
+  });
 
   // ---------- avisos fora do site: preferências e push ----------
   const prefsOut = async (user) => {
@@ -280,9 +310,12 @@ function build() {
   // ---------- administração ----------
   app.post('/api/admin/login', async (req, res) => res.json(200, { admin: await A.adminLogin(req, res) }));
   app.post('/api/admin/suspend', async (req, res) => { need(req, 'admin'); await ADM.setSuspended(req.body.email, !!req.body.on); S.bump(); res.json(200, { rev: S.rev(), view: await V.viewFor(req.user) }); });
-  app.post('/api/admin/delete-user', async (req, res) => { need(req, 'admin'); await ADM.deleteUser(req.body.email); S.bump(); res.json(200, { rev: S.rev(), view: await V.viewFor(req.user) }); });
+  app.post('/api/admin/delete-user', async (req, res) => { need(req, 'admin'); try { await B.cancelRemote(String(req.body.email || '').toLowerCase()); } catch (e) { /* segue com a exclusão */ } await ADM.deleteUser(req.body.email); S.bump(); res.json(200, { rev: S.rev(), view: await V.viewFor(req.user) }); });
   app.post('/api/admin/delete-house', async (req, res) => { need(req, 'admin'); await ADM.deleteHouse(req.body.id); S.bump(); res.json(200, { rev: S.rev(), view: await V.viewFor(req.user) }); });
   app.post('/api/admin/cancel-proposal', async (req, res) => { need(req, 'admin'); await ADM.cancelProposal(req.body.id); S.bump(); res.json(200, { rev: S.rev(), view: await V.viewFor(req.user) }); });
+  app.get('/api/admin/billing', async (req, res) => { need(req, 'admin'); res.json(200, await B.adminView()); });
+  app.post('/api/admin/billing', async (req, res) => { need(req, 'admin'); await B.setSettings(req.body || {}); res.json(200, await B.adminView()); });
+  app.post('/api/admin/billing/free', async (req, res) => { need(req, 'admin'); await B.setFree(req.body.email, !!req.body.on); res.json(200, await B.adminView()); });
   app.post('/api/admin/password', async (req, res) => { need(req, 'admin'); await A.adminChangePassword(req.body.old, req.body.new); res.json(200, { ok: true }); });
   app.get('/api/admin/backup', async (req, res) => {
     need(req, 'admin');

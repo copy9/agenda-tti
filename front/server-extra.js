@@ -147,3 +147,79 @@ async function showProfile(code){
  try{const r=await api0('/api/public/broker/'+encodeURIComponent(code));
   showProfPage({bn:r.bn,wa:r.wa,av:r.av,c:r.c,r:r.r,bi:r.bi,hs:r.hs.map(h=>Object.assign({},h,{href:g=>'/c/'+encodeURIComponent(h.pg)+'?b='+encodeURIComponent(code)+'&lg='+g}))})}
  catch(x){$('pub').innerHTML='<div class="pv" style="text-align:center;padding:90px 20px"><h1>'+L3('Este perfil não está disponível','This profile is not available','Este perfil no está disponible')+'</h1></div>'}}
+
+/* ===== mensalidade da plataforma (Mercado Pago) ===== */
+Object.assign(XT.pt,{bt:'Assinatura',bn:'{p} por mês, cobrados pelo Mercado Pago. Você pode cancelar quando quiser.',btr:'Período grátis: faltam {n} dia(s).',bac:'Assinatura ativa.',brn:'Renova sozinha. Próxima cobrança por volta de {d}.',bcn:'Renovação cancelada. Seu acesso vale até {d}.',bfr:'Sua conta não paga mensalidade.',
+ bet:'Seu período grátis terminou',bep:'Para continuar usando a Agenda TTI, assine por {p} por mês. O pagamento é feito no Mercado Pago.',bsb:'Assinar com Mercado Pago',bpd:'Já paguei, verificar',bcc:'Cancelar renovação',bcy:'Confirmar: cancelar renovação',bpe:'Pagamento iniciado. Se você já concluiu no Mercado Pago, toque em "Já paguei, verificar".',
+ bof:'O pagamento ainda não foi configurado neste servidor. Fale com a administração.',bnc:'Pagamento ainda não confirmado. Pode levar alguns minutos.',bok:'Assinatura confirmada. Obrigado!',bwa:'Faltam {n} dia(s) do período grátis. Assine em Conta, Assinatura.',bsx:'Sair',bcd:'Renovação cancelada'});
+Object.assign(XT.en,{bt:'Subscription',bn:'{p} per month, charged by Mercado Pago. You can cancel anytime.',btr:'Free period: {n} day(s) left.',bac:'Subscription active.',brn:'Renews automatically. Next charge around {d}.',bcn:'Renewal canceled. Your access lasts until {d}.',bfr:'Your account does not pay a subscription.',
+ bet:'Your free period has ended',bep:'To keep using Agenda TTI, subscribe for {p} per month. Payment is made on Mercado Pago.',bsb:'Subscribe with Mercado Pago',bpd:'I already paid, check',bcc:'Cancel renewal',bcy:'Confirm: cancel renewal',bpe:'Payment started. If you already finished on Mercado Pago, tap "I already paid, check".',
+ bof:'Payment is not set up on this server yet. Contact the administration.',bnc:'Payment not confirmed yet. It can take a few minutes.',bok:'Subscription confirmed. Thank you!',bwa:'{n} day(s) of the free period left. Subscribe under Account, Subscription.',bsx:'Sign out',bcd:'Renewal canceled'});
+Object.assign(XT.es,{bt:'Suscripción',bn:'{p} por mes, cobrados por Mercado Pago. Puede cancelar cuando quiera.',btr:'Período gratis: faltan {n} día(s).',bac:'Suscripción activa.',brn:'Se renueva sola. Próximo cobro alrededor del {d}.',bcn:'Renovación cancelada. Su acceso vale hasta el {d}.',bfr:'Su cuenta no paga mensualidad.',
+ bet:'Su período gratis terminó',bep:'Para seguir usando Agenda TTI, suscríbase por {p} al mes. El pago se hace en Mercado Pago.',bsb:'Suscribirse con Mercado Pago',bpd:'Ya pagué, verificar',bcc:'Cancelar renovación',bcy:'Confirmar: cancelar renovación',bpe:'Pago iniciado. Si ya terminó en Mercado Pago, toque "Ya pagué, verificar".',
+ bof:'El pago aún no está configurado en este servidor. Hable con la administración.',bnc:'Pago aún no confirmado. Puede tardar unos minutos.',bok:'Suscripción confirmada. ¡Gracias!',bwa:'Faltan {n} día(s) del período gratis. Suscríbase en Cuenta, Suscripción.',bsx:'Salir',bcd:'Renovación cancelada'});
+let PAY=null,PAYWARN=false;
+const bmoney=n=>brl(Number(n));
+const bdate=ms=>new Date(ms).toLocaleDateString(LNAMES[TTI_LANG]||'pt-BR',{day:'2-digit',month:'long'});
+function setPay(p){PAY=p;if(SRVU)SRVU.pay=p;const b=$('fbill');if(b)b.textContent=xt('bt')+(p&&p.status==='trial'?' · '+p.daysLeft+' d':'');
+ if(p&&p.status==='trial'&&p.daysLeft<=3&&!PAYWARN){PAYWARN=true;toast(xt('bwa',{n:p.daysLeft}))}
+ if(p&&p.blocked)paywallDraw()}
+async function payLoad(){if(!SRVU||SRVU.role==='admin')return;
+ try{if(new URLSearchParams(location.search).get('assinatura')){history.replaceState(null,'',location.pathname);try{const r=await api0('/api/billing/refresh',{});setPay(r.pay);if(r.pay.status==='active'){if($('billd').open||PAYRET)location.reload();else toast(xt('bok'));return}}catch(e){}}
+  setPay((await api0('/api/billing')).pay)}catch(e){}}
+function billBody(p,pw){if(!p||!p.applies)return '<div class="bst">'+xt('bfr')+'</div>';
+ const pr='<div class="bpr">'+bmoney(p.price)+'<small style="font-size:14px;font-weight:400"> / '+L3('mês','month','mes')+'</small></div>';
+ if(p.status==='free')return '<div class="bst">'+xt('bfr')+'</div>';
+ let st='';if(p.status==='trial')st=xt('btr',{n:p.daysLeft});else if(p.status==='active')st=p.renews?xt('bac')+' '+xt('brn',{d:bdate(p.paidUntil)}):xt('bcn',{d:bdate(p.paidUntil)});else st=xt('bet');
+ if(p.status==='expired'&&p.pending)st+=' '+xt('bpe');
+ return pr+(pw&&p.status==='expired'&&!p.pending?'':'<div class="bst">'+st+'</div>')+(p.configured?'':'<p class="mute">'+xt('bof')+'</p>')}
+function billBtns(p){if(!p||!p.applies||p.status==='free'||!p.configured)return '';
+ let h='';if(!(p.status==='active'&&p.renews))h+='<button class="btn" id="bsub" type="button">'+xt('bsb')+'</button>';
+ if(p.status==='expired'||p.pending||p.status==='trial')h+='<button class="btn o" id="bchk" type="button">'+xt('bpd')+'</button>';
+ if(p.status==='active'&&p.renews)h+='<button class="btn o" id="bcan" type="button">'+xt('bcc')+'</button>';return h}
+function billBind(root,after){
+ const s=root.querySelector('#bsub');if(s)s.onclick=async()=>{MO.busy(s,true);try{const r=await api('/api/billing/subscribe',{});location.href=r.url}catch(x){toast(x.message);MO.busy(s,false)}};
+ const c=root.querySelector('#bchk');if(c)c.onclick=async()=>{MO.busy(c,true);try{const r=await api('/api/billing/refresh',{});setPay(r.pay);if(!r.pay.blocked){toast(xt('bok'));after(r.pay)}else toast(xt('bnc'))}catch(x){toast(x.message)}MO.busy(c,false)};
+ const k=root.querySelector('#bcan');if(k)k.onclick=async()=>{if(!k._a){k._a=1;k.textContent=xt('bcy');return}MO.busy(k,true);try{const r=await api('/api/billing/cancel',{});setPay(r.pay);toast(xt('bcd'));after(r.pay)}catch(x){toast(x.message);MO.busy(k,false)}}}
+/* Conta vencida: janela que não fecha. Só deixa assinar, verificar, baixar os dados ou sair. */
+let PAYRET=false;
+function srvPaywall(){if(!PAYRET&&new URLSearchParams(location.search).get('assinatura')){PAYRET=true;payLoad();return}
+ if(!PAY||!PAY.blocked){PAY=Object.assign({},PAY||{},{blocked:true,applies:true,status:'expired',configured:true});api0('/api/billing').then(r=>setPay(r.pay),()=>paywallDraw())}else paywallDraw()}
+function paywallDraw(){const d=$('billd');if(!d)return;
+ d.oncancel=e=>e.preventDefault();
+ d.innerHTML='<div class="xd" style="padding-top:24px"><h2 id="bgt" style="margin:0 0 8px">'+xt('bet')+'</h2><p>'+xt('bep',{p:bmoney((PAY||{}).price||10)})+'</p>'+billBody(PAY,1)+'<div class="row" style="margin-top:16px">'+billBtns(PAY)+'</div>'
+  +'<div class="row" style="margin-top:14px"><a class="btn o" href="/api/me/export" download>'+xt('md')+'</a><button class="btn o" id="bout" type="button">'+xt('bsx')+'</button></div></div>';
+ billBind(d,()=>location.reload());
+ $('bout').onclick=()=>{api0('/api/logout',{}).catch(()=>{}).then(()=>location.reload())};
+ if(!d.open)d.showModal()}
+async function openBilling(){const d=$('billd');if(!d)return;
+ await payLoad();if(PAY&&PAY.blocked)return;
+ const draw=()=>{d.oncancel=null;d.innerHTML='<div class="fh"><h2 id="bgt">'+xt('bt')+'</h2><button class="fx" id="bx" type="button" aria-label="'+xt('cl')+'">×</button></div><div class="xd">'+billBody(PAY)+'<div class="row">'+billBtns(PAY)+'</div>'+(PAY&&PAY.applies&&PAY.status!=='free'?'<p class="mute" style="margin-top:14px">'+xt('bn',{p:bmoney(PAY.price)})+'</p>':'')+'</div>';
+  $('bx').onclick=()=>d.close();billBind(d,draw)};
+ draw();if(!d.open)d.showModal()}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#fbill'))openBilling()});
+{const _sa2=srvApply;srvApply=function(v,f){_sa2(v,f);if(!PAYLOADED){PAYLOADED=true;payLoad()}}}
+let PAYLOADED=false;
+
+/* ===== painel do administrador: mensalidade ===== */
+let ABV=null;
+async function admBill(){
+ if(!$('abill')){const e=document.createElement('div');e.id='abill';e.className='cal';e.style.marginTop='16px';$('am').appendChild(e)}
+ if(ABV)admBillPaint();
+ try{ABV=await api0('/api/admin/billing')}catch(x){const e=$('abill');if(e)e.innerHTML='<p class="mute">'+esc(x.message)+'</p>';return}
+ admBillPaint()}
+function admBillPaint(){
+ const el=$('abill'),v=ABV;if(!el||!v)return;
+ const s=v.settings,roles={both:'Proprietários e corretores',owner:'Só proprietários',broker:'Só corretores'},st={trial:'Em teste',active:'Assinante',expired:'Vencida',free:'Isenta'};
+ el.innerHTML='<h3>Mensalidade</h3><p class="mute" style="margin:6px 0 0">Cada conta tem os dias grátis e depois paga a mensalidade pelo Mercado Pago. Mudanças no valor valem para as próximas assinaturas.</p>'
+  +(v.configured?'':'<p class="err" role="alert" style="margin:10px 0 0">O Mercado Pago ainda não está ligado: defina MP_ACCESS_TOKEN no servidor. Enquanto isso, ninguém é bloqueado.</p>')
+  +'<div class="ag"><label>Valor mensal (R$)<input id="ab-p" inputmode="decimal" value="'+String(s.price).replace('.',',')+'"></label><label>Dias grátis<input id="ab-t" type="number" min="0" max="365" value="'+s.trial+'"></label>'
+  +'<label>Quem paga<select id="ab-r">'+Object.keys(roles).map(k=>'<option value="'+k+'"'+(s.roles===k?' selected':'')+'>'+roles[k]+'</option>').join('')+'</select></label></div>'
+  +'<label style="display:flex;gap:10px;align-items:center;font-weight:600"><input type="checkbox" id="ab-o"'+(s.on?' checked':'')+' style="width:20px;height:20px"> Cobrança ligada</label>'
+  +'<div class="inv" style="margin-top:12px"><button class="btn" id="ab-s" type="button">Salvar</button></div>'
+  +'<p class="mute" style="margin:14px 0 4px">Endereço de aviso (webhook) para cadastrar no Mercado Pago, evento "Assinaturas":</p><code>'+esc(v.hook)+'</code>'+(v.signed?'':'<p class="mute" style="font-size:13px">Defina MP_WEBHOOK_SECRET no servidor para conferir a assinatura dos avisos.</p>')
+  +'<div class="ac"><span><b>'+v.counts.trial+'</b>em teste</span><span><b>'+v.counts.active+'</b>assinantes</span><span><b>'+v.counts.expired+'</b>vencidas</span><span><b>'+v.counts.free+'</b>isentas</span></div>'
+  +'<div style="overflow:auto"><table class="tb"><thead><tr><th>Conta</th><th>Tipo</th><th>Situação</th><th></th></tr></thead><tbody>'+v.list.map(u=>'<tr><td>'+esc(u.name)+'<br><small class="mute">'+esc(u.email)+'</small></td><td>'+(u.role==='owner'?'Proprietário':'Corretor')+'</td><td>'+st[u.status]+(u.status==='trial'?' ('+u.daysLeft+' d)':'')+(u.courtesy?' · cortesia':'')+'</td><td style="text-align:right"><button class="btn o s" type="button" data-free="'+esc(u.email)+'" data-on="'+(u.courtesy?0:1)+'">'+(u.courtesy?'Remover isenção':'Isentar')+'</button></td></tr>').join('')+'</tbody></table></div>';
+ $('ab-s').onclick=async()=>{const b=$('ab-s');MO.busy(b,true);try{await api0('/api/admin/billing',{price:$('ab-p').value,trial:Number($('ab-t').value),roles:$('ab-r').value,on:$('ab-o').checked});toast('Mensalidade salva');ABV=null;admBill()}catch(x){toast(x.message);MO.busy(b,false)}};
+ el.querySelectorAll('[data-free]').forEach(b=>b.onclick=async()=>{try{await api0('/api/admin/billing/free',{email:b.dataset.free,on:b.dataset.on==='1'});ABV=null;admBill()}catch(x){toast(x.message)}})}
+{const _ar=arender;arender=function(){_ar();if(SRV&&AT==='cf')admBill()}}

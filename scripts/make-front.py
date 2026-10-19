@@ -47,7 +47,7 @@ rep('<button type="button" class="back" id="sw"', '<p class="lk" id="fgw" hidden
 rep("$('nmw').hidden=$('waw').hidden=ex;", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=ex;$('fgw').hidden=!SRV||!ex;")
 rep("function resetLogin(){INVT=null;", "function resetLogin(){INVT=null;$('tc').checked=false;")
 rep('<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button></div></div>', '<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a></div></div>')
-rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fdata">Meus dados</button><button class="fl" type="button" id="fnotif">Avisos por e-mail e push</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
+rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fbill">Assinatura</button><button class="fl" type="button" id="fdata">Meus dados</button><button class="fl" type="button" id="fnotif">Avisos por e-mail e push</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
 rep('<dialog id="dlg" aria-labelledby="dtt">', extra('server-extra.html') + '<dialog id="dlg" aria-labelledby="dtt">')
 rep('</style>', extra('server-extra.css') + '</style>')
 rep('const I18N_D=/*I18N_DATA*/[', 'const I18N_D=/*I18N_DATA*/' + json.dumps(json.loads(extra('server-extra.i18n.json')), ensure_ascii=False)[:-1] + ',')
@@ -90,7 +90,7 @@ async function api(path,body){MO.bar.start();try{return await api0(path,body)}fi
 async function api0(path,body){const o={credentials:'same-origin',headers:{}};if(body!==undefined){o.method='POST';o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
- if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;if(j&&j.code)e.code=j.code;if(r.status===403&&e.code==='terms')srvTerms();throw e}return j}
+ if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;if(j&&j.code)e.code=j.code;if(r.status===403&&e.code==='terms')srvTerms();if(r.status===402&&e.code==='billing')srvPaywall();throw e}return j}
 const SRVK=['edits','susp','owners','brokers','houses','blocks','props','inv','chat','noti','prof','bio','tour','remx','rems','remh'];
 const PUSHK=['houses','props','blocks','noti','chat','prof','bio','inv','tour','remx','rems','remh'];
 let SREV=0,SNAP={},SDIRTY=new Set(),SBUSY=false,STMR=null,SPOLL=null,SPEND=false;

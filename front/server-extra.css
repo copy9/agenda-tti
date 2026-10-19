@@ -7,3 +7,6 @@
 .xd .lk{margin-top:22px;font-size:14px}.xd .lk a{color:inherit;text-underline-offset:2px}
 #tmod{width:min(520px,94vw)}
 .xd a.btn{text-decoration:none;display:inline-block}
+#billd{width:min(480px,94vw)}#billd .bst{padding:12px 14px;border-radius:14px;background:var(--bg);border:1px solid var(--line);margin:10px 0}#billd .bpr{font-size:28px;font-weight:700;letter-spacing:-.02em}
+#abill .ag{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:12px 0}#abill label{display:grid;gap:6px;font-weight:600;font-size:14px}#abill .ac{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;font-size:14px}#abill .ac b{font-size:20px;display:block}
+#abill code{word-break:break-all;font-size:13px}
