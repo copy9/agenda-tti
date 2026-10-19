@@ -129,6 +129,7 @@ async function subscribe(user) {
   const pa = await mp('POST', '/preapproval', {
     reason: 'Agenda TTI · mensalidade',
     external_reference: sub.ref,
+    payer_email: user.email,
     auto_recurring: { frequency: 1, frequency_type: 'months', transaction_amount: s.price, currency_id: 'BRL' },
     back_url: cfg.PUBLIC_URL + '/?assinatura=retorno',
     status: 'pending',

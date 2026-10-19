@@ -14,6 +14,7 @@ B.setHttp(async (url, opt) => {
   mp.calls.push({ method: opt.method, path, body, auth: opt.headers.Authorization, idem: opt.headers['X-Idempotency-Key'] });
   const out = (j, status = 200) => ({ ok: status < 300, status, text: async () => JSON.stringify(j) });
   if (opt.method === 'POST' && path === '/preapproval') {
+    if (!body.payer_email) return out({ message: 'payer_email is required' }, 400);
     const id = 'pa' + (++mp.n);
     mp.subs[id] = { id, status: 'pending', external_reference: body.external_reference, next_payment_date: null, amount: body.auto_recurring.transaction_amount };
     return out({ id, init_point: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_id=' + id });
@@ -92,7 +93,7 @@ test('assinar cria a assinatura recorrente no Mercado Pago e o aviso assinado li
   assert.ok(call.idem);
   assert.deepEqual(call.body.auto_recurring, { frequency: 1, frequency_type: 'months', transaction_amount: 10, currency_id: 'BRL' });
   assert.equal(call.body.back_url, 'https://agenda.test/?assinatura=retorno');
-  assert.ok(!JSON.stringify(call.body).includes('bl-c1@x.com'), 'o e-mail não vai para o Mercado Pago');
+  assert.equal(call.body.payer_email, 'bl-c1@x.com', 'o Mercado Pago exige o e-mail do pagador');
   assert.equal((await pay(cor)).status, 'expired', 'pendente ainda não libera');
 
   const id = r.j.url.split('=').pop();
