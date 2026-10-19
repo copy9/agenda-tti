@@ -76,6 +76,14 @@ Para ligar:
 
 Sem `MP_ACCESS_TOKEN` a cobrança fica desligada e ninguém é bloqueado. Conta com o teste vencido e sem assinatura fica bloqueada (a API responde 402), mas continuam abertas: assinar, baixar os próprios dados, excluir a conta e todas as páginas públicas (casa, perfil do corretor e página de check-in da família). Cancelar a assinatura mantém o acesso até o fim do período pago, e excluir a conta cancela a assinatura. O Mercado Pago exige o e-mail do pagador, então o e-mail da conta é enviado a ele ao criar a assinatura; o vínculo da assinatura com a conta usa um código interno (`external_reference`).
 
+#### Testar a assinatura no seu computador
+O Mercado Pago só aceita endereço de retorno `https://` público, então `localhost` não serve. Para testar sem hospedar, use um túnel:
+1. Com o servidor rodando, abra o túnel apontando para `127.0.0.1` (não `localhost`, que pode virar IPv6 e dar erro 502): `cloudflared tunnel --url http://127.0.0.1:3000`.
+2. Copie o endereço `https://....trycloudflare.com` que ele mostra, ponha em `PUBLIC_URL` no `.env` (uma só linha `PUBLIC_URL=`, sem barra no final) e reinicie o servidor.
+3. Abra o sistema por esse endereço. Cada vez que o túnel é reaberto o endereço muda e o `PUBLIC_URL` precisa ser atualizado.
+4. Se o checkout não abrir, o motivo está no log do servidor, na linha `mercado pago recusou a chamada` (campos `status` e `detail`): 401 é token errado, 400 `payer_email` ou `back_url` inválido.
+5. Com credenciais de produção a cobrança é real: para testar, ponha o valor em R$ 1 no painel e cancele a assinatura depois.
+
 ### Recuperação de senha
 Em Entrar, "Esqueci a senha" envia por e-mail um link que vale 30 minutos e uma única vez (no banco fica só o hash). A resposta é a mesma exista o e-mail ou não, há limite por e-mail e por IP, e ao redefinir todas as sessões são encerradas e a pessoa recebe um aviso. Exige `SMTP_*` configurado. A senha do administrador continua vindo de `ADMIN_PASSWORD`.
 
