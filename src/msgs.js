@@ -100,6 +100,11 @@ KINDS.proposal_queued = { grp: 'answer', to: 'broker',
   pt: ['Sua proposta para {house} entrou na fila', 'As datas de {in} a {out} estão em análise. Sua proposta segue na fila e será enviada ao proprietário se as datas voltarem a ficar livres.'],
   en: ['Your proposal for {house} is in the queue', 'The dates from {in} to {out} are under review. Your proposal stays in the queue and goes to the owner if the dates become free again.'],
   es: ['Su propuesta para {house} entró en la fila', 'Las fechas del {in} al {out} están en análisis. Su propuesta sigue en la fila y irá al propietario si las fechas vuelven a quedar libres.'] };
+// Aviso ao proprietário de que há oferta maior esperando. Nunca cita o corretor da fila: ele segue anônimo.
+KINDS.queue_higher = { grp: 'proposal', to: 'owner',
+  pt: ['Oferta maior aguardando para {house}', 'Chegou uma proposta de {value} para {in} a {out}, acima da que está esperando sua resposta. Ela assume o lugar se a atual for recusada ou expirar.'],
+  en: ['Higher offer waiting for {house}', 'A proposal of {value} arrived for {in} to {out}, above the one awaiting your reply. It takes its place if the current one is rejected or expires.'],
+  es: ['Oferta mayor en espera para {house}', 'Llegó una propuesta de {value} para el {in} al {out}, por encima de la que espera su respuesta. Ocupa su lugar si la actual es rechazada o expira.'] };
 KINDS.proposal_promoted = { grp: 'answer', to: 'broker',
   pt: ['Sua proposta para {house} saiu da fila', 'As datas de {in} a {out} ficaram livres e sua proposta foi enviada ao proprietário.'],
   en: ['Your proposal for {house} left the queue', 'The dates from {in} to {out} became free and your proposal was sent to the owner.'],

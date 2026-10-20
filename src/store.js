@@ -200,6 +200,13 @@ async function flagsFor(t, emails, owner) {
   return out;
 }
 
+// Oferta na fila maior que a proposta que está com o proprietário: ele é avisado do valor, nunca de quem ofereceu.
+// Sem `pid`: o aviso não pode abrir a proposta da fila, que continua invisível para ele.
+async function queueHigher(t, ownerEmail, d, value) {
+  await notify(t, ownerEmail, 'Oferta maior aguardando para ' + d.house + ': ' + M.fmtMoney(value, 'pt') + ' de ' + d.in + ' a ' + d.out + '. Ela assume o lugar se a proposta atual for recusada ou expirar.');
+  await event(t, ownerEmail, 'queue_higher', { house: d.house, in: d.in, out: d.out, value });
+}
+
 // Quando as datas ficam livres, a proposta mais antiga da fila vira a proposta ativa (e o proprietário é avisado).
 async function promoteQueue(t, houseId) {
   const rows = await t.all("SELECT * FROM proposals WHERE house_id = ? AND status = 'pending' ORDER BY updated", [houseId]);
@@ -309,4 +316,4 @@ async function writeBlocks(t, houseId, dates) {
   if (!r.changes) await t.run('INSERT INTO blocks (house_id, dates) VALUES (?,?)', [houseId, j]);
 }
 
-module.exports = { HOLD_DEFAULT, ADV_DEFAULT, INT_HOURS, QUEUE_MAX, STRIKE_DAYS, holdH, advH, strike, strikeCount, openLimit, flagsFor, promoteQueue, nightsOf, overlaps, rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
+module.exports = { HOLD_DEFAULT, ADV_DEFAULT, INT_HOURS, QUEUE_MAX, STRIKE_DAYS, holdH, advH, strike, strikeCount, openLimit, flagsFor, promoteQueue, queueHigher, nightsOf, overlaps, rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
