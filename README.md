@@ -16,6 +16,8 @@ npm start                   # abre em http://localhost:3000
 npm test                    # testes automáticos (API, termos, avisos)
 ```
 
+No Windows, um comando instala tudo (Node, Git, Docker, GitHub CLI, dependências e o navegador dos testes): `powershell -ExecutionPolicy Bypass -File scripts\setup-windows.ps1`.
+
 ## 2. Subir em um servidor com Docker (recomendado)
 
 Precisa de uma VPS (Ubuntu) com Docker e de um domínio apontando para o IP dela.
