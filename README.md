@@ -102,6 +102,15 @@ Em Entrar, "Esqueci a senha" envia por e-mail um link que vale 30 minutos e uma 
 - Convite de corretor: `/?convite=<token>`. O link só funciona com o e-mail convidado.
 - `GET /api/health` serve para monitoramento.
 
+### Prazos de bloqueio, fila e ocorrências
+
+- **Prazo por imóvel** (Editar casa): o proprietário escolhe em quanto tempo responde uma proposta (12, 24 ou 48 h; padrão 24 h) e em quanto tempo o corretor deve informar o adiantamento depois do aceite (12 a 72 h; padrão 24 h).
+- **Interesse**: o corretor marca datas "com interesse" (violeta). Não bloqueia ninguém, dura 6 h, vale 1 a 14 noites (máx. 5 ativos). Outros corretores veem só a data, sem nome.
+- **Fila**: se as datas já estão em análise por outra proposta, a nova entra na fila (até 3 por datas, invisível ao proprietário) e é enviada a ele automaticamente quando as datas ficam livres.
+- **Liberação automática**: aceite sem adiantamento informado no prazo libera as datas e gera uma ocorrência. Contraproposta ignorada também gera ocorrência. Proposta que o proprietário não responde **não** pune o corretor.
+- **Ocorrências** valem 90 dias e aparecem como selo no perfil do corretor para o proprietário (e para o próprio corretor, nunca para outros corretores). 2 ocorrências: 1 proposta aberta por vez; 3: não propõe mais. O proprietário pode remover o acesso do corretor ao imóvel a qualquer momento (Remover convite).
+- Tabelas `interests` e `strikes`; regras em `src/store.js` (`expireDue`, `promoteQueue`, `flagsFor`) e `src/policy.js`. Testes em `test/holds.test.js`.
+
 ## 7. Mapa dos arquivos
 
 ```

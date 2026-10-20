@@ -271,6 +271,7 @@ async function ints(t, user, op) {
   for (const id of (Array.isArray(op.del) ? op.del : [])) await t.run('DELETE FROM interests WHERE id = ? AND broker_email = ?', [String(id), user.email]);
   for (const inc of (Array.isArray(op.up) ? op.up : [])) {
     if (!inc || !U.isDate(inc.in) || !U.isDate(inc.out)) continue;
+    if (await S.one(t, 'SELECT 1 AS x FROM interests WHERE id = ?', [String(inc.id)])) continue; // já existe (reenvio)
     const hid = String(inc.hid || '').replace(/^r(?=[A-Za-z])/, '');
     const ok = await S.one(t, "SELECT 1 AS x FROM invites WHERE house_id = ? AND broker_email = ? AND status = 'accepted'", [hid, user.email]);
     if (!ok) throw forbid('Você não tem acesso a esta casa.');

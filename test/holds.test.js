@@ -43,11 +43,12 @@ test('interesse: não bloqueia, é anônimo para outros corretores e expira', as
   const r = await a.sync([{ c: 'ints', up: [{ hid: 'r' + hid, in: D(40), out: D(43) }] }]);
   assert.equal(r.status, 200, r.txt);
   const mine = r.j.view.ints;
-  assert.equal(mine.length, 1); assert.equal(mine[0].mine, 1);
+  assert.equal(mine.length, 1); assert.equal(mine[0].mine, 1); assert.equal(mine[0].hid, hid);
+  assert.equal(r.j.view.intso.length, 0);
   const seen = (await b.get('/api/sync')).j;
-  assert.equal(seen.view.ints.length, 1); assert.equal(seen.view.ints[0].mine, 0);
+  assert.equal(seen.view.ints.length, 0); assert.equal(seen.view.intso.length, 1); assert.equal(seen.view.intso[0].mine, 0);
   assert.ok(!JSON.stringify(seen).includes('it-a@x.com') && !JSON.stringify(seen).includes('Ana it'));
-  assert.deepEqual(Object.keys(seen.view.ints[0]).sort(), ['exp', 'hid', 'id', 'in', 'mine', 'out']);
+  assert.deepEqual(Object.keys(seen.view.intso[0]).sort(), ['exp', 'hid', 'id', 'in', 'mine', 'out']);
   // o proprietário não vê interesses
   assert.ok(!(await dono.get('/api/sync')).j.view.ints);
   // outro corretor pode propor nas mesmas datas (interesse não bloqueia)
