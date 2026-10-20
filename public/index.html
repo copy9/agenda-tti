@@ -2196,7 +2196,10 @@ function showErr(e){try{console.error(e);let b=$('errb');if(!b){b=document.creat
  $('er1').onclick=()=>{b.remove();PG='houses';PV=null;view=null;CT=null;try{_render()}catch(x){}};
  $('er2').onclick=()=>{DB.clear();try{sessionStorage.clear()}catch(x){}location.reload()}}catch(x){}}
 addEventListener('error',ev=>{if(/^(chrome|moz|safari)-extension:/.test(ev.filename||'')||ev.message==='Script error.'||/ResizeObserver/.test(ev.message||''))return;showErr(ev.error||ev.message)});
-addEventListener('unhandledrejection',ev=>{const m=String((ev.reason&&ev.reason.message)||ev.reason||'');if(/extension|MetaMask|ObjectMultiplex/i.test(m))return;showErr(ev.reason)});
+addEventListener('unhandledrejection',ev=>{const m=String((ev.reason&&ev.reason.message)||ev.reason||'');if(/extension|MetaMask|ObjectMultiplex/i.test(m))return;
+ // transição de tela trocada por outra: comportamento normal do navegador, não é falha da aplicação
+ if(/Transition was skipped|ViewTransition|view transition/i.test(m))return;
+ showErr(ev.reason)});
 const _render=render;render=function(){try{_render.apply(this,arguments)}catch(e){showErr(e)}};
 
 /* ===== v2: tema, página pública, tour ===== */
@@ -2647,7 +2650,12 @@ function moEnter(el,key,slot){const first=key!==MO[slot];MO[slot]=key;if(first&&
  const _e=enter;enter=function(){MO.k='';return _e.apply(this,arguments)};
  const _a=arender;arender=function(){const r=_a.apply(this,arguments);moEnter($('am'),'a'+AT,'ak');return r};
  // troca de tela inteira com View Transitions (rara, então pode ser expressiva; cai para instantâneo sem suporte)
- const vt=fn=>function(){const a=arguments,t=this;if(!document.startViewTransition||REDUCED())return fn.apply(t,a);try{document.startViewTransition(()=>{fn.apply(t,a)})}catch(e){return fn.apply(t,a)}};
+ const vt=fn=>function(){const a=arguments,t=this;if(!document.startViewTransition||REDUCED())return fn.apply(t,a);
+  try{const v=document.startViewTransition(()=>{fn.apply(t,a)});
+   // trocar de tela antes de a transição anterior terminar rejeita estas promessas de propósito.
+   // Sem um catch, a rejeição sobe como erro não tratado e abre o painel "Algo deu errado nesta tela".
+   const ig=()=>{};if(v){if(v.finished&&v.finished.catch)v.finished.catch(ig);if(v.ready&&v.ready.catch)v.ready.catch(ig);if(v.updateCallbackDone&&v.updateCallbackDone.catch)v.updateCallbackDone.catch(ig)}
+  }catch(e){return fn.apply(t,a)}};
  showHome=vt(showHome);showAdmin=vt(showAdmin);const _en=enter;enter=vt(_en)}
 // diálogos: saída antes de fechar (Esc e botão Fechar)
 {const _c=HTMLDialogElement.prototype.close;HTMLDialogElement.prototype.close=function(v){if(!this.open||REDUCED()||this.classList.contains('closing'))return _c.call(this,v);this.classList.add('closing');setTimeout(()=>{this.classList.remove('closing');_c.call(this,v)},120)};
