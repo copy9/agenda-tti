@@ -39,3 +39,20 @@ test('diálogo tem entrada e saída; reduced-motion desliga', async ({ browser, 
   await r.waitForSelector('#dlg[open]');
   expect(await r.evaluate(() => getComputedStyle(document.getElementById('dlg')).animationName)).toBe('none');
 });
+
+// Trocar de tela duas vezes seguidas cancela a transição anterior e o navegador rejeita as promessas
+// dela. Isso é esperado; o que não pode é virar o painel de erro "Algo deu errado nesta tela".
+test('trocar de tela rápido não abre o painel de erro', async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ baseURL });
+  const page = await ctx.newPage();
+  await signup(page, 'owner', `vt${Date.now()}@x.com`, 'Vt Teste', '51999990011', 'senha123');
+  await page.waitForSelector('#app:not([hidden])');
+  const rejeicoes = [];
+  await page.evaluate(() => { window.__rej = []; addEventListener('unhandledrejection', (e) => { window.__rej.push(String((e.reason && e.reason.message) || e.reason)); }); });
+  // duas transições encavaladas, sem esperar a primeira terminar
+  await page.evaluate(() => { try { showHome(); } catch (e) { /* ok */ } try { enter('owner', 'x@x.com'); } catch (e) { /* ok */ } try { showHome(); } catch (e) { /* ok */ } });
+  await page.waitForTimeout(800);
+  rejeicoes.push(...await page.evaluate(() => window.__rej || []));
+  await expect(page.locator('#errb')).toHaveCount(0);
+  expect(rejeicoes.join(' | ')).not.toMatch(/Algo deu errado/);
+});
