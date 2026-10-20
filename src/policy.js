@@ -192,15 +192,41 @@ async function updateProposal(t, user, row, inc, post) {
       else if (s0 === 'pending' && s1 === 'countered') {
         const c = U.num(inc.counter, 0);
         if (!(c > 0 && c < 1e9)) throw U.bad('Informe o valor da nova proposta.');
-        next.status = 'countered'; next.counter = c; next.exp = Date.now() + S.holdH(await houseOf(t, row.house_id)) * 36e5;
+        const house = await houseOf(t, row.house_id);
+        // A contraproposta pode mudar datas e adiantamento, não só o valor (#111).
+        // O que o dono propõe fica em campos próprios: a proposta do corretor só muda se ele aceitar.
+        if (inc.cin != null || inc.cout != null) {
+          const a = inc.cin == null ? doc.in : String(inc.cin);
+          const b = inc.cout == null ? doc.out : String(inc.cout);
+          if (!U.isDate(a) || !U.isDate(b)) throw U.bad('Datas inválidas.');
+          const nights = U.nightList(a, b);
+          if (!nights.length || nights.length > 60) throw U.bad('A estadia precisa ter de 1 a 60 noites.');
+          if (a < U.today()) throw U.bad('A entrada não pode ser no passado.');
+          if (nights.length < Math.max(1, (house && house.minN) || 1)) throw U.bad('A estadia precisa ter no mínimo ' + house.minN + ' noites.');
+          const taken = await datesTaken(t, row.house_id, nights, doc.id);
+          if (taken) throw conflict(taken);
+          if (a === doc.in && b === doc.out) { delete next.cin; delete next.cout; }
+          else { next.cin = a; next.cout = b; }
+        }
+        if (inc.cadv != null) {
+          const adv = U.int(inc.cadv, doc.adv == null ? 50 : doc.adv, 0, 100);
+          if (adv === (doc.adv == null ? 50 : doc.adv)) delete next.cadv; else next.cadv = adv;
+        }
+        next.status = 'countered'; next.counter = c; next.exp = Date.now() + S.holdH(house) * 36e5;
       } else throw stale();
     } else if (isBroker) {
       if (s0 === 'pending' && s1 === 'cancelled') next.status = 'cancelled';
       else if (s0 === 'countered' && s1 === 'accepted') {
-        const taken = await datesTaken(t, row.house_id, U.nightList(doc.in, doc.out), doc.id);
+        // Aceitar fecha nas datas da CONTRAPROPOSTA, e é sobre elas que a conferência de conflito roda:
+        // duas propostas contrapostas para as mesmas datas novas não podem ser aceitas as duas.
+        const ni = doc.cin || doc.in; const no = doc.cout || doc.out;
+        const taken = await datesTaken(t, row.house_id, U.nightList(ni, no), doc.id);
         if (taken) throw conflict(taken);
+        next.in = ni; next.out = no;
+        if (doc.cadv != null) next.adv = doc.cadv;
+        delete next.cin; delete next.cout; delete next.cadv;
         next.status = 'accepted'; next.final = doc.counter; next.acc = Date.now(); post.accepted.push(next);
-      } else if (s0 === 'countered' && s1 === 'declined') next.status = 'declined';
+      } else if (s0 === 'countered' && s1 === 'declined') { next.status = 'declined'; delete next.cin; delete next.cout; delete next.cadv; }
       else throw stale();
     }
   }
@@ -246,7 +272,8 @@ async function announce(t, user, row, next, who) {
   } else if (who.isOwner) {
     if (next.status === 'accepted') await to(row.broker_email, 'proposal_accepted', { value: next.final });
     else if (next.status === 'rejected') await to(row.broker_email, 'proposal_declined');
-    else if (next.status === 'countered') await to(row.broker_email, 'proposal_countered', { value: next.counter, hours: S.holdH(await houseOf(t, row.house_id)) });
+    // o aviso cita as datas que o dono propôs, não as originais: é sobre elas que o corretor decide
+    else if (next.status === 'countered') await to(row.broker_email, 'proposal_countered', { value: next.counter, hours: S.holdH(await houseOf(t, row.house_id)), in: next.cin || next.in, out: next.cout || next.out });
   } else if (who.isBroker) {
     const x = { broker: user.name };
     if (next.status === 'accepted') await to(row.owner_email, 'counter_accepted', Object.assign({ value: next.final }, x));
