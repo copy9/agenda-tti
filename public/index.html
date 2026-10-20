@@ -833,9 +833,11 @@ button,a,.d,.hc,.pr,.ci{touch-action:manipulation;-webkit-tap-highlight-color:tr
 .ovc{border:0;border-right:1px solid color-mix(in srgb,var(--line) 55%,transparent);border-bottom:1px solid var(--line);min-height:54px;background:transparent;cursor:pointer;padding:0;position:relative}
 .ovc.f{background:color-mix(in srgb,var(--ok) 11%,var(--surf))}.ovc.f.we{background:color-mix(in srgb,var(--ok) 17%,var(--surf))}
 .ovc.b{background:var(--red)}.ovc.m{background:var(--ok)}
-.ovc.p{background:repeating-linear-gradient(45deg,#D99A2B,#D99A2B 4px,#F0C45E 4px,#F0C45E 8px)}
+.ovc.p{background:repeating-linear-gradient(45deg,color-mix(in srgb,#D99A2B 55%,var(--surf)),color-mix(in srgb,#D99A2B 55%,var(--surf)) 5px,color-mix(in srgb,#D99A2B 18%,var(--surf)) 5px,color-mix(in srgb,#D99A2B 18%,var(--surf)) 10px)}
 .ovc.x{background:#5e130c;outline:2px solid #ff8a7a;outline-offset:-2px}.ovc.x::after{content:"!";color:#fff;font-weight:800;font-size:13px}
-.ovc.past{opacity:.35}.ovc.spc::before{content:"";position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:50%;background:var(--spc);box-shadow:0 0 0 2px #fff}
+.ovc.past{opacity:.35}
+.ovd.spc b{box-shadow:inset 0 -3px 0 var(--spc)}
+.ovc.sel{box-shadow:inset 0 0 0 3px var(--sea)}
 .ovc:hover{filter:brightness(1.12)}.ovc:focus-visible,.ovn:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
 .ovl{display:flex;gap:14px;flex-wrap:wrap;margin:12px 2px 0;font-size:13px;color:var(--mute)}.ovl span{display:inline-flex;align-items:center;gap:6px}
 .ovl i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
@@ -1071,7 +1073,7 @@ img.lz{opacity:0;transition:opacity var(--mo-slow) var(--ease-out)}img.lz.ld{opa
 /* Calendário geral: detalhe do dia */
 .ovi{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf)}
 .ovi div{flex:1;min-width:200px}.ovi b{display:block}.ovi span{color:var(--mute);font-size:14px}
-.ovc.pk{outline:2.5px solid var(--sea);outline-offset:-2px;position:relative;z-index:1}
+
 .pfhs{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}.pfform .pfhs label{display:flex;gap:12px;align-items:center;font-weight:400;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surf);cursor:pointer}.pfhs input{margin:0;width:20px;height:20px;flex:0 0 auto}.pfhs b{font-size:15px}.pfhs span{display:grid;gap:2px}.pfhs small{color:var(--mute)}
 .sti{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;margin-bottom:8px}.sfm{display:grid;gap:10px}.sf{display:grid;gap:4px;font-size:14px}.sf span{color:var(--mute)}.sf input,.sf textarea{width:100%}.sg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:480px){.sg2{grid-template-columns:1fr}}
 .slk input{width:100%}.stw{padding:16px;border-radius:16px;background:var(--bg);border:1px solid var(--line);margin:16px 0}.sth{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}.sth span,.stf span{display:block;color:var(--mute);font-size:13px}.sth b{font-size:17px}
@@ -2472,7 +2474,7 @@ function syncRem(){if(!AUTH||!ME)return;const S=RSn();let ch=false;
 
 // Visão geral
 function ovDraw(){const el=$('ov');if(!el)return;const y=OV.getFullYear(),m=OV.getMonth(),nd=new Date(y,m+1,0).getDate(),own=ROLE==='owner',hs=all(),W=DOWL();
- const ds=[...Array(nd)].map((_,i)=>{const d=new Date(y,m,i+1,12);return{k:iso(d),n:i+1,w:d.getDay()}});
+ const ds=[...Array(nd)].map((_,i)=>{const d=new Date(y,m,i+1,12);const k=iso(d);return{k,n:i+1,w:d.getDay(),s:specialName(k)}});
  const rows=hs.map(h=>{const hid=ROLE==='broker'?h.id.slice(1):h.id,bl=new Set(getBl(h)),hold=h.ro?new Set(heldOthers(h)):new Set();
   const op=PROP.filter(x=>x.hid===hid&&isOpen(x)&&(own||x.broker===ME)),ac=PROP.filter(x=>x.hid===hid&&x.status==='accepted'&&(own||x.broker===ME)),pm={},am={};
   op.forEach(x=>nl(x.in,x.out).forEach(k=>(pm[k]=pm[k]||[]).push(x)));ac.forEach(x=>nl(x.in,x.out).forEach(k=>am[k]=x));let fr=0;
@@ -2480,15 +2482,15 @@ function ovDraw(){const el=$('ov');if(!el)return;const y=OV.getFullYear(),m=OV.g
    if(own){if(a){c='b';t='Reservado para '+a.bname}else if(b){c='b';t='Bloqueado'}else if(p){c='p';t='Proposta de '+p[0].bname}}
    else{if(a){c='m';t='Sua reserva'}else if(p){c='p';t='Sua proposta'}else if(b){c='b';t='Bloqueado'}}
    if(c==='f'&&!past)fr++;const sn=specialName(k);
-   return `<button type="button" class="ovc ${c}${past?' past':''}${d.w%6===0?' we':''}${sn?' spc':''}" data-h="${esc(h.id)}" data-k="${k}" title="${esc(t+' · '+fd(k)+(sn?' · '+sn:''))}" aria-label="${esc(h.name+', '+fd(k)+', '+t)}"></button>`}).join('');
+   return `<button type="button" class="ovc ${c}${past?' past':''}${d.w%6===0?' we':''}" data-h="${esc(h.id)}" data-k="${k}" title="${esc(t+' · '+fd(k)+(sn?' · '+sn:''))}" aria-label="${esc(h.name+', '+fd(k)+', '+t)}"></button>`}).join('');
   return `<button type="button" class="ovn" data-h="${esc(h.id)}"><img alt="" src="${h.photos&&h.photos[0]||uri(h,0)}"><span><b>${esc(h.name)}</b><small>${fr} ${fr===1?'dia livre':'dias livres'}</small></span></button>${cells}`}).join('');
  el.innerHTML=`<div class="ovnav"><button type="button" id="ovp" aria-label="Mês anterior">‹</button><h3>${OV.toLocaleDateString(LOC(),{month:'long',year:'numeric'})}</h3><button type="button" id="ovx" aria-label="Próximo mês">›</button><button class="chip" type="button" id="ovt">Hoje</button></div>
- <div class="ovw"><div class="ovg" style="--nd:${nd}"><div class="ovh">Casa</div>${ds.map(d=>`<div class="ovd${d.w%6===0?' we':''}${d.k===today?' td':''}"><span>${W[d.w]}</span><b>${d.n}</b></div>`).join('')}${rows}</div></div>
- <div class="ovl"><span><i style="background:color-mix(in srgb,var(--ok) 20%,var(--surf))"></i>Livre</span><span><i style="background:var(--red)"></i>${own?'Bloqueado ou reservado':'Bloqueado'}</span>${own?'':'<span><i style="background:var(--ok)"></i>Sua reserva</span>'}<span><i style="background:repeating-linear-gradient(45deg,#D99A2B,#D99A2B 3px,#F0C45E 3px,#F0C45E 6px)"></i>${own?'Proposta em aberto':'Sua proposta'}</span><span><i style="background:var(--spc)"></i>Data especial</span></div>`;
+ <div class="ovw"><div class="ovg" style="--nd:${nd}"><div class="ovh">Casa</div>${ds.map(d=>`<div class="ovd${d.w%6===0?' we':''}${d.k===today?' td':''}${d.s?' spc':''}"${d.s?` title="${esc(d.s)}"`:''}><span>${W[d.w]}</span><b>${d.n}</b></div>`).join('')}${rows}</div></div>
+ <div class="ovl"><span><i style="background:color-mix(in srgb,var(--ok) 20%,var(--surf))"></i>Livre</span><span><i style="background:var(--red)"></i>${own?'Bloqueado ou reservado':'Bloqueado'}</span>${own?'':'<span><i style="background:var(--ok)"></i>Sua reserva</span>'}<span><i style="background:repeating-linear-gradient(45deg,#D99A2B,#D99A2B 3px,#F0C45E 3px,#F0C45E 6px)"></i>${own?'Proposta em aberto':'Sua proposta'}</span><span><i style="background:var(--surf);box-shadow:inset 0 -3px 0 var(--spc)"></i>${L3('Data especial (marcada no dia, no topo)','Special date (marked on the day, at the top)','Fecha especial (marcada en el día, arriba)')}</span></div>`;
  $('ovp').onclick=()=>{OV.setMonth(OV.getMonth()-1);ovDraw()};$('ovx').onclick=()=>{OV.setMonth(OV.getMonth()+1);ovDraw()};$('ovt').onclick=()=>{OV=new Date();OV.setDate(1);ovDraw()};
  const openH=id=>{view=id;sel={a:null,b:null};PM=false;PSEL=[];cm=new Date(OV);cm.setDate(1);render();scrollTo(0,0)};
  el.querySelectorAll('.ovn[data-h]').forEach(b=>b.onclick=()=>openH(b.dataset.h));
- el.querySelectorAll('.ovc[data-h]').forEach(b=>b.onclick=()=>{el.querySelectorAll('.ovc.pk').forEach(x=>x.classList.remove('pk'));b.classList.add('pk');
+ el.querySelectorAll('.ovc[data-h]').forEach(b=>b.onclick=()=>{el.querySelectorAll('.ovc.sel').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
   let bx=$('ovi');if(!bx){bx=document.createElement('div');bx.id='ovi';bx.className='ovi';el.appendChild(bx)}
   const t=(b.title||'').split(' · '),nm=(b.getAttribute('aria-label')||'').split(',')[0];
   bx.innerHTML='<div><b>'+esc(nm)+' · '+esc(t[1]||'')+'</b><span>'+esc(t[0])+(t[2]?' · '+esc(t[2]):'')+'</span></div><button class="btn s" type="button" id="ovo">'+L3('Abrir casa','Open house','Abrir casa')+'</button>';
