@@ -41,7 +41,23 @@ async function owned(user) {
 async function ownerView(user) {
   const { houses, blocks } = await owned(user);
   // propostas na fila ainda não chegaram ao proprietário
-  const props = (await docsOf(await db.all('SELECT status, doc FROM proposals WHERE owner_email = ?', [user.email]))).filter((p) => !p.q);
+  const allProps = await docsOf(await db.all('SELECT status, doc FROM proposals WHERE owner_email = ?', [user.email]));
+  const props = allProps.filter((p) => !p.q);
+  // Da fila sai só um número: o maior valor que supera a proposta em aberto das mesmas datas.
+  // Nada que identifique o corretor da fila (nome, e-mail, id ou prazo) entra aqui.
+  const queued = allProps.filter((p) => p.q);
+  if (queued.length) {
+    for (const p of props) {
+      if (!S.isOpen(p.status)) continue;
+      const cur = U.num(p.counter == null ? p.value : p.counter, 0);
+      let hi = 0;
+      for (const q of queued) {
+        if (q.hid !== p.hid || !S.overlaps(q, p)) continue;
+        hi = Math.max(hi, U.num(q.value, 0));
+      }
+      if (hi > cur) p.qhi = hi;
+    }
+  }
   const inv = {};
   (await db.all('SELECT house_id, broker_email, created, token, status FROM invites WHERE owner_email = ? ORDER BY created', [user.email])).forEach((r) => {
     inv[r.house_id] = inv[r.house_id] || [];

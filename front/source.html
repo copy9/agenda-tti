@@ -122,6 +122,7 @@ textarea{min-height:80px;resize:vertical}
 .d.hd:not(:disabled){cursor:pointer}
 .flag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,#D9822B 22%,var(--surf));color:var(--ink);border:1px solid #D9822B}.flag.l2{background:color-mix(in srgb,#D9822B 38%,var(--surf))}.flag.l3{background:var(--red);border-color:var(--red);color:#fff}
 .flagbox{border-left:5px solid #D9822B;margin:0 0 18px}.flagbox.l3{border-color:var(--red)}
+.qhi{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--sea) 16%,var(--surf));color:var(--ink);border:1px solid var(--sea);align-self:flex-start}
 .d.sel{outline:3px solid var(--sea);outline-offset:-3px;background:color-mix(in srgb,var(--sea) 16%,var(--surf))}
 .tag.r{background:var(--badbg);color:var(--bad)}
 .val{text-align:right;min-width:150px}
@@ -1566,14 +1567,21 @@ function occupy(x){const a=blocks[x.hid]||(blocks[x.hid]=[]);nl(x.in,x.out).forE
  PROP.forEach(y=>{if(y!==x&&y.hid===x.hid&&(y.status==='pending'||y.status==='countered')&&y.in<x.out&&x.in<y.out){y.status='rejected';(y.log=y.log||[]).push({d:today,s:'rejected',v:y.value});notify(y.broker,'Sua proposta para '+y.house+' foi encerrada: as datas foram reservadas por outra proposta',y.id)}})}
 function cardInfo(h,n){if(h.ro)return n?n+(n>1?' datas ocupadas':' data ocupada'):'Agenda livre';const k=PROP.filter(x=>x.hid===h.id&&x.status==='pending').length;
  return (k?`<b style="color:var(--brass)">${k} ${k>1?'propostas novas':'proposta nova'}</b> · `:'')+(n?n+(n>1?' datas bloqueadas':' data bloqueada'):'Nenhuma data bloqueada')}
+// Oferta maior esperando na fila. Com servidor o valor já vem pronto em x.qhi (views.js); na demonstração sai das propostas em fila.
+// Só o valor: quem está na fila nunca é identificado.
+function qhiOf(x){if(x.qhi)return Number(x.qhi)||0;
+ const cur=Number(x.counter==null?x.value:x.counter)||0;let hi=0;
+ PROPQ.forEach(q=>{if(q.hid===x.hid&&q.in<x.out&&x.in<q.out){const v=Number(q.value)||0;if(v>hi)hi=v}});
+ return hi>cur?hi:0}
 function pcard(x){const own=ROLE==='owner',n=nights(x.in,x.out),c=x.status==='countered',cur=c?x.counter:(x.final||x.value),id=x.id;
+ const qh=own&&(x.status==='pending'||c)?qhiOf(x):0;
  const sub=c?(own?'Sua contraproposta. Oferta: ':'Contraproposta do proprietário. Sua oferta: ')+brl(x.value):x.status==='accepted'?'Valor fechado':'Oferta';
  let ac='';
  if(own&&x.status==='pending')ac=`<button class="btn ok s" data-a="ok">Aceitar</button><button class="btn o s" data-a="cn">Nova proposta</button><button class="btn o s del" data-a="no">Rejeitar</button>`+(cnOpen===id?`<div class="cn"><input type="number" min="1" aria-label="Valor da nova proposta" placeholder="Novo valor (R$)"><button class="btn s" data-a="cs">Enviar nova proposta</button></div>`:'');
  if(!own&&x.status==='pending')ac=`<button class="btn o s del" data-a="bx">Cancelar proposta</button>`;
  if(!own&&c)ac=`<button class="btn ok s" data-a="bok">Aceitar ${brl(x.counter)}</button><button class="btn o s del" data-a="bno">Recusar</button>`;
  const cl=x.status==='accepted'?'':(x.status==='pending'||c)?' h':' r';
- return `<div class="ir" data-id="${id}"><div class="t"><b>${own?esc(x.bname)+' · ':''}${esc(x.house)}</b>${own?flagChip(x.broker):''}<span class="mute">${fd(x.in)} a ${fd(x.out)} · ${n} ${n>1?'noites':'noite'} · ${x.pax} hóspedes · ${esc(x.guest)}</span>${x.msg?`<span class="mute">“${esc(x.msg)}”</span>`:''}</div><div class="val"><b>${brl(cur)}</b><small>${sub}</small></div><span class="tag${cl}">${stl(x)}</span>${ac}</div>`}
+ return `<div class="ir" data-id="${id}"><div class="t"><b>${own?esc(x.bname)+' · ':''}${esc(x.house)}</b>${own?flagChip(x.broker):''}<span class="mute">${fd(x.in)} a ${fd(x.out)} · ${n} ${n>1?'noites':'noite'} · ${x.pax} hóspedes · ${esc(x.guest)}</span>${x.msg?`<span class="mute">“${esc(x.msg)}”</span>`:''}${qh?`<span class="qhi">⬆ ${L3('Oferta maior aguardando','Higher offer waiting','Oferta mayor en espera')}: ${brl(qh)}</span>`:''}</div><div class="val"><b>${brl(cur)}</b><small>${sub}</small></div><span class="tag${cl}">${stl(x)}</span>${ac}</div>`}
 function pbind(root){root.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const row=b.closest('[data-id]'),id=row.dataset.id,x=PROP.find(q=>q.id===id);if(!x)return;const a=b.dataset.a;
  if(a==='rel'){const acc=new Set(PROP.filter(q=>q!==x&&q.hid===x.hid&&q.status==='accepted').flatMap(q=>nl(q.in,q.out))),ns=nl(x.in,x.out);
   if(ns.some(d=>acc.has(d)))return toast(L3('Essas datas já estão reservadas por outra proposta aceita.','Those dates are already booked by another accepted proposal.','Esas fechas ya están reservadas por otra propuesta aceptada.'));
@@ -1643,7 +1651,12 @@ function pform(h){const el=$('pf');if(!el)return;const hid=h.id.slice(1);
   if(qn&&inQ>=3)return bad(L3('Essas datas estão em análise e a fila está cheia. Tente outras datas.','These dates are under review and the queue is full. Try other dates.','Estas fechas están en análisis y la fila está llena. Pruebe otras fechas.'));
   PROP.push(Object.assign({id:'p'+Date.now(),hid,house:h.name,broker:ME,bname:bname(),in:sel.a,out:sel.b,value:v,guest:g,pax:pn,msg:$('pv-m').value.trim(),status:'pending',at:today,on:h.owner,adv:advOf(h),oe:h.oe||USER.email},qn?{q:1,cr:Date.now()}:{exp:Date.now()+HOLDH(h)*36e5}));
   const np=PROP[PROP.length-1];INTS=INTS.filter(i=>!(i.hid===hid&&nl(i.in,i.out).some(d=>nl(np.in,np.out).includes(d))));DB.set('ints',INTS);
-  if(qn)notify(ME,L3('Sua proposta para '+h.name+' entrou na fila','Your proposal for '+h.name+' joined the queue','Su propuesta para '+h.name+' entró en la fila'),np.id);else notify(np.oe,bname()+' enviou uma proposta de '+brl(v)+' para '+h.name,np.id);
+  if(qn){notify(ME,L3('Sua proposta para '+h.name+' entrou na fila','Your proposal for '+h.name+' joined the queue','Su propuesta para '+h.name+' entró en la fila'),np.id);
+   // Oferta maior que a proposta que já está com o proprietário: ele é avisado do valor, nunca de quem ofereceu (sem pid).
+   const act=PROP.filter(x=>x.hid===hid&&!x.q&&(x.status==='pending'||x.status==='countered')&&x.in<np.out&&np.in<x.out)
+    .reduce((m,x)=>Math.max(m,Number(x.counter==null?x.value:x.counter)||0),0);
+   if(v>act)notify(np.oe,L3('Oferta maior aguardando para '+h.name+': '+brl(v)+'. Ela assume o lugar se a proposta atual for recusada ou expirar.','Higher offer waiting for '+h.name+': '+brl(v)+'. It takes over if the current proposal is rejected or expires.','Oferta mayor en espera para '+h.name+': '+brl(v)+'. Ocupa el lugar si la propuesta actual es rechazada o expira.'));
+  }else notify(np.oe,bname()+' enviou uma proposta de '+brl(v)+' para '+h.name,np.id);
   saveP();sel={a:null,b:null};cal(h);pform(h);toast(qn?L3('Proposta na fila. Avisaremos quando ela seguir ao proprietário.','Proposal queued. We will notify you when it goes to the owner.','Propuesta en la fila. Le avisaremos cuando pase al propietario.'):'Proposta enviada ao proprietário')}}
 const LG={accepted:'Proposta aceita',rejected:'Proposta rejeitada',countered:'Você enviou uma nova proposta',declined:'O corretor recusou a nova proposta',cancelled:'O corretor cancelou a proposta',expired:'Prazo encerrado sem resposta',paid:'Adiantamento marcado como recebido',unpaid:'Adiantamento desmarcado'};
 const tcl=x=>x.status==='accepted'?'':(x.status==='pending'||x.status==='countered')?' h':' r';

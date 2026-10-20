@@ -186,3 +186,49 @@ test('contraproposta ignorada gera ocorrência; flag é visível ao dono e ao pr
   assert.equal((await ptxt(p2.id)).status, 'expired');
   assert.ok(!(await dono.get('/api/sync')).j.view.flags['fg-b@x.com']);
 });
+
+test('fila com oferta maior: o dono vê o valor e nada do corretor da fila vaza', async () => {
+  const { dono, a, b, hid } = await setup('qh');
+  const p1 = Object.assign(prop(hid, 120, 123), { value: 5000 });
+  const p2 = Object.assign(prop(hid, 120, 123), { value: 10000 });
+  assert.equal((await a.sync([{ c: 'props', up: [p1] }])).status, 200);
+  assert.equal((await b.sync([{ c: 'props', up: [p2] }])).status, 200);
+  assert.equal((await ptxt(p2.id)).q, 1, 'a segunda proposta entra na fila');
+  const v = (await dono.get('/api/sync')).j.view;
+  const act = v.props.find((x) => x.id === p1.id);
+  assert.equal(act.qhi, 10000, 'a proposta ativa mostra o valor da oferta maior');
+  assert.equal(v.props.filter((x) => x.id === p2.id).length, 0, 'a proposta da fila segue invisível');
+  const aviso = v.noti.filter((n) => /Oferta maior aguardando/.test(n.text));
+  assert.equal(aviso.length, 1, 'o dono recebe um aviso de oferta maior');
+  assert.match(aviso[0].text, /10\.000/);
+  assert.ok(!aviso[0].text.includes('qh-b@x.com') && !aviso[0].text.includes('Beto qh'), 'o aviso não identifica quem está na fila');
+  assert.ok(!v.noti.some((n) => n.pid === p2.id), 'o aviso não dá acesso à proposta da fila');
+  const vj = JSON.stringify(v.props);
+  assert.ok(!vj.includes('qh-b@x.com') && !vj.includes('Beto qh'), 'nenhum dado do corretor da fila no payload do dono');
+  assert.equal((await a.get('/api/sync')).j.view.props.filter((x) => x.ghost).length, 0, 'quem está na fila não vira data segurada');
+});
+
+test('fila com oferta igual ou menor: o dono não é avisado nem vê marca', async () => {
+  const { dono, a, b, hid } = await setup('ql');
+  const p1 = Object.assign(prop(hid, 130, 133), { value: 9000 });
+  const p2 = Object.assign(prop(hid, 130, 133), { value: 9000 });
+  await a.sync([{ c: 'props', up: [p1] }]);
+  await b.sync([{ c: 'props', up: [p2] }]);
+  assert.equal((await ptxt(p2.id)).q, 1);
+  const v = (await dono.get('/api/sync')).j.view;
+  assert.equal(v.props.find((x) => x.id === p1.id).qhi, undefined, 'sem marca quando a fila não supera');
+  assert.ok(!v.noti.map((n) => n.text).join(' ').includes('Oferta maior'), 'sem aviso quando a fila não supera');
+});
+
+test('fila maior que a contraproposta: a comparação usa o valor que está em jogo', async () => {
+  const { dono, a, b, hid } = await setup('qc');
+  const p1 = Object.assign(prop(hid, 140, 143), { value: 4000 });
+  await a.sync([{ c: 'props', up: [p1] }]);
+  await dono.sync([{ c: 'props', up: [{ id: p1.id, status: 'countered', counter: 12000 }] }]);
+  assert.equal((await ptxt(p1.id)).status, 'countered');
+  // 8000 supera a proposta original (4000) mas não a contraproposta (12000): nada chega ao dono
+  await b.sync([{ c: 'props', up: [Object.assign(prop(hid, 140, 143), { value: 8000 })] }]);
+  const v = (await dono.get('/api/sync')).j.view;
+  assert.equal(v.props.find((x) => x.id === p1.id).qhi, undefined);
+  assert.ok(!v.noti.map((n) => n.text).join(' ').includes('Oferta maior'));
+});

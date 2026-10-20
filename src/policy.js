@@ -100,11 +100,14 @@ async function createProposal(t, user, inc, post) {
   let queued = false;
   const others = await t.all("SELECT broker_email, doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered')", [hid]);
   let inQueue = 0;
+  let activeValue = 0; // maior valor em jogo na proposta que já está com o proprietário
   for (const r of others) {
     const d = U.parse(r.doc, {});
     if (!S.overlaps(d, cand)) continue;
     if (r.broker_email === user.email) throw conflict('Você já tem uma proposta para essa data.');
-    if (d.q) inQueue++; else queued = true;
+    if (d.q) { inQueue++; continue; }
+    queued = true;
+    activeValue = Math.max(activeValue, U.num(d.counter == null ? d.value : d.counter, 0));
   }
   if (queued && inQueue >= S.QUEUE_MAX) throw conflict('Essas datas estão em análise e a fila está cheia. Tente outras datas.');
   const recent = await S.one(t, 'SELECT COUNT(*) AS n FROM proposals WHERE broker_email = ? AND updated > ?', [user.email, Date.now() - 864e5]);
@@ -123,7 +126,11 @@ async function createProposal(t, user, inc, post) {
   for (const r of await t.all('SELECT id, d_in, d_out FROM interests WHERE house_id = ? AND broker_email = ?', [hid, user.email])) {
     if (S.overlaps({ in: r.d_in, out: r.d_out }, cand)) await t.run('DELETE FROM interests WHERE id = ?', [r.id]);
   }
-  if (queued) await S.event(t, user.email, 'proposal_queued', { house: house.name, in: a, out: b, pid: id });
+  if (queued) {
+    await S.event(t, user.email, 'proposal_queued', { house: house.name, in: a, out: b, pid: id });
+    // O proprietário só fica sabendo da fila quando ela traz oferta maior — e mesmo assim sem saber de quem é.
+    if (value > activeValue) await S.queueHigher(t, hrow.owner_email, doc, value);
+  }
   else await S.event(t, hrow.owner_email, 'proposal_new', { house: house.name, broker: user.name, in: a, out: b, value, hours: S.holdH(house), pid: id });
 }
 
