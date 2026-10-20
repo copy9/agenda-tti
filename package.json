@@ -23,11 +23,12 @@
     "arch": "node scripts/arch-contract.js",
     "knip": "knip --exclude exports,nsExports,types,nsTypes,enumMembers,classMembers,duplicates",
     "mutation": "stryker run",
-    "check": "npm run lint && npm run arch && npm run knip && npm test",
+    "check": "npm run lint && npm run arch && npm run knip && npm run check:front && npm test",
     "test:fast": "node --test \"test/**/*.test.js\"",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
-    "pages": "cp front/source.html index.html"
+    "pages": "cp front/source.html index.html",
+    "check:front": "node scripts/check-front.js"
   },
   "dependencies": {},
   "optionalDependencies": {
