@@ -31,6 +31,26 @@ test('proprietário e dois corretores: convite, proposta, aceite e privacidade',
     await expect.poll(async () => ((await api(owner, '/api/sync')).view.blocks[hid] || []).length).toBe(1);
   });
 
+  await test.step('data negociável tem estado próprio, diferente do bloqueio firme', async () => {
+    await owner.click('.hc');
+    await owner.waitForSelector('#g .d[data-k]');
+    const k = await owner.evaluate((id) => {
+      const btn = document.querySelector('#g .d[data-k]:not(.past)');
+      const d = btn.dataset.k;
+      blocks[id] = (blocks[id] || []).concat(d);
+      softb[id] = [d];
+      saveB();
+      cal(all().find((x) => x.id === id));
+      return d;
+    }, hid);
+    const cell = owner.locator(`#g .d[data-k="${k}"]`);
+    await expect(cell).toHaveClass(/(^|\s)ng(\s|$)/);
+    await expect(cell).not.toHaveClass(/(^|\s)bl(\s|$)/);
+    await owner.evaluate((id) => { softb[id] = []; blocks[id] = (blocks[id] || []).slice(0, 1); saveB(); }, hid);
+    await owner.click('#bk');
+    await owner.waitForSelector('.hc');
+  });
+
   const links = [];
   await test.step('convites para dois corretores', async () => {
     await owner.click('.hc');
