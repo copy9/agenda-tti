@@ -21,6 +21,7 @@ jobs:
       - run: scripts/ci-run.sh Lint npx biome check . --diagnostic-level=error --max-diagnostics=300
       - run: scripts/ci-run.sh Arquitetura npm run arch
       - run: scripts/ci-run.sh Knip npm run knip
+      - run: scripts/ci-run.sh Front-em-dia npm run check:front
       - name: Commitlint (commits do PR)
         if: github.event_name == 'pull_request'
         run: scripts/ci-run.sh Commitlint npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
