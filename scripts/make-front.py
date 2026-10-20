@@ -91,19 +91,21 @@ async function api0(path,body){const o={credentials:'same-origin',headers:{}};if
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
  if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;if(j&&j.code)e.code=j.code;if(r.status===403&&e.code==='terms')srvTerms();if(r.status===402&&e.code==='billing')srvPaywall();throw e}return j}
-const SRVK=['edits','susp','owners','brokers','houses','blocks','props','inv','chat','noti','prof','bio','tour','remx','rems','remh','ints','intso','flags','flag'];
+const SRVK=['edits','susp','owners','brokers','houses','blocks','soft','props','inv','chat','noti','prof','bio','tour','remx','rems','remh','ints','intso','flags','flag'];
 const PUSHK=['houses','props','blocks','noti','chat','prof','bio','inv','tour','remx','rems','remh','ints'];
 let SREV=0,SNAP={},SDIRTY=new Set(),SBUSY=false,STMR=null,SPOLL=null,SPEND=false;
 const KEYF={houses:h=>h.id,props:p=>p.id,chat:t=>t.id,noti:n=>n.to+'|'+n.at,ints:i=>i.id};
 function sidx(name,val){if(KEYF[name]&&Array.isArray(val)){const m={};val.forEach(x=>{m[KEYF[name](x)]=JSON.stringify(x)});return m}
- if(name==='blocks'&&val&&typeof val==='object'){const m={};Object.keys(val).forEach(k=>{m[k]=JSON.stringify(val[k])});return m}
+ if(name==='blocks'&&val&&typeof val==='object'){const m={},sf=DB.get('soft',{})||{};Object.keys(val).forEach(k=>{m[k]=JSON.stringify([val[k],sf[k]||[]])});Object.keys(sf).forEach(k=>{if(!(k in m))m[k]=JSON.stringify([val[k]||[],sf[k]])});return m}
  return JSON.stringify(val==null?null:val)}
 function sops(name,val,snap){
  if(KEYF[name]){const up=[],del=[],cur={};(val||[]).forEach(x=>{const k=KEYF[name](x);cur[k]=1;if(name==='houses'&&x.owner!==ME)return;if(snap[k]!==JSON.stringify(x))up.push(x)});
   if(name==='houses'||name==='ints')Object.keys(snap).forEach(k=>{if(!cur[k])del.push(k)});
   return up.length||del.length?{c:name,up,del}:null}
- if(name==='blocks'){if(!SRVU||SRVU.role!=='owner')return null;const own=new Set((DB.get('houses',[])||[]).map(h=>h.id)),up={},del=[];val=val||{};
-  Object.keys(val).forEach(k=>{if(own.has(k)&&snap[k]!==JSON.stringify(val[k]))up[k]=val[k]});Object.keys(snap).forEach(k=>{if(own.has(k)&&!(k in val))del.push(k)});
+ if(name==='blocks'){if(!SRVU||SRVU.role!=='owner')return null;const own=new Set((DB.get('houses',[])||[]).map(h=>h.id)),sf=DB.get('soft',{})||{},up={},del=[];val=val||{};
+  Object.keys(val).forEach(k=>{if(own.has(k)&&snap[k]!==JSON.stringify([val[k],sf[k]||[]]))up[k]={d:val[k],s:sf[k]||[]}});
+  Object.keys(sf).forEach(k=>{if(own.has(k)&&!(k in up)&&snap[k]!==JSON.stringify([val[k]||[],sf[k]]))up[k]={d:val[k]||[],s:sf[k]}});
+  Object.keys(snap).forEach(k=>{if(own.has(k)&&!(k in val))del.push(k)});
   return Object.keys(up).length||del.length?{c:'blocks',up,del}:null}
  if(sidx(name,val)===snap)return null;
  return name==='prof'?{c:'prof',up:val}:{c:name,set:val}}
@@ -117,7 +119,7 @@ async function srvFlush(){
  catch(e){if(e.status===401)srvExpired();else{toast(e.message);try{const r=await api('/api/sync');SREV=r.rev;srvApply(r.view,true)}catch(x){}}}
  finally{SBUSY=false;if(SDIRTY.size){clearTimeout(STMR);STMR=setTimeout(srvFlush,50)}}}
 function srvLoad(view){DB.load(view);SNAP={};SRVK.forEach(k=>{SNAP[k]=sidx(k,view[k])});
- try{CUS=view.houses||[];OVR={};Object.keys(INV).forEach(k=>delete INV[k]);Object.assign(INV,view.inv||{});HAS_B=true;blocks=view.blocks||{};reload()}catch(e){}}
+ try{CUS=view.houses||[];OVR={};Object.keys(INV).forEach(k=>delete INV[k]);Object.assign(INV,view.inv||{});HAS_B=true;blocks=view.blocks||{};softb=view.soft||{};reload()}catch(e){}}
 function srvRender(){
  if(document.querySelector('dialog[open]')||(/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')&&AUTH&&!$('app').hidden)){SPEND=true;return}
  SPEND=false;
@@ -131,7 +133,7 @@ function srvPoll(){clearInterval(SPOLL);SPOLL=setInterval(async()=>{
   try{const r=await api0('/api/sync?since='+SREV);if(r.same){if(SPEND)srvRender();return}SREV=r.rev;srvApply(r.view)}catch(e){if(e.status===401)srvExpired()}},5000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SRVU&&!SBUSY)api0('/api/sync?since='+SREV).then(r=>{if(!r.same){SREV=r.rev;srvApply(r.view)}},()=>{})});
 function srvExpired(){SRVU=null;clearInterval(SPOLL);SDIRTY.clear();DB.wipe();AUTH=null;try{resetLogin()}catch(e){}showHome();toast('Sua sessão expirou. Entre de novo.')}
-function srvLogout(){api('/api/logout',{}).catch(()=>{});SRVU=null;clearInterval(SPOLL);clearTimeout(STMR);SDIRTY.clear();DB.wipe();CUS=[];PROP=[];NOTI=[];CHAT=[];blocks={};Object.keys(INV).forEach(k=>delete INV[k])}
+function srvLogout(){api('/api/logout',{}).catch(()=>{});SRVU=null;clearInterval(SPOLL);clearTimeout(STMR);SDIRTY.clear();DB.wipe();CUS=[];PROP=[];NOTI=[];CHAT=[];blocks={};softb={};Object.keys(INV).forEach(k=>delete INV[k])}
 DB.onChange((n)=>{if(SRV)srvQueue(n)});
 
 async function srvGo(){

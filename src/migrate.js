@@ -31,7 +31,8 @@ const TABLES = [
   )`,
   `CREATE TABLE IF NOT EXISTS blocks (
     house_id VARCHAR(40) NOT NULL PRIMARY KEY,
-    dates LONGTEXT NOT NULL
+    dates LONGTEXT NOT NULL,
+    soft LONGTEXT
   )`,
   `CREATE TABLE IF NOT EXISTS invites (
     token CHAR(32) NOT NULL PRIMARY KEY,
@@ -190,6 +191,9 @@ async function migrate() {
   }
   // Dados opcionais do perfil do corretor (cidades, CRECI, bio), em JSON.
   try { await db.run('ALTER TABLE users ADD COLUMN info TEXT'); } catch (e) { /* já existe */ }
+  // Datas negociáveis: subconjunto dos bloqueios do proprietário que continua aceitando proposta.
+  // Banco antigo entra com a coluna vazia, ou seja, todo bloqueio existente permanece firme.
+  try { await db.run('ALTER TABLE blocks ADD COLUMN soft LONGTEXT'); } catch (e) { /* já existe */ }
   // Código público da reserva (página de check-in do hóspede).
   try { await db.run('ALTER TABLE proposals ADD COLUMN tok VARCHAR(40)'); } catch (e) { /* já existe */ }
   try { await db.run('CREATE INDEX idx_prop_tok ON proposals (tok)'); } catch (e) { /* já existe */ }
