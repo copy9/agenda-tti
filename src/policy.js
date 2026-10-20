@@ -61,7 +61,8 @@ async function blocks(t, user, op) {
       const open = await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered')", [hid]);
       for (const r of open) {
         const d = U.parse(r.doc, {});
-        if (!d.q && U.nightList(d.in, d.out).some((k) => novasFirmes.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
+        // conta também as datas que o próprio dono ofereceu numa contraproposta: elas estão em jogo
+        if (!d.q && U.nightList(d.cin || d.in, d.cout || d.out).some((k) => novasFirmes.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
       }
     }
     await S.writeBlocks(t, hid, dates);
@@ -205,6 +206,15 @@ async function updateProposal(t, user, row, inc, post) {
           if (nights.length < Math.max(1, (house && house.minN) || 1)) throw U.bad('A estadia precisa ter no mínimo ' + house.minN + ' noites.');
           const taken = await datesTaken(t, row.house_id, nights, doc.id);
           if (taken) throw conflict(taken);
+          // Nunca prometer as mesmas noites a dois corretores: a contraproposta não pode mirar datas
+          // que já estão em jogo em outra proposta aberta — inclusive nas datas de outra contraproposta.
+          for (const r of await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered') AND id <> ?", [row.house_id, doc.id])) {
+            const o = U.parse(r.doc, {});
+            if (o.q) continue;
+            if (S.overlaps({ in: o.cin || o.in, out: o.cout || o.out }, { in: a, out: b })) {
+              throw conflict('Essas datas já estão em outra proposta em aberto. Responda àquela antes de oferecê-las aqui.');
+            }
+          }
           if (a === doc.in && b === doc.out) { delete next.cin; delete next.cout; }
           else { next.cin = a; next.cout = b; }
         }
