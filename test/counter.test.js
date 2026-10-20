@@ -84,18 +84,34 @@ test('recusar a contraproposta devolve a proposta original intacta', async () =>
   assert.ok(d.cin === undefined && d.cadv === undefined);
 });
 
-test('duas contrapropostas para as mesmas datas novas: só a primeira aceita fecha', async () => {
+test('as mesmas noites não podem ser oferecidas a dois corretores', async () => {
   const { dono, a, b, hid } = await setup('cx');
   const p1 = prop(hid, 450, 453);
   const p2 = prop(hid, 460, 463);
   await a.sync([{ c: 'props', up: [p1] }]);
   await b.sync([{ c: 'props', up: [p2] }]);
-  // o dono empurra as duas para as mesmas noites
   assert.equal((await dono.sync([{ c: 'props', up: [{ id: p1.id, status: 'countered', counter: 10000, cin: D(470), cout: D(473) }] }])).status, 200);
-  assert.equal((await dono.sync([{ c: 'props', up: [{ id: p2.id, status: 'countered', counter: 11000, cin: D(470), cout: D(473) }] }])).status, 200);
-  assert.equal((await a.sync([{ c: 'props', up: [{ id: p1.id, status: 'accepted' }] }])).status, 200);
-  const segundo = await b.sync([{ c: 'props', up: [{ id: p2.id, status: 'accepted' }] }]);
-  assert.ok(segundo.status === 409 || (await ptxt(p2.id)).status !== 'accepted', 'a segunda não pode fechar nas mesmas noites');
+  // a segunda contraproposta para as mesmas noites é barrada na origem
+  const dupla = await dono.sync([{ c: 'props', up: [{ id: p2.id, status: 'countered', counter: 11000, cin: D(470), cout: D(473) }] }]);
+  assert.equal(dupla.status, 409, dupla.txt);
+  assert.match(dupla.txt, /outra proposta em aberto/);
+  assert.equal((await ptxt(p2.id)).status, 'pending', 'a segunda proposta fica como estava');
+  // nem sobrepondo parcialmente
+  const parcial = await dono.sync([{ c: 'props', up: [{ id: p2.id, status: 'countered', counter: 11000, cin: D(472), cout: D(475) }] }]);
+  assert.equal(parcial.status, 409);
+  // noites livres seguem permitidas
+  assert.equal((await dono.sync([{ c: 'props', up: [{ id: p2.id, status: 'countered', counter: 11000, cin: D(480), cout: D(483) }] }])).status, 200);
+});
+
+test('as datas de uma contraproposta não podem ser bloqueadas por baixo', async () => {
+  const { dono, a, hid } = await setup('cb');
+  const p = prop(hid, 490, 493);
+  await a.sync([{ c: 'props', up: [p] }]);
+  await dono.sync([{ c: 'props', up: [{ id: p.id, status: 'countered', counter: 10000, cin: D(500), cout: D(503) }] }]);
+  const bloq = await dono.sync([{ c: 'blocks', up: { [hid]: [D(500), D(501)] } }]);
+  assert.equal(bloq.status, 409, 'bloquear de forma firme o que está oferecido é recusado');
+  // e o aceite do corretor continua protegido mesmo que algo escape
+  assert.equal((await a.sync([{ c: 'props', up: [{ id: p.id, status: 'accepted' }] }])).status, 200);
 });
 
 test('contraproposta sem datas continua funcionando como antes', async () => {
