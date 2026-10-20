@@ -40,25 +40,40 @@ async function blocks(t, user, op) {
   const up = op.up && typeof op.up === 'object' ? op.up : {};
   for (const hid of Object.keys(up)) {
     if (!(await mine(hid))) continue;
-    const dates = Array.isArray(up[hid]) ? up[hid] : [];
-    // Uma proposta em aberto nunca pode ficar sobre datas bloqueadas: o proprietário responde antes de bloquear.
-    const cur = new Set(await S.readBlocks(t, hid));
-    const novas = dates.filter((d) => !cur.has(d));
-    if (novas.length) {
+    // Formato novo: { d: [datas], s: [negociáveis] }. Lista solta segue valendo e mantém o que já era negociável.
+    const val = up[hid];
+    const legacy = Array.isArray(val);
+    const dates = legacy ? val : (Array.isArray(val && val.d) ? val.d : []);
+    const antes = new Set(await S.readSoft(t, hid));
+    const pedido = legacy ? dates.filter((d) => antes.has(d)) : (Array.isArray(val && val.s) ? val.s : []);
+    // Negociável só existe dentro do bloqueio, e jamais sobre data vendida: ali a reserva já está fechada.
+    const vendidas = new Set();
+    for (const r of await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status = 'accepted'", [hid])) {
+      for (const k of U.nightList(U.parse(r.doc, {}).in, U.parse(r.doc, {}).out)) vendidas.add(k);
+    }
+    const soft = pedido.filter((d) => dates.includes(d) && !vendidas.has(d));
+    // Uma proposta em aberto nunca pode ficar sob bloqueio FIRME: o proprietário responde antes de travar.
+    // Marcar como negociável é permitido — não tira nada de ninguém.
+    const cur = await S.readBlocks(t, hid);
+    const antesFirme = new Set(cur.filter((d) => !antes.has(d)));
+    const novasFirmes = dates.filter((d) => !soft.includes(d) && !antesFirme.has(d));
+    if (novasFirmes.length) {
       const open = await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered')", [hid]);
       for (const r of open) {
         const d = U.parse(r.doc, {});
-        if (!d.q && U.nightList(d.in, d.out).some((k) => novas.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
+        if (!d.q && U.nightList(d.in, d.out).some((k) => novasFirmes.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
       }
     }
     await S.writeBlocks(t, hid, dates);
+    await S.writeSoft(t, hid, soft);
   }
   for (const hid of (op.del || [])) { if (await mine(String(hid))) await S.writeBlocks(t, String(hid), []); }
 }
 
 // ---------- propostas ----------
+// Só o bloqueio FIRME barra. O negociável é do proprietário, mas continua aberto a proposta e a interesse (#110).
 async function datesTaken(t, hid, nights, exceptId) {
-  const bl = new Set(await S.readBlocks(t, hid));
+  const bl = new Set(await S.readHard(t, hid));
   if (nights.some((d) => bl.has(d))) return 'Essas datas já estão ocupadas.';
   const acc = await t.all("SELECT id, doc FROM proposals WHERE house_id = ? AND status = 'accepted'", [hid]);
   for (const r of acc) {
@@ -254,6 +269,9 @@ async function afterAccept(t, post) {
   for (const x of post.accepted) {
     const nights = U.nightList(x.in, x.out);
     await S.writeBlocks(t, x.hid, (await S.readBlocks(t, x.hid)).concat(nights));
+    // Aceitar em data negociável fecha a reserva: aquelas noites deixam de ser negociáveis e viram bloqueio firme.
+    const sf = await S.readSoft(t, x.hid);
+    if (sf.some((d) => nights.includes(d))) await S.writeSoft(t, x.hid, sf.filter((d) => !nights.includes(d)));
     for (const r of await t.all('SELECT id, d_in, d_out FROM interests WHERE house_id = ?', [x.hid])) {
       if (S.overlaps({ in: r.d_in, out: r.d_out }, x)) await t.run('DELETE FROM interests WHERE id = ?', [r.id]);
     }

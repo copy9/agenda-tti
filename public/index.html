@@ -76,6 +76,7 @@ h2.s{font-size:24px;margin:34px 0 4px}
 .d small{font-size:11px;font-weight:600}
 .d:hover{border-color:var(--sea)}
 .d.bl{background:var(--red);color:#fff;border-color:var(--red)}
+.d.ng{background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--red) 30%,var(--surf)) 0 6px,var(--surf) 6px 12px);border-color:var(--red);border-style:dashed}
 .d.past{opacity:.4;cursor:not-allowed}
 .note{display:flex;gap:10px;align-items:center;margin-top:14px;background:var(--okbg);color:var(--ok);padding:10px 14px;border-radius:10px;font-size:14px;font-weight:600}
 @media(max-width:640px){.d{min-height:46px}
@@ -1358,6 +1359,10 @@ const BR=()=>{try{return DB.get('brokers',{})}catch(e){return{}}};
 const saveBR=o=>{try{DB.set('brokers',o)}catch(e){}};
 const all=()=>ROLE==='broker'?((BR()[ME]||{}).houses||[]).map(h=>{const b=H.find(x=>x.id===h.id.slice(1)),o=b?Object.assign({},b,OVR[b.id]||{}):CUS.find(x=>x.id===h.id.slice(1));if(!o)return h;const x=Object.assign({},h,{rate:o.rate,rates:o.rates,minN:o.minN,minSp:o.minSp,am:o.am,rules:o.rules,ci:o.ci,co:o.co,cit:o.cit,cot:o.cot,acc:o.acc,wfn:o.wfn,wfp:o.wfp,ckoff:o.ckoff});if(o.photos&&o.photos.length){x.photos=o.photos;x.cap=o.cap}return x}):ME===USER.email?H.map(h=>Object.assign({},h,OVR[h.id]||{})).concat(CUS.filter(x=>!x.owner||x.owner===ME)):CUS.filter(x=>x.owner===ME);
 const getBl=h=>h.ro?((HAS_B&&blocks[h.id.slice(1)])||h.blocked||[]):(blocks[h.id]||[]);
+// Negociáveis da casa. Com servidor já chegam separadas; na demonstração saem do mapa local.
+const getSf=h=>h.ro?((HAS_B&&softb[h.id.slice(1)])||h.soft||[]):(softb[h.id]||[]);
+// O que realmente barra: bloqueio firme. É o que o corretor não distingue de data vendida.
+const hardBl=h=>{const s=new Set(getSf(h));return getBl(h).filter(d=>!s.has(d))};
 const SC=['Fachada','Piscina','Sala de estar','Suíte master','Varanda gourmet'];
 function svg(h,i){const c=h.hue,hs=[...String(h.id)].reduce((a,x)=>a+x.charCodeAt(0),0),sx=330+(hs*53)%340,
  L=(l,s=30)=>`hsl(${c},${s}%,${l}%)`,wd=l=>`hsl(28,40%,${l}%)`,W='hsl(40,25%,96%)',
@@ -1377,7 +1382,10 @@ const uri=(h,i)=>'data:image/svg+xml;utf8,'+encodeURIComponent(svg(h,i));
 // estado
 let blocks={h1:[add(10),add(11),add(12)],h2:[add(5)],h3:[]};if(SRV)blocks={};
 try{const s=DB.get('blocks',null);if(s)blocks=s}catch(e){}
-const saveB=()=>{try{DB.set('blocks',blocks)}catch(e){}};
+// Datas negociáveis: subconjunto de `blocks` que o proprietário deixou aberto a proposta (#110).
+let softb={};try{const s=DB.get('soft',null);if(s)softb=s}catch(e){}
+let NG=false; // modo de marcação do calendário do proprietário: firme (padrão) ou negociável
+const saveB=()=>{try{DB.set('soft',softb)}catch(e){}try{DB.set('blocks',blocks)}catch(e){}};
 let view=null,cm=new Date();cm.setDate(1);
 let tt;const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2400)};
 // login
@@ -1512,8 +1520,8 @@ function house(h){
  const PH=h.photos&&h.photos.length?h.photos.map((u,i)=>({n:(h.cap&&h.cap[i])||'Foto '+(i+1),u})):SC.map((n,i)=>({n,u:uri(h,i)}));
  const sp=[[h.lot,'Lotação máxima','max'],[h.rate?brl(h.rate):'Não definido','Valor da diária'],[(h.minN||1)+((h.minN||1)>1?' noites':' noite'),'Mínimo de noites'],...(h.minSp>(h.minN||1)?[[h.minSp+' noites','Mínimo em datas especiais']]:[]),[h.q,'Quartos'],[h.s,'Suítes'],[h.b,'Banheiros'],[h.v,'Vagas'],[h.a,'Área construída'],[h.pool,'Lazer'],[h.pets,'Pets']],pct=advOf(h),ex=10000,oem=h.oe||(h.owner===USER.name?USER.email:'');
  const CALB=`<h2 class="s">${h.ro?'Datas disponíveis':'Calendário de bloqueio'}</h2><p class="mute" style="margin:0">${h.ro?'Clique no primeiro e no último dia da estadia (a saída é no dia seguinte). Dias em vermelho estão ocupados e não podem ser escolhidos.':'Clique em uma data para bloquear. Ela fica vermelha e some para todos os corretores da sua rede. Clique de novo para liberar.'}</p>
- <div class="cal"><div class="nav"><button id="pv" aria-label="Mês anterior">‹</button><h3 id="ml"></h3><button id="nx" aria-label="Próximo mês">›</button><span style="flex:1"></span><button class="chip" id="bsp" type="button" aria-pressed="${SPEC}">★ Datas especiais</button>${h.ro?'':`<button class="chip" id="bpm" type="button" aria-pressed="${PM}">Definir preços</button>`}</div><div class="grid" id="g"></div>
- <div class="lg"><span><i style="background:var(--surf);border:1px solid var(--line)"></i>Livre</span><span><i style="background:var(--red)"></i>Bloqueado</span><span><i style="background:var(--spc)"></i>Data especial</span><span>Valor no dia = diária (k = mil reais)</span>${h.ro?'<span><i style="background:#0B4F5C"></i>Selecionado</span><span><i style="background:color-mix(in srgb,var(--brass) 40%,var(--surf));border:1px solid var(--brass)"></i>Sua proposta</span><span><i style="background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--brass) 40%,var(--surf)) 0 4px,var(--surf) 4px 8px);border:1px solid var(--brass)"></i>'+L3('Em análise (entra na fila)','Under review (joins queue)','En análisis (entra en fila)')+'</span><span><i style="background:color-mix(in srgb,#8E6BD1 35%,var(--surf));border:1px solid #8E6BD1"></i>'+L3('Com interesse (não bloqueia)','Interest (does not block)','Con interés (no bloquea)')+'</span>':''}</div>
+ <div class="cal"><div class="nav"><button id="pv" aria-label="Mês anterior">‹</button><h3 id="ml"></h3><button id="nx" aria-label="Próximo mês">›</button><span style="flex:1"></span><button class="chip" id="bsp" type="button" aria-pressed="${SPEC}">★ Datas especiais</button>${h.ro?'':`<button class="chip" id="bng" type="button" aria-pressed="${NG}">${L3('Marcar como negociável','Mark as negotiable','Marcar como negociable')}</button><button class="chip" id="bpm" type="button" aria-pressed="${PM}">Definir preços</button>`}</div><div class="grid" id="g"></div>
+ <div class="lg"><span><i style="background:var(--surf);border:1px solid var(--line)"></i>Livre</span><span><i style="background:var(--red)"></i>Bloqueado</span><span><i style="background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--red) 30%,var(--surf)) 0 4px,var(--surf) 4px 8px);border:1px dashed var(--red)"></i>${h.ro?L3('Negociável (aceita proposta)','Negotiable (open to proposals)','Negociable (acepta propuesta)'):L3('Do proprietário, negociável','Owner\u2019s, negotiable','Del propietario, negociable')}</span><span><i style="background:var(--spc)"></i>Data especial</span><span>Valor no dia = diária (k = mil reais)</span>${h.ro?'<span><i style="background:#0B4F5C"></i>Selecionado</span><span><i style="background:color-mix(in srgb,var(--brass) 40%,var(--surf));border:1px solid var(--brass)"></i>Sua proposta</span><span><i style="background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--brass) 40%,var(--surf)) 0 4px,var(--surf) 4px 8px);border:1px solid var(--brass)"></i>'+L3('Em análise (entra na fila)','Under review (joins queue)','En análisis (entra en fila)')+'</span><span><i style="background:color-mix(in srgb,#8E6BD1 35%,var(--surf));border:1px solid #8E6BD1"></i>'+L3('Com interesse (não bloqueia)','Interest (does not block)','Con interés (no bloquea)')+'</span>':''}</div>
  <div id="spl" class="spl" hidden></div><div id="pp"></div>
  <div class="note" id="nt"></div></div>`;
  const HPN=h.ro?0:PROP.filter(x=>x.hid===h.id&&needs(x)).length,HPB=HPN?`<button class="hpn" id="hpp" type="button"><b>${HPN} ${HPN>1?'propostas aguardam':'proposta aguarda'} a sua resposta nesta casa</b><span>Ver propostas ›</span></button>`:'';
@@ -1531,6 +1539,7 @@ function house(h){
  if($('hpp'))$('hpp').onclick=()=>{PG='props';PV=null;PT='open';view=null;render();scrollTo(0,0)};
  if(!h.ro)invInit(h);
  $('bsp').onclick=()=>{SPEC=!SPEC;cal(h)};
+ if($('bng'))$('bng').onclick=()=>{NG=!NG;if(NG&&PM){PM=false;PSEL=[]}cal(h);toast(NG?L3('Agora os cliques marcam datas negociáveis: suas, mas abertas a proposta.','Clicks now mark negotiable dates: yours, but open to proposals.','Ahora los clics marcan fechas negociables: suyas, pero abiertas a propuestas.'):L3('Agora os cliques bloqueiam de forma firme.','Clicks now block firmly.','Ahora los clics bloquean de forma firme.'))};
  if($('bpm'))$('bpm').onclick=()=>{PM=!PM;PSEL=[];cal(h)};
 
  if($('eh'))$('eh').onclick=()=>openForm(h);
@@ -1551,25 +1560,32 @@ function house(h){
  cal(h);if(h.ro)pform(h);
 }
 function cal(h){
- const y=cm.getFullYear(),m=cm.getMonth(),bl=getBl(h),pd=h.ro?new Set(PROP.filter(x=>x.hid===h.id.slice(1)&&x.broker===ME&&(x.status==='pending'||x.status==='countered')).flatMap(x=>nl(x.in,x.out))):new Set(),hs=h.ro?new Set(heldOthers(h)):new Set(),im=h.ro?new Set(intsOf(h,true).flatMap(x=>nl(x.in,x.out))):new Set(),io=h.ro?new Set(intsOf(h,false).flatMap(x=>nl(x.in,x.out))):new Set();
+ const y=cm.getFullYear(),m=cm.getMonth(),bl=h.ro?hardBl(h):getBl(h),sf=new Set(getSf(h)),pd=h.ro?new Set(PROP.filter(x=>x.hid===h.id.slice(1)&&x.broker===ME&&(x.status==='pending'||x.status==='countered')).flatMap(x=>nl(x.in,x.out))):new Set(),hs=h.ro?new Set(heldOthers(h)):new Set(),im=h.ro?new Set(intsOf(h,true).flatMap(x=>nl(x.in,x.out))):new Set(),io=h.ro?new Set(intsOf(h,false).flatMap(x=>nl(x.in,x.out))):new Set();
  $('ml').textContent=cm.toLocaleDateString(LOC(),{month:'long',year:'numeric'});
- $('bsp').setAttribute('aria-pressed',SPEC);if($('bpm'))$('bpm').setAttribute('aria-pressed',PM);
+ $('bsp').setAttribute('aria-pressed',SPEC);if($('bpm'))$('bpm').setAttribute('aria-pressed',PM);if($('bng'))$('bng').setAttribute('aria-pressed',NG);
  let s=DOWL().map(d=>`<div class="dow">${d}</div>`).join('');
  for(let i=0;i<new Date(y,m,1).getDay();i++)s+='<div class="d pad"></div>';
  for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const k=iso(new Date(y,m,d)),b=bl.includes(k),p=k<today;
-  const pp=pd.has(k),sl=h.ro&&sel.a&&(sel.b?k>=sel.a&&k<sel.b:k===sel.a),lb=b?'Bloqueado':pp?'Sua proposta':hs.has(k)?'Em análise':sl&&k===sel.a?'Entrada':h.ro&&sel.b&&k===sel.b?'Saída':'';
+  const ng=sf.has(k)&&!b;
+  const pp=pd.has(k),sl=h.ro&&sel.a&&(sel.b?k>=sel.a&&k<sel.b:k===sel.a),lb=b?'Bloqueado':ng?(h.ro?L3('Do proprietário','Owner\u2019s','Del propietario'):L3('Negociável','Negotiable','Negociable')):pp?'Sua proposta':hs.has(k)?'Em análise':sl&&k===sel.a?'Entrada':h.ro&&sel.b&&k===sel.b?'Saída':'';
   const sn=SPEC?specialName(k):'',pr=priceOf(h,k),ov=h.rates&&h.rates[k]!=null,ps=!h.ro&&PM&&PSEL.includes(k);
-  s+=`<button class="d${b?' bl':pp?' pd':hs.has(k)?' hd':im.has(k)?' im':io.has(k)?' it':''}${sl?' sel':''}${p?' past':''}${sn?' spc':''}${ps?' ps':''}" data-k="${k}" title="${esc(sn)}" ${p||(h.ro&&(b||pp))?'disabled':''} ${h.ro?'':`aria-pressed="${b}"`} aria-label="${d}${sn?', '+esc(sn):''}${pr?', diária '+brl(pr):''}, ${b?'bloqueado':hs.has(k)?'em análise':im.has(k)?'seu interesse':io.has(k)?'com interesse':'livre'}"><span class="dt"><b>${d}</b>${sn?'<i class="st">★</i>':''}</span>${(lb||im.has(k)||io.has(k))?`<small>${lb||(im.has(k)?L3('Seu interesse','Your interest','Su interés'):L3('Com interesse','Interest','Con interés'))}</small>`:(pr?`<em class="${ov?'ov':''}">${rk(pr)}</em>`:'')}</button>`}
+  const alvo=b?L3('bloqueado','blocked','bloqueado'):ng?(h.ro?L3('do proprietário, aceita proposta','owner\u2019s, open to proposals','del propietario, acepta propuesta'):L3('negociável, aberta a proposta','negotiable, open to proposals','negociable, abierta a propuesta')):hs.has(k)?'em análise':im.has(k)?'seu interesse':io.has(k)?'com interesse':'livre';
+  s+=`<button class="d${b?' bl':ng?' ng':pp?' pd':hs.has(k)?' hd':im.has(k)?' im':io.has(k)?' it':''}${sl?' sel':''}${p?' past':''}${sn?' spc':''}${ps?' ps':''}" data-k="${k}" title="${esc(sn)}" ${p||(h.ro&&(b||pp))?'disabled':''} ${h.ro?'':`aria-pressed="${b||ng}"`} aria-label="${d}${sn?', '+esc(sn):''}${pr?', diária '+brl(pr):''}, ${alvo}"><span class="dt"><b>${d}</b>${sn?'<i class="st">★</i>':''}</span>${(lb||im.has(k)||io.has(k))?`<small>${lb||(im.has(k)?L3('Seu interesse','Your interest','Su interés'):L3('Com interesse','Interest','Con interés'))}</small>`:(pr?`<em class="${ov?'ov':''}">${rk(pr)}</em>`:'')}</button>`}
  $('spl').hidden=!SPEC;if(SPEC){const g={};for(let d=1;d<=new Date(y,m+1,0).getDate();d++){const k=iso(new Date(y,m,d)),nm=specialName(k);if(nm){(g[nm]=g[nm]||[]).push(d)}}
   const it=Object.entries(g).map(([nm,ds])=>nm+' ('+(ds.length>1?ds[0]+' a '+ds[ds.length-1]:ds[0])+')');$('spl').innerHTML='<b>Datas especiais do mês:</b> '+(it.length?it.map(esc).join(' · '):'nenhuma.')}
  $('g').innerHTML=s;
- const n=bl.filter(d=>d>=today).length;
- $('nt').textContent=h.ro?(()=>{const u=new Set(bl.filter(d=>d>=today)).size,w=new Set(heldOthers(h).filter(d=>d>=today&&!bl.includes(d))).size;return (u?`${u} ${u>1?'datas bloqueadas':'data bloqueada'}.`:'Nenhuma data bloqueada.')+(w?' '+L3(w+(w>1?' datas em análise por outra proposta (a sua entra na fila).':' data em análise por outra proposta (a sua entra na fila).'),w+(w>1?' dates under review by another proposal (yours joins the queue).':' date under review by another proposal (yours joins the queue).'),w+(w>1?' fechas en análisis por otra propuesta (la suya entra en la fila).':' fecha en análisis por otra propuesta (la suya entra en la fila).')):'')})():n?`${n} ${n>1?'datas bloqueadas':'data bloqueada'} para toda a sua rede de corretores.`:'Nenhuma data bloqueada. Toda a agenda está aberta para a sua rede.';
+ const n=bl.filter(d=>d>=today).length,ngn=[...sf].filter(d=>d>=today).length;
+ $('nt').textContent=h.ro?(()=>{const u=new Set(bl.filter(d=>d>=today)).size,w=new Set(heldOthers(h).filter(d=>d>=today&&!bl.includes(d))).size;return (u?`${u} ${u>1?'datas bloqueadas':'data bloqueada'}.`:'Nenhuma data bloqueada.')+(w?' '+L3(w+(w>1?' datas em análise por outra proposta (a sua entra na fila).':' data em análise por outra proposta (a sua entra na fila).'),w+(w>1?' dates under review by another proposal (yours joins the queue).':' date under review by another proposal (yours joins the queue).'),w+(w>1?' fechas en análisis por otra propuesta (la suya entra en la fila).':' fecha en análisis por otra propuesta (la suya entra en la fila).')):'')})():(n||ngn)?`${n} ${n>1?'datas bloqueadas':'data bloqueada'} para toda a sua rede de corretores.`+(ngn?` ${ngn} ${ngn>1?'delas negociáveis: continuam suas, mas o corretor pode propor.':'delas negociável: continua sua, mas o corretor pode propor.'}`:''):'Nenhuma data bloqueada. Toda a agenda está aberta para a sua rede.';
  $('g').querySelectorAll('.d[data-k]').forEach(b=>b.onclick=()=>{
   if(h.ro){pick(h,b.dataset.k);return}
   if(PM){const k=b.dataset.k,i=PSEL.indexOf(k);i>=0?PSEL.splice(i,1):PSEL.push(k);cal(h);return}
-  const k=b.dataset.k,a=blocks[h.id]||(blocks[h.id]=[]),i=a.indexOf(k);
-  if(i>=0){a.splice(i,1);toast('Data liberada para a rede')}else{const cp=PROP.some(x=>x.hid===h.id&&isOpen(x)&&k>=x.in&&k<x.out);if(cp){a.length||delete blocks[h.id];return toast(L3('Esta data está em uma proposta em aberto. Responda a proposta antes de bloqueá-la.','This date is part of an open proposal. Reply to the proposal before blocking it.','Esta fecha está en una propuesta abierta. Responda la propuesta antes de bloquearla.'))}a.push(k);toast('Data bloqueada para toda a rede')}
+  const k=b.dataset.k,a=blocks[h.id]||(blocks[h.id]=[]),sa=softb[h.id]||(softb[h.id]=[]),i=a.indexOf(k),si=sa.indexOf(k);
+  if(NG){
+   if(si>=0){sa.splice(si,1);if(i>=0)a.splice(i,1);toast(L3('Data liberada para a rede','Date released to the network','Fecha liberada para la red'))}
+   else{if(i<0)a.push(k);sa.push(k);toast(L3('Data negociável: continua sua, mas o corretor pode propor.','Negotiable date: still yours, but brokers can propose.','Fecha negociable: sigue siendo suya, pero el corredor puede proponer.'))}
+  }else if(i>=0){a.splice(i,1);if(si>=0)sa.splice(si,1);toast('Data liberada para a rede')}
+  else{const cp=PROP.some(x=>x.hid===h.id&&isOpen(x)&&k>=x.in&&k<x.out);if(cp){a.length||delete blocks[h.id];if(!sa.length)delete softb[h.id];return toast(L3('Esta data está em uma proposta em aberto. Responda a proposta antes de bloqueá-la.','This date is part of an open proposal. Reply to the proposal before blocking it.','Esta fecha está en una propuesta abierta. Responda la propuesta antes de bloquearla.'))}a.push(k);toast('Data bloqueada para toda a rede')}
+  if(!sa.length)delete softb[h.id];
   saveB();cal(h)});
  if(!h.ro)pricePanel(h);
 }
@@ -1584,8 +1600,8 @@ function pricePanel(h){const el=$('pp');if(!el)return;if(h.ro||!PM){el.innerHTML
  $('ppr').onclick=()=>{if(!PSEL.length)return toast('Selecione ao menos uma data');const r=Object.assign({},h.rates||{});PSEL.forEach(d=>delete r[d]);if(savePrices(h,r)){toast('Datas voltaram à diária padrão');PSEL=[];cal(h)}};
  $('pps').onclick=()=>{const y=cm.getFullYear(),mo=String(cm.getMonth()+1).padStart(2,'0'),ds=Object.keys(specials(y)).filter(k=>k.slice(5,7)===mo&&k>=today);if(!ds.length)return toast('Nenhuma data especial futura neste mês');ds.forEach(d=>{if(!PSEL.includes(d))PSEL.push(d)});SPEC=true;cal(h)};
  $('ppc').onclick=()=>{PSEL=[];cal(h)}}
-const free=x=>!nl(x.in,x.out).some(d=>(blocks[x.hid]||[]).includes(d));
-function occupy(x){const a=blocks[x.hid]||(blocks[x.hid]=[]);nl(x.in,x.out).forEach(d=>{if(!a.includes(d))a.push(d)});saveB();
+const free=x=>{const sf=new Set(softb[x.hid]||[]);return !nl(x.in,x.out).some(d=>(blocks[x.hid]||[]).includes(d)&&!sf.has(d))};
+function occupy(x){const a=blocks[x.hid]||(blocks[x.hid]=[]),sa=softb[x.hid]||[];nl(x.in,x.out).forEach(d=>{if(!a.includes(d))a.push(d);const i=sa.indexOf(d);if(i>=0)sa.splice(i,1)});if(!sa.length)delete softb[x.hid];saveB();
  PROP.forEach(y=>{if(y!==x&&y.hid===x.hid&&(y.status==='pending'||y.status==='countered')&&y.in<x.out&&x.in<y.out){y.status='rejected';(y.log=y.log||[]).push({d:today,s:'rejected',v:y.value});notify(y.broker,'Sua proposta para '+y.house+' foi encerrada: as datas foram reservadas por outra proposta',y.id)}})}
 function cardInfo(h,n){if(h.ro)return n?n+(n>1?' datas ocupadas':' data ocupada'):'Agenda livre';const k=PROP.filter(x=>x.hid===h.id&&x.status==='pending').length;
  return (k?`<b style="color:var(--brass)">${k} ${k>1?'propostas novas':'proposta nova'}</b> · `:'')+(n?n+(n>1?' datas bloqueadas':' data bloqueada'):'Nenhuma data bloqueada')}
@@ -1632,7 +1648,7 @@ function listProps(){return ownerBanner();const ids=all().map(h=>ROLE==='broker'
  const hs=$('m').querySelector('.houses');if(ROLE==='owner'&&hs)hs.before(box);else $('m').appendChild(box);pbind(box)}
 function heldOthers(h){return PROP.filter(x=>x.hid===h.id.slice(1)&&x.broker!==ME&&(x.status==='pending'||x.status==='countered')).flatMap(x=>nl(x.in,x.out))}
 function ownHeld(h){return PROP.filter(x=>x.hid===h.id.slice(1)&&x.broker===ME&&(x.status==='pending'||x.status==='countered')).flatMap(x=>nl(x.in,x.out))}
-const unav=h=>getBl(h).concat(ownHeld(h));
+const unav=h=>hardBl(h).concat(ownHeld(h));
 function intsOf(h,mine){const hid=h.id.slice(1);return (mine?INTS:INTSO).filter(i=>i.hid===hid&&i.exp>Date.now())}
 function addInterest(h){const hid=h.id.slice(1),a=sel.a,b=sel.b,ns=nl(a,b);
  if(ns.length>14)return toast(L3('O interesse vale de 1 a 14 noites.','An interest covers 1 to 14 nights.','El interés vale de 1 a 14 noches.'));
@@ -2726,19 +2742,21 @@ async function api0(path,body){const o={credentials:'same-origin',headers:{}};if
  let r;try{r=await fetch(path,o)}catch(e){throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.')}
  let j=null;try{j=await r.json()}catch(e){}
  if(!r.ok){const e=new Error((j&&j.error)||'Erro do servidor ('+r.status+').');e.status=r.status;if(j&&j.code)e.code=j.code;if(r.status===403&&e.code==='terms')srvTerms();if(r.status===402&&e.code==='billing')srvPaywall();throw e}return j}
-const SRVK=['edits','susp','owners','brokers','houses','blocks','props','inv','chat','noti','prof','bio','tour','remx','rems','remh','ints','intso','flags','flag'];
+const SRVK=['edits','susp','owners','brokers','houses','blocks','soft','props','inv','chat','noti','prof','bio','tour','remx','rems','remh','ints','intso','flags','flag'];
 const PUSHK=['houses','props','blocks','noti','chat','prof','bio','inv','tour','remx','rems','remh','ints'];
 let SREV=0,SNAP={},SDIRTY=new Set(),SBUSY=false,STMR=null,SPOLL=null,SPEND=false;
 const KEYF={houses:h=>h.id,props:p=>p.id,chat:t=>t.id,noti:n=>n.to+'|'+n.at,ints:i=>i.id};
 function sidx(name,val){if(KEYF[name]&&Array.isArray(val)){const m={};val.forEach(x=>{m[KEYF[name](x)]=JSON.stringify(x)});return m}
- if(name==='blocks'&&val&&typeof val==='object'){const m={};Object.keys(val).forEach(k=>{m[k]=JSON.stringify(val[k])});return m}
+ if(name==='blocks'&&val&&typeof val==='object'){const m={},sf=DB.get('soft',{})||{};Object.keys(val).forEach(k=>{m[k]=JSON.stringify([val[k],sf[k]||[]])});Object.keys(sf).forEach(k=>{if(!(k in m))m[k]=JSON.stringify([val[k]||[],sf[k]])});return m}
  return JSON.stringify(val==null?null:val)}
 function sops(name,val,snap){
  if(KEYF[name]){const up=[],del=[],cur={};(val||[]).forEach(x=>{const k=KEYF[name](x);cur[k]=1;if(name==='houses'&&x.owner!==ME)return;if(snap[k]!==JSON.stringify(x))up.push(x)});
   if(name==='houses'||name==='ints')Object.keys(snap).forEach(k=>{if(!cur[k])del.push(k)});
   return up.length||del.length?{c:name,up,del}:null}
- if(name==='blocks'){if(!SRVU||SRVU.role!=='owner')return null;const own=new Set((DB.get('houses',[])||[]).map(h=>h.id)),up={},del=[];val=val||{};
-  Object.keys(val).forEach(k=>{if(own.has(k)&&snap[k]!==JSON.stringify(val[k]))up[k]=val[k]});Object.keys(snap).forEach(k=>{if(own.has(k)&&!(k in val))del.push(k)});
+ if(name==='blocks'){if(!SRVU||SRVU.role!=='owner')return null;const own=new Set((DB.get('houses',[])||[]).map(h=>h.id)),sf=DB.get('soft',{})||{},up={},del=[];val=val||{};
+  Object.keys(val).forEach(k=>{if(own.has(k)&&snap[k]!==JSON.stringify([val[k],sf[k]||[]]))up[k]={d:val[k],s:sf[k]||[]}});
+  Object.keys(sf).forEach(k=>{if(own.has(k)&&!(k in up)&&snap[k]!==JSON.stringify([val[k]||[],sf[k]]))up[k]={d:val[k]||[],s:sf[k]}});
+  Object.keys(snap).forEach(k=>{if(own.has(k)&&!(k in val))del.push(k)});
   return Object.keys(up).length||del.length?{c:'blocks',up,del}:null}
  if(sidx(name,val)===snap)return null;
  return name==='prof'?{c:'prof',up:val}:{c:name,set:val}}
@@ -2752,7 +2770,7 @@ async function srvFlush(){
  catch(e){if(e.status===401)srvExpired();else{toast(e.message);try{const r=await api('/api/sync');SREV=r.rev;srvApply(r.view,true)}catch(x){}}}
  finally{SBUSY=false;if(SDIRTY.size){clearTimeout(STMR);STMR=setTimeout(srvFlush,50)}}}
 function srvLoad(view){DB.load(view);SNAP={};SRVK.forEach(k=>{SNAP[k]=sidx(k,view[k])});
- try{CUS=view.houses||[];OVR={};Object.keys(INV).forEach(k=>delete INV[k]);Object.assign(INV,view.inv||{});HAS_B=true;blocks=view.blocks||{};reload()}catch(e){}}
+ try{CUS=view.houses||[];OVR={};Object.keys(INV).forEach(k=>delete INV[k]);Object.assign(INV,view.inv||{});HAS_B=true;blocks=view.blocks||{};softb=view.soft||{};reload()}catch(e){}}
 function srvRender(){
  if(document.querySelector('dialog[open]')||(/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')&&AUTH&&!$('app').hidden)){SPEND=true;return}
  SPEND=false;
@@ -2766,7 +2784,7 @@ function srvPoll(){clearInterval(SPOLL);SPOLL=setInterval(async()=>{
   try{const r=await api0('/api/sync?since='+SREV);if(r.same){if(SPEND)srvRender();return}SREV=r.rev;srvApply(r.view)}catch(e){if(e.status===401)srvExpired()}},5000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SRVU&&!SBUSY)api0('/api/sync?since='+SREV).then(r=>{if(!r.same){SREV=r.rev;srvApply(r.view)}},()=>{})});
 function srvExpired(){SRVU=null;clearInterval(SPOLL);SDIRTY.clear();DB.wipe();AUTH=null;try{resetLogin()}catch(e){}showHome();toast('Sua sessão expirou. Entre de novo.')}
-function srvLogout(){api('/api/logout',{}).catch(()=>{});SRVU=null;clearInterval(SPOLL);clearTimeout(STMR);SDIRTY.clear();DB.wipe();CUS=[];PROP=[];NOTI=[];CHAT=[];blocks={};Object.keys(INV).forEach(k=>delete INV[k])}
+function srvLogout(){api('/api/logout',{}).catch(()=>{});SRVU=null;clearInterval(SPOLL);clearTimeout(STMR);SDIRTY.clear();DB.wipe();CUS=[];PROP=[];NOTI=[];CHAT=[];blocks={};softb={};Object.keys(INV).forEach(k=>delete INV[k])}
 DB.onChange((n)=>{if(SRV)srvQueue(n)});
 
 async function srvGo(){

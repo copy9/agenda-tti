@@ -23,10 +23,10 @@ async function ustateOf(email) {
 }
 const threadDocs = (rows) => rows.map((r) => { const d = U.parse(r.doc, {}); d.id = r.o_email + '|' + r.b_email; d.o = r.o_email; d.b = r.b_email; return d; });
 
-function brokerHouse(doc, owner, blocked) {
+function brokerHouse(doc, owner, blocked, soft) {
   const d = Object.assign({}, doc);
   delete d.custom;
-  return Object.assign(d, { id: 'r' + doc.id, ro: true, owner: owner ? owner.name : '', oe: doc.owner, blocked: blocked || [] });
+  return Object.assign(d, { id: 'r' + doc.id, ro: true, owner: owner ? owner.name : '', oe: doc.owner, blocked: blocked || [], soft: soft || [] });
 }
 
 async function owned(user) {
@@ -34,12 +34,19 @@ async function owned(user) {
   const houses = rows.map(S.houseDoc);
   const hid = ids(houses);
   const blocks = {};
-  if (hid.length) (await db.all(`SELECT house_id, dates FROM blocks WHERE house_id IN (${inList(hid)})`, hid)).forEach((r) => { blocks[r.house_id] = U.parse(r.dates, []); });
-  return { houses, blocks };
+  const soft = {};
+  if (hid.length) {
+    (await db.all(`SELECT house_id, dates, soft FROM blocks WHERE house_id IN (${inList(hid)})`, hid)).forEach((r) => {
+      blocks[r.house_id] = U.parse(r.dates, []);
+      const s = U.parse(r.soft, []);
+      if (Array.isArray(s) && s.length) soft[r.house_id] = s;
+    });
+  }
+  return { houses, blocks, soft };
 }
 
 async function ownerView(user) {
-  const { houses, blocks } = await owned(user);
+  const { houses, blocks, soft } = await owned(user);
   // propostas na fila ainda não chegaram ao proprietário
   const allProps = await docsOf(await db.all('SELECT status, doc FROM proposals WHERE owner_email = ?', [user.email]));
   const props = allProps.filter((p) => !p.q);
@@ -74,7 +81,7 @@ async function ownerView(user) {
   (await usersByRole('broker')).filter((b) => mine.has(b.email)).forEach((b) => { brokers[b.email] = { name: b.name, wa: b.wa, houses: [] }; const i = U.parse(b.info, null); if (i) bio[b.email] = i; });
   return {
     bio, flags: await S.flagsFor(db, Object.keys(brokers), user.email),
-    owners: { [user.email]: { name: user.name, wa: user.wa } }, brokers, houses, blocks, props, inv, chat,
+    owners: { [user.email]: { name: user.name, wa: user.wa } }, brokers, houses, blocks, soft, props, inv, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
   };
 }
@@ -82,15 +89,23 @@ async function ownerView(user) {
 async function brokerView(user) {
   const invs = await db.all("SELECT house_id FROM invites WHERE broker_email = ? AND status = 'accepted'", [user.email]);
   const hid = invs.map((r) => r.house_id);
-  let houses = []; const blocks = {};
+  let houses = []; const blocks = {}; const soft = {};
   const own = {};
   (await usersByRole('owner')).forEach((o) => { own[o.email] = o; });
   if (hid.length) {
     houses = (await db.all(`SELECT * FROM houses WHERE id IN (${inList(hid)})`, hid)).map(S.houseDoc);
-    (await db.all(`SELECT house_id, dates FROM blocks WHERE house_id IN (${inList(hid)})`, hid)).forEach((r) => { blocks[r.house_id] = U.parse(r.dates, []); });
+    // Para o corretor, `blocks` carrega só o bloqueio FIRME — que continua indistinguível de data vendida.
+    // O negociável vai à parte: ele sabe que a data é de uso do proprietário e que pode propor mesmo assim.
+    (await db.all(`SELECT house_id, dates, soft FROM blocks WHERE house_id IN (${inList(hid)})`, hid)).forEach((r) => {
+      const sf0 = U.parse(r.soft, []);
+      const sf = Array.isArray(sf0) ? sf0 : [];
+      const sset = new Set(sf);
+      blocks[r.house_id] = U.parse(r.dates, []).filter((d) => !sset.has(d));
+      if (sf.length) soft[r.house_id] = sf;
+    });
   }
   const today = U.today();
-  const bh = houses.map((h) => brokerHouse(h, own[h.owner], (blocks[h.id] || []).filter((d) => d >= today)));
+  const bh = houses.map((h) => brokerHouse(h, own[h.owner], (blocks[h.id] || []).filter((d) => d >= today), (soft[h.id] || []).filter((d) => d >= today)));
   const mine = await docsOf(await db.all('SELECT status, doc FROM proposals WHERE broker_email = ?', [user.email]));
   // Propostas de outros corretores viram apenas "datas seguradas": sem nome, valor ou qualquer dado pessoal.
   let ghosts = [];
@@ -111,7 +126,7 @@ async function brokerView(user) {
   return {
     bio: U.parse(me && me.info, null) ? { [user.email]: U.parse(me.info, {}) } : {},
     ints: ints.filter((i) => i.mine), intso: ints.filter((i) => !i.mine), flag: (await S.flagsFor(db, [user.email], ''))[user.email] || null,
-    owners, brokers: { [user.email]: { name: user.name, wa: user.wa, houses: bh } }, houses: [], blocks, props: mine.concat(ghosts), inv: {}, chat,
+    owners, brokers: { [user.email]: { name: user.name, wa: user.wa, houses: bh } }, houses: [], blocks, soft, props: mine.concat(ghosts), inv: {}, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
   };
 }

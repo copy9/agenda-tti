@@ -6,7 +6,9 @@
 
 Agenda TTI é o meio de comunicação entre **proprietários** e **corretores** de casas e mansões de alto padrão, para acabar com multas por dupla reserva. Não é uma experiência do cliente final: o cliente só vê uma página pública limpa da casa.
 
-- **Um corretor nunca pode saber do outro.** Ele só vê datas *livres* ou *bloqueadas/seguradas*, nunca nome, valor, e-mail ou WhatsApp de outro corretor. O proprietário vê quem fez cada proposta. Qualquer mudança em `src/views.js` ou `src/policy.js` precisa manter e testar essa regra.
+- **Um corretor nunca pode saber do outro.** Ele só vê datas *livres*, *bloqueadas/seguradas* ou *negociáveis*, nunca nome, valor, e-mail ou WhatsApp de outro corretor. O proprietário vê quem fez cada proposta. Qualquer mudança em `src/views.js` ou `src/policy.js` precisa manter e testar essa regra.
+- **O bloqueio do proprietário tem duas espécies.** *Firme* é o padrão e continua indistinguível de data vendida: barra proposta e interesse, e o corretor não descobre se aquilo é uso do dono ou reserva de um concorrente. *Negociável* é a data que o dono reservou para si mas aceita ouvir oferta: ganha estado próprio no calendário, recebe proposta e interesse, e o aceite libera o bloqueio no mesmo clique. Data vendida nunca pode virar negociável.
+- **A fila é invisível, com uma exceção.** O proprietário é avisado quando uma proposta na fila supera o valor em jogo na proposta que está com ele — só o valor, nunca quem ofereceu.
 - Aceitar uma proposta bloqueia as datas para toda a rede e encerra as concorrentes. Propostas expiram em 48 h. Mínimo de noites e lotação são conferidos no servidor.
 - Idiomas: português, inglês e espanhol em toda a interface. Texto novo entra nos três.
 - **A plataforma não processa pagamentos entre proprietário e corretor.** Adiantamento, multas e pendências são acertados por Pix, fora dela; o sistema só registra. Pagamento dentro da plataforma existe apenas para a assinatura do próprio software.

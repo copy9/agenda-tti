@@ -217,7 +217,7 @@ async function promoteQueue(t, houseId) {
   const house = houseDoc(hrow);
   let n = 0;
   for (const { r, d } of queued) {
-    const bl = new Set(await readBlocks(t, houseId));
+    const bl = new Set(await readHard(t, houseId));
     const live = (await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered','accepted') AND id <> ?", [houseId, r.id])).map((x) => U.parse(x.doc, {})).filter((x) => !x.q);
     if (nightsOf(d).some((k) => bl.has(k)) || live.some((x) => overlaps(x, d))) continue;
     delete d.q;
@@ -314,6 +314,29 @@ async function writeBlocks(t, houseId, dates) {
   const j = JSON.stringify(arr);
   const r = await t.run('UPDATE blocks SET dates = ? WHERE house_id = ?', [j, houseId]);
   if (!r.changes) await t.run('INSERT INTO blocks (house_id, dates) VALUES (?,?)', [houseId, j]);
+  // negociável é sempre subconjunto do bloqueado: o que saiu do bloqueio sai daqui também
+  const sf = await readSoft(t, houseId);
+  const keep = sf.filter((d) => arr.includes(d));
+  if (keep.length !== sf.length) await writeSoft(t, houseId, keep);
 }
 
-module.exports = { HOLD_DEFAULT, ADV_DEFAULT, INT_HOURS, QUEUE_MAX, STRIKE_DAYS, holdH, advH, strike, strikeCount, openLimit, flagsFor, promoteQueue, queueHigher, nightsOf, overlaps, rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
+// ---------- datas negociáveis (bloqueio do proprietário que ainda aceita proposta) ----------
+// Subconjunto de `blocks.dates`. Fora daqui, todo bloqueio é firme e se comporta como data vendida.
+async function readSoft(t, houseId) {
+  const r = await one(t, 'SELECT soft FROM blocks WHERE house_id = ?', [houseId]);
+  const v = r ? U.parse(r.soft, []) : [];
+  return Array.isArray(v) ? v : []; // coluna nova: linha antiga vem NULL
+}
+async function writeSoft(t, houseId, dates) {
+  const arr = [...new Set((dates || []).filter(U.isDate))].sort().slice(0, 3000);
+  const j = JSON.stringify(arr);
+  const r = await t.run('UPDATE blocks SET soft = ? WHERE house_id = ?', [j, houseId]);
+  if (!r.changes) await t.run('INSERT INTO blocks (house_id, dates, soft) VALUES (?,?,?)', [houseId, '[]', j]);
+}
+// O que de fato barra proposta e interesse: bloqueio firme, indistinguível de data vendida.
+async function readHard(t, houseId) {
+  const sf = new Set(await readSoft(t, houseId));
+  return (await readBlocks(t, houseId)).filter((d) => !sf.has(d));
+}
+
+module.exports = { HOLD_DEFAULT, ADV_DEFAULT, INT_HOURS, QUEUE_MAX, STRIKE_DAYS, holdH, advH, strike, strikeCount, openLimit, flagsFor, promoteQueue, queueHigher, readSoft, writeSoft, readHard, nightsOf, overlaps, rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
