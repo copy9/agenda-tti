@@ -40,7 +40,8 @@ async function owned(user) {
 
 async function ownerView(user) {
   const { houses, blocks } = await owned(user);
-  const props = await docsOf(await db.all('SELECT status, doc FROM proposals WHERE owner_email = ?', [user.email]));
+  // propostas na fila ainda não chegaram ao proprietário
+  const props = (await docsOf(await db.all('SELECT status, doc FROM proposals WHERE owner_email = ?', [user.email]))).filter((p) => !p.q);
   const inv = {};
   (await db.all('SELECT house_id, broker_email, created, token, status FROM invites WHERE owner_email = ? ORDER BY created', [user.email])).forEach((r) => {
     inv[r.house_id] = inv[r.house_id] || [];
@@ -56,7 +57,7 @@ async function ownerView(user) {
   const bio = {};
   (await usersByRole('broker')).filter((b) => mine.has(b.email)).forEach((b) => { brokers[b.email] = { name: b.name, wa: b.wa, houses: [] }; const i = U.parse(b.info, null); if (i) bio[b.email] = i; });
   return {
-    bio,
+    bio, flags: await S.flagsFor(db, Object.keys(brokers), user.email),
     owners: { [user.email]: { name: user.name, wa: user.wa } }, brokers, houses, blocks, props, inv, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
   };
@@ -79,7 +80,13 @@ async function brokerView(user) {
   let ghosts = [];
   if (hid.length) {
     const rows = await db.all(`SELECT id, house_id, doc FROM proposals WHERE broker_email <> ? AND status IN ('pending','countered') AND house_id IN (${inList(hid)})`, [user.email, ...hid]);
-    ghosts = rows.map((r) => { const d = U.parse(r.doc, {}); return { id: 'g' + U.sha1(r.id).slice(0, 10), hid: r.house_id, broker: '', status: 'pending', in: d.in, out: d.out, exp: d.exp, ghost: 1 }; });
+    ghosts = rows.map((r) => ({ r, d: U.parse(r.doc, {}) })).filter((x) => !x.d.q).map(({ r, d }) => { return { id: 'g' + U.sha1(r.id).slice(0, 10), hid: r.house_id, broker: '', status: 'pending', in: d.in, out: d.out, exp: d.exp, ghost: 1 }; });
+  }
+  // Interesse: data "com interesse" (não bloqueia). De outros corretores chega só a data, sem nome.
+  let ints = [];
+  if (hid.length) {
+    const rows = await db.all(`SELECT id, house_id, broker_email, d_in, d_out, exp FROM interests WHERE exp > ? AND house_id IN (${inList(hid)})`, [Date.now(), ...hid]);
+    ints = rows.map((r) => ({ id: r.broker_email === user.email ? r.id : 'i' + U.sha1(r.id).slice(0, 10), hid: r.house_id, in: r.d_in, out: r.d_out, exp: r.exp, mine: r.broker_email === user.email ? 1 : 0 }));
   }
   const chat = threadDocs(await db.all('SELECT * FROM threads WHERE b_email = ?', [user.email]));
   const owners = {};
@@ -87,6 +94,7 @@ async function brokerView(user) {
   const me = await db.one('SELECT info FROM users WHERE email = ?', [user.email]);
   return {
     bio: U.parse(me && me.info, null) ? { [user.email]: U.parse(me.info, {}) } : {},
+    ints: ints.filter((i) => i.mine), intso: ints.filter((i) => !i.mine), flag: (await S.flagsFor(db, [user.email], ''))[user.email] || null,
     owners, brokers: { [user.email]: { name: user.name, wa: user.wa, houses: bh } }, houses: [], blocks, props: mine.concat(ghosts), inv: {}, chat,
     noti: await notiOf(user.email), prof: user.wa ? { [user.email]: user.wa } : {},
   };

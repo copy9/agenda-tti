@@ -16,14 +16,25 @@ const one = async (t, sql, p) => (await t.all(sql, p))[0] || null;
 // Remove o que permite injetar HTML em páginas de outros usuários.
 const safe = (v, max) => U.text(v, max).replace(/[<>"`]/g, '');
 
+// ---------- prazos de bloqueio ----------
+const HOLD_DEFAULT = 24; // horas que o proprietário tem para responder uma proposta
+const ADV_DEFAULT = 24; // horas, depois do aceite, para o corretor informar o adiantamento
+const INT_HOURS = 6; // duração de um "interesse" (não bloqueia ninguém)
+const QUEUE_MAX = 3; // propostas na fila para as mesmas datas
+const STRIKE_DAYS = 90; // ocorrências valem por 90 dias
+const holdH = (h) => Math.min(72, Math.max(6, Number(h && h.hold) || HOLD_DEFAULT));
+const advH = (h) => Math.min(168, Math.max(6, Number(h && h.advH) || ADV_DEFAULT));
+
 // ---------- casas ----------
-const NUMS = { q: [0, 60], s: [0, 60], b: [0, 60], lot: [1, 200], v: [0, 60], rate: [0, 1e7], minN: [1, 60], minSp: [0, 60], adv: [0, 100], hue: [0, 360] };
+const NUMS = { q: [0, 60], s: [0, 60], b: [0, 60], lot: [1, 200], v: [0, 60], rate: [0, 1e7], minN: [1, 60], minSp: [0, 60], adv: [0, 100], hue: [0, 360], hold: [6, 72], advH: [6, 168] };
 const STRS = { name: 120, loc: 160, a: 30, pool: 200, pets: 40, desc: 3000, rules: 4000, cit: 10, cot: 10, acc: 600, wfn: 80, wfp: 80, ph: 600, ci: 3000, co: 3000 };
 
 function cleanHouse(inc, prev) {
   const d = {};
   for (const k of Object.keys(STRS)) d[k] = safe(inc[k], STRS[k]).trim();
   for (const k of Object.keys(NUMS)) { const [lo, hi] = NUMS[k]; d[k] = Math.min(hi, Math.max(lo, U.num(inc[k], lo))); }
+  d.hold = inc.hold == null ? (prev && prev.hold) || HOLD_DEFAULT : d.hold;
+  d.advH = inc.advH == null ? (prev && prev.advH) || ADV_DEFAULT : d.advH;
   d.adv = inc.adv == null ? (prev && prev.adv != null ? prev.adv : 50) : d.adv;
   d.am = (Array.isArray(inc.am) ? inc.am : []).filter((x) => typeof x === 'string' && /^[a-z0-9]{1,30}$/.test(x)).slice(0, 80);
   const rates = {};
@@ -85,6 +96,7 @@ async function newSlug(t) {
 const houseDoc = (row) => { const d = U.parse(row.doc, {}); d.id = row.id; d.owner = row.owner_email; d.pg = row.slug; return d; };
 
 async function deleteHouse(t, id) {
+  await t.run('DELETE FROM interests WHERE house_id = ?', [id]);
   await t.run('DELETE FROM blocks WHERE house_id = ?', [id]);
   await t.run('DELETE FROM invites WHERE house_id = ?', [id]);
   await t.run('DELETE FROM proposals WHERE house_id = ?', [id]);
@@ -161,13 +173,86 @@ async function saveProposal(t, doc, houseId, broker, owner) {
   if (!r.changes) await t.run('INSERT INTO proposals (id, house_id, broker_email, owner_email, status, doc, updated, tok) VALUES (?,?,?,?,?,?,?,?)', [doc.id, houseId, broker, owner, doc.status, j, Date.now(), tok]);
 }
 
-// Marca como expiradas as propostas em aberto com prazo vencido (48h).
+// ---------- ocorrências (flag do corretor) ----------
+const nightsOf = (d) => U.nightList(d.in, d.out);
+const overlaps = (a, b) => { const s = new Set(nightsOf(a)); return nightsOf(b).some((k) => s.has(k)); };
+
+// Registra uma ocorrência (kind: hold = contraproposta sem resposta, advance = adiantamento não informado) e avisa os dois lados.
+async function strike(t, doc, kind) {
+  await t.run('INSERT INTO strikes (id, broker_email, owner_email, house_id, kind, pid, at) VALUES (?,?,?,?,?,?,?)', [U.rid(8), doc.broker, doc.oe, doc.hid, kind, doc.id, Date.now()]);
+  const n = await strikeCount(t, doc.broker);
+  await notify(t, doc.oe, 'Ocorrência registrada no perfil de ' + doc.bname + ' (' + n + ')', doc.id);
+  await notify(t, doc.broker, 'Você recebeu uma ocorrência (' + n + ' nos últimos ' + STRIKE_DAYS + ' dias). Com 2 ocorrências você só pode ter 1 proposta aberta; com 3 perde o direito de propor.', doc.id);
+  return n;
+}
+const strikeCount = async (t, email) => Number((await one(t, 'SELECT COUNT(*) AS n FROM strikes WHERE broker_email = ? AND at > ?', [email, Date.now() - STRIKE_DAYS * 864e5])).n);
+const openLimit = (n) => (n >= 2 ? 1 : 3);
+
+// Flag de cada corretor para o proprietário: total recente, as dele, nível (0 a 3) e a última.
+async function flagsFor(t, emails, owner) {
+  const out = {};
+  const since = Date.now() - STRIKE_DAYS * 864e5;
+  for (const e of emails) {
+    const rows = await t.all('SELECT owner_email, at FROM strikes WHERE broker_email = ? AND at > ? ORDER BY at DESC', [e, since]);
+    if (!rows.length) continue;
+    out[e] = { n: rows.length, mine: rows.filter((r) => r.owner_email === owner).length, lv: Math.min(3, rows.length), last: rows[0].at };
+  }
+  return out;
+}
+
+// Quando as datas ficam livres, a proposta mais antiga da fila vira a proposta ativa (e o proprietário é avisado).
+async function promoteQueue(t, houseId) {
+  const rows = await t.all("SELECT * FROM proposals WHERE house_id = ? AND status = 'pending' ORDER BY updated", [houseId]);
+  const queued = rows.map((r) => ({ r, d: U.parse(r.doc, {}) })).filter((x) => x.d.q).sort((a, b) => (a.d.cr || 0) - (b.d.cr || 0));
+  if (!queued.length) return 0;
+  const hrow = await one(t, 'SELECT * FROM houses WHERE id = ?', [houseId]);
+  if (!hrow) return 0;
+  const house = houseDoc(hrow);
+  let n = 0;
+  for (const { r, d } of queued) {
+    const bl = new Set(await readBlocks(t, houseId));
+    const live = (await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered','accepted') AND id <> ?", [houseId, r.id])).map((x) => U.parse(x.doc, {})).filter((x) => !x.q);
+    if (nightsOf(d).some((k) => bl.has(k)) || live.some((x) => overlaps(x, d))) continue;
+    delete d.q;
+    d.exp = Date.now() + holdH(house) * 36e5;
+    await saveProposal(t, d, houseId, r.broker_email, r.owner_email);
+    await notify(t, r.broker_email, 'Sua proposta para ' + d.house + ' saiu da fila e foi enviada ao proprietário', d.id);
+    await event(t, r.broker_email, 'proposal_promoted', { house: d.house, in: d.in, out: d.out, pid: d.id });
+    await notify(t, r.owner_email, 'Nova proposta de ' + d.bname + ' para ' + d.house, d.id);
+    await event(t, r.owner_email, 'proposal_new', { house: d.house, broker: d.bname, in: d.in, out: d.out, value: d.value, hours: holdH(house), pid: d.id });
+    n++;
+  }
+  return n;
+}
+
+// Vence prazos: propostas sem resposta, contrapropostas ignoradas (ocorrência), reservas sem adiantamento (liberam as datas + ocorrência) e interesses.
 async function expireDue(t) {
-  const rows = await t.all("SELECT * FROM proposals WHERE status IN ('pending','countered')");
+  const now = Date.now();
+  const rows = await t.all("SELECT * FROM proposals WHERE status IN ('pending','countered','accepted')");
+  const touched = new Set();
   let n = 0;
   for (const r of rows) {
     const d = U.parse(r.doc, null);
-    if (!d || !d.exp || d.exp >= Date.now()) continue;
+    if (!d) continue;
+    if (r.status === 'accepted') {
+      const hrow = d.acc && !d.pay && !d.paid ? await one(t, 'SELECT * FROM houses WHERE id = ?', [r.house_id]) : null;
+      if (!hrow || d.acc + advH(houseDoc(hrow)) * 36e5 >= now) continue;
+      d.status = 'expired'; d.rel = 'adv';
+      d.log = d.log || [];
+      d.log.push({ d: U.today(), s: 'expired', v: d.final || d.value });
+      await saveProposal(t, d, r.house_id, r.broker_email, r.owner_email);
+      const gone = new Set(nightsOf(d));
+      await writeBlocks(t, r.house_id, (await readBlocks(t, r.house_id)).filter((k) => !gone.has(k)));
+      await notify(t, r.broker_email, 'A reserva de ' + d.house + ' foi liberada: o adiantamento não foi informado a tempo', d.id);
+      await notify(t, r.owner_email, 'A reserva de ' + d.bname + ' em ' + d.house + ' foi liberada: adiantamento não informado. As datas voltaram à agenda.', d.id);
+      const vars = { house: d.house, in: d.in, out: d.out, pid: d.id };
+      await event(t, r.broker_email, 'proposal_released', vars);
+      await event(t, r.owner_email, 'proposal_released', vars);
+      await strike(t, d, 'advance');
+      touched.add(r.house_id); n++;
+      continue;
+    }
+    if (!d.exp || d.exp >= now) continue;
     d.status = 'expired';
     d.log = d.log || [];
     d.log.push({ d: U.today(), s: 'expired', v: d.value });
@@ -177,8 +262,11 @@ async function expireDue(t) {
     const vars = { house: d.house, in: d.in, out: d.out, pid: d.id };
     await event(t, r.broker_email, 'proposal_expired', vars);
     await event(t, r.owner_email, 'proposal_expired', vars);
-    n++;
+    if (r.status === 'countered') await strike(t, d, 'hold');
+    touched.add(r.house_id); n++;
   }
+  for (const h of touched) await promoteQueue(t, h);
+  await t.run('DELETE FROM interests WHERE exp < ?', [now]);
   return n;
 }
 
@@ -196,6 +284,17 @@ async function remindDue(t) {
     await event(t, r.status === 'countered' ? r.broker_email : r.owner_email, 'proposal_expiring', { house: d.house, in: d.in, out: d.out, hours: Math.max(1, Math.ceil((d.exp - now) / 36e5)), pid: d.id });
     n++;
   }
+  for (const r of await t.all("SELECT * FROM proposals WHERE status = 'accepted'")) {
+    const d = U.parse(r.doc, null);
+    if (!d || !d.acc || d.pay || d.paid || d.rem6a) continue;
+    const hrow = await one(t, 'SELECT * FROM houses WHERE id = ?', [r.house_id]);
+    const end = d.acc + advH(hrow ? houseDoc(hrow) : null) * 36e5;
+    if (!hrow || end <= now || end - now > REMIND_MS) continue;
+    d.rem6a = 1;
+    await t.run('UPDATE proposals SET doc = ? WHERE id = ?', [JSON.stringify(d), r.id]);
+    await event(t, r.broker_email, 'advance_due', { house: d.house, in: d.in, out: d.out, hours: Math.max(1, Math.ceil((end - now) / 36e5)), pid: d.id });
+    n++;
+  }
   return n;
 }
 
@@ -210,4 +309,4 @@ async function writeBlocks(t, houseId, dates) {
   if (!r.changes) await t.run('INSERT INTO blocks (house_id, dates) VALUES (?,?)', [houseId, j]);
 }
 
-module.exports = { rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };
+module.exports = { HOLD_DEFAULT, ADV_DEFAULT, INT_HOURS, QUEUE_MAX, STRIKE_DAYS, holdH, advH, strike, strikeCount, openLimit, flagsFor, promoteQueue, nightsOf, overlaps, rev, bump, one, safe, cleanHouse, savePhotos, newSlug, houseDoc, deleteHouse, related, notify, consent, prefsOf, setPrefs, event, remindDue, CHANNELS, isOpen, saveProposal, expireDue, readBlocks, writeBlocks, NUMS, STRS };

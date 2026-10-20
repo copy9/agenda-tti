@@ -136,6 +136,24 @@ const TABLES = [
     free INT NOT NULL DEFAULT 0,
     updated BIGINT NOT NULL DEFAULT 0
   )`,
+  `CREATE TABLE IF NOT EXISTS interests (
+    id VARCHAR(40) NOT NULL PRIMARY KEY,
+    house_id VARCHAR(40) NOT NULL,
+    broker_email VARCHAR(190) NOT NULL,
+    d_in CHAR(10) NOT NULL,
+    d_out CHAR(10) NOT NULL,
+    exp BIGINT NOT NULL,
+    created BIGINT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS strikes (
+    id VARCHAR(40) NOT NULL PRIMARY KEY,
+    broker_email VARCHAR(190) NOT NULL,
+    owner_email VARCHAR(190) NOT NULL,
+    house_id VARCHAR(40) NOT NULL,
+    kind VARCHAR(12) NOT NULL,
+    pid VARCHAR(40) NOT NULL DEFAULT '',
+    at BIGINT NOT NULL
+  )`,
   `CREATE TABLE IF NOT EXISTS settings (
     k VARCHAR(60) NOT NULL PRIMARY KEY,
     v LONGTEXT NOT NULL
@@ -158,6 +176,10 @@ const INDEXES = [
   ['idx_outbox_due', 'outbox', 'status'],
   ['idx_pwreset_email', 'pwreset', 'email'],
   ['idx_dreq_hash', 'data_requests', 'email_hash'],
+  ['idx_int_house', 'interests', 'house_id'],
+  ['idx_int_broker', 'interests', 'broker_email'],
+  ['idx_strikes_broker', 'strikes', 'broker_email'],
+  ['idx_strikes_owner', 'strikes', 'owner_email'],
 ];
 
 async function migrate() {
