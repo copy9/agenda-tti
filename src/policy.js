@@ -4,7 +4,6 @@ const cfg = require('./config');
 const U = require('./util');
 const S = require('./store');
 
-const H48 = 48 * 36e5;
 const forbid = (m = 'Você não tem permissão para essa ação.') => U.bad(m, 403);
 const conflict = (m) => U.bad(m, 409);
 
@@ -49,7 +48,7 @@ async function blocks(t, user, op) {
       const open = await t.all("SELECT doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered')", [hid]);
       for (const r of open) {
         const d = U.parse(r.doc, {});
-        if (U.nightList(d.in, d.out).some((k) => novas.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
+        if (!d.q && U.nightList(d.in, d.out).some((k) => novas.includes(k))) throw U.bad('Há uma proposta em aberto nessas datas. Responda a proposta antes de bloqueá-las.', 409);
       }
     }
     await S.writeBlocks(t, hid, dates);
@@ -91,11 +90,23 @@ async function createProposal(t, user, inc, post) {
   if (pax > house.lot) throw U.bad('O número de hóspedes passa da lotação.');
   const taken = await datesTaken(t, hid, nights, '');
   if (taken) throw conflict(taken);
+  // Limites por corretor: ocorrências recentes reduzem as propostas abertas; com 3 ocorrências não propõe mais.
+  const strikes = await S.strikeCount(t, user.email);
+  if (strikes >= 3) throw forbid('Seu acesso para propor está suspenso por ocorrências (liberação de reservas sem adiantamento). Fale com a administração ou com os proprietários.');
+  const mineOpen = await t.all("SELECT doc FROM proposals WHERE broker_email = ? AND status IN ('pending','countered')", [user.email]);
+  const lim = S.openLimit(strikes);
+  if (mineOpen.length >= lim) throw conflict('Você já tem ' + lim + ' proposta(s) em aberto' + (strikes >= 2 ? ' (limite reduzido por ocorrências)' : '') + '. Aguarde uma resposta antes de enviar outra.');
+  const cand = { in: a, out: b };
+  let queued = false;
   const others = await t.all("SELECT broker_email, doc FROM proposals WHERE house_id = ? AND status IN ('pending','countered')", [hid]);
+  let inQueue = 0;
   for (const r of others) {
     const d = U.parse(r.doc, {});
-    if (U.nightList(d.in, d.out).some((k) => nights.includes(k))) throw conflict(r.broker_email === user.email ? 'Você já tem uma proposta para essa data.' : 'Essas datas estão reservadas por outra proposta.');
+    if (!S.overlaps(d, cand)) continue;
+    if (r.broker_email === user.email) throw conflict('Você já tem uma proposta para essa data.');
+    if (d.q) inQueue++; else queued = true;
   }
+  if (queued && inQueue >= S.QUEUE_MAX) throw conflict('Essas datas estão em análise e a fila está cheia. Tente outras datas.');
   const recent = await S.one(t, 'SELECT COUNT(*) AS n FROM proposals WHERE broker_email = ? AND updated > ?', [user.email, Date.now() - 864e5]);
   if (Number(recent.n) >= 40) throw U.bad('Limite diário de propostas atingido.', 429);
   let id = /^p\d{6,}$/.test(String(inc.id)) ? String(inc.id) : 'p' + Date.now();
@@ -104,10 +115,16 @@ async function createProposal(t, user, inc, post) {
   const doc = {
     id, hid, house: house.name, broker: user.email, bname: user.name, in: a, out: b, value, guest, pax,
     msg: U.text(inc.msg, 600), status: 'pending', at: U.today(), on: owner ? owner.name : '', adv: house.adv == null ? 50 : house.adv,
-    exp: Date.now() + H48, oe: hrow.owner_email, log: [], chat: [],
+    exp: Date.now() + S.holdH(house) * 36e5, oe: hrow.owner_email, log: [], chat: [],
   };
+  if (queued) { doc.q = 1; delete doc.exp; doc.cr = Date.now(); }
   await S.saveProposal(t, doc, hid, user.email, hrow.owner_email);
-  await S.event(t, hrow.owner_email, 'proposal_new', { house: house.name, broker: user.name, in: a, out: b, value, pid: id });
+  // o interesse do próprio corretor nessas datas vira proposta
+  for (const r of await t.all('SELECT id, d_in, d_out FROM interests WHERE house_id = ? AND broker_email = ?', [hid, user.email])) {
+    if (S.overlaps({ in: r.d_in, out: r.d_out }, cand)) await t.run('DELETE FROM interests WHERE id = ?', [r.id]);
+  }
+  if (queued) await S.event(t, user.email, 'proposal_queued', { house: house.name, in: a, out: b, pid: id });
+  else await S.event(t, hrow.owner_email, 'proposal_new', { house: house.name, broker: user.name, in: a, out: b, value, hours: S.holdH(house), pid: id });
 }
 
 // Dados da página de check-in. t/k = horários, a = acesso, w/p = Wi-Fi, ph = telefones úteis, n = observações, s = envio ao corretor.
@@ -121,6 +138,7 @@ const cleanStay = (x, prev) => {
   return out;
 };
 
+const houseOf = async (t, id) => { const r = await S.one(t, 'SELECT * FROM houses WHERE id = ?', [id]); return r ? S.houseDoc(r) : null; };
 const LOGS = new Set(['pending', 'accepted', 'rejected', 'countered', 'declined', 'cancelled', 'expired', 'paid', 'unpaid', 'informed']);
 
 async function updateProposal(t, user, row, inc, post) {
@@ -141,23 +159,25 @@ async function updateProposal(t, user, row, inc, post) {
     } else if (s1 === 'expired') {
       if (!(open && due)) throw stale();
       next.status = 'expired';
+      if (s0 === 'countered') await S.strike(t, doc, 'hold');
     } else if (isOwner) {
+      if (doc.q) throw stale();
       if (s0 === 'pending' && s1 === 'accepted') {
         const taken = await datesTaken(t, row.house_id, U.nightList(doc.in, doc.out), doc.id);
         if (taken) throw conflict(taken);
-        next.status = 'accepted'; next.final = doc.value; post.accepted.push(next);
+        next.status = 'accepted'; next.final = doc.value; next.acc = Date.now(); post.accepted.push(next);
       } else if (s0 === 'pending' && s1 === 'rejected') next.status = 'rejected';
       else if (s0 === 'pending' && s1 === 'countered') {
         const c = U.num(inc.counter, 0);
         if (!(c > 0 && c < 1e9)) throw U.bad('Informe o valor da nova proposta.');
-        next.status = 'countered'; next.counter = c; next.exp = Date.now() + H48;
+        next.status = 'countered'; next.counter = c; next.exp = Date.now() + S.holdH(await houseOf(t, row.house_id)) * 36e5;
       } else throw stale();
     } else if (isBroker) {
       if (s0 === 'pending' && s1 === 'cancelled') next.status = 'cancelled';
       else if (s0 === 'countered' && s1 === 'accepted') {
         const taken = await datesTaken(t, row.house_id, U.nightList(doc.in, doc.out), doc.id);
         if (taken) throw conflict(taken);
-        next.status = 'accepted'; next.final = doc.counter; post.accepted.push(next);
+        next.status = 'accepted'; next.final = doc.counter; next.acc = Date.now(); post.accepted.push(next);
       } else if (s0 === 'countered' && s1 === 'declined') next.status = 'declined';
       else throw stale();
     }
@@ -186,6 +206,7 @@ async function updateProposal(t, user, row, inc, post) {
     next.chat = (doc.chat || []).concat(inc.chat.slice((doc.chat || []).length, (doc.chat || []).length + 5).map((m) => ({ f: isOwner ? 'owner' : 'broker', t: U.text(m && m.t, 2000), at: Date.now() })).filter((m) => m.t.trim()));
   }
   if (JSON.stringify(next) !== JSON.stringify(doc)) await S.saveProposal(t, next, row.house_id, row.broker_email, row.owner_email);
+  if (next.status !== s0 && open) post.houses.add(row.house_id);
   if (next.status !== s0) await announce(t, user, row, next, { isOwner, isBroker });
   const base = { house: next.house, in: next.in, out: next.out, pid: next.id };
   if (next.pay && !doc.pay) await S.event(t, row.owner_email, 'advance_informed', Object.assign({ broker: user.name }, base));
@@ -203,7 +224,7 @@ async function announce(t, user, row, next, who) {
   } else if (who.isOwner) {
     if (next.status === 'accepted') await to(row.broker_email, 'proposal_accepted', { value: next.final });
     else if (next.status === 'rejected') await to(row.broker_email, 'proposal_declined');
-    else if (next.status === 'countered') await to(row.broker_email, 'proposal_countered', { value: next.counter });
+    else if (next.status === 'countered') await to(row.broker_email, 'proposal_countered', { value: next.counter, hours: S.holdH(await houseOf(t, row.house_id)) });
   } else if (who.isBroker) {
     const x = { broker: user.name };
     if (next.status === 'accepted') await to(row.owner_email, 'counter_accepted', Object.assign({ value: next.final }, x));
@@ -226,6 +247,9 @@ async function afterAccept(t, post) {
   for (const x of post.accepted) {
     const nights = U.nightList(x.in, x.out);
     await S.writeBlocks(t, x.hid, (await S.readBlocks(t, x.hid)).concat(nights));
+    for (const r of await t.all('SELECT id, d_in, d_out FROM interests WHERE house_id = ?', [x.hid])) {
+      if (S.overlaps({ in: r.d_in, out: r.d_out }, x)) await t.run('DELETE FROM interests WHERE id = ?', [r.id]);
+    }
     const rest = await t.all("SELECT * FROM proposals WHERE house_id = ? AND status IN ('pending','countered') AND id <> ?", [x.hid, x.id]);
     for (const r of rest) {
       const d = U.parse(r.doc, {});
@@ -237,6 +261,27 @@ async function afterAccept(t, post) {
       await S.notify(t, r.broker_email, 'Sua proposta para ' + d.house + ' foi encerrada: as datas foram reservadas por outra proposta', d.id);
       await S.event(t, r.broker_email, 'proposal_closed', { house: d.house, in: d.in, out: d.out, pid: d.id });
     }
+  }
+  for (const h of post.houses) await S.promoteQueue(t, h);
+}
+
+// ---------- interesse (corretor): marca datas "com interesse" sem bloquear ninguém; some em poucas horas ----------
+async function ints(t, user, op) {
+  if (user.role !== 'broker') return;
+  for (const id of (Array.isArray(op.del) ? op.del : [])) await t.run('DELETE FROM interests WHERE id = ? AND broker_email = ?', [String(id), user.email]);
+  for (const inc of (Array.isArray(op.up) ? op.up : [])) {
+    if (!inc || !U.isDate(inc.in) || !U.isDate(inc.out)) continue;
+    const hid = String(inc.hid || '').replace(/^r(?=[A-Za-z])/, '');
+    const ok = await S.one(t, "SELECT 1 AS x FROM invites WHERE house_id = ? AND broker_email = ? AND status = 'accepted'", [hid, user.email]);
+    if (!ok) throw forbid('Você não tem acesso a esta casa.');
+    const nights = U.nightList(inc.in, inc.out);
+    if (!nights.length || nights.length > 14) throw U.bad('O interesse vale de 1 a 14 noites.');
+    if (inc.in < U.today()) throw U.bad('A entrada não pode ser no passado.');
+    const taken = await datesTaken(t, hid, nights, '');
+    if (taken) throw conflict(taken);
+    const live = await t.all('SELECT id FROM interests WHERE broker_email = ? AND exp > ?', [user.email, Date.now()]);
+    if (live.length >= 5) throw conflict('Você já tem 5 interesses ativos. Aguarde expirar ou remova um.');
+    await t.run('INSERT INTO interests (id, house_id, broker_email, d_in, d_out, exp, created) VALUES (?,?,?,?,?,?,?)', [U.rid(8), hid, user.email, inc.in, inc.out, Date.now() + S.INT_HOURS * 36e5, Date.now()]);
   }
 }
 
@@ -353,12 +398,13 @@ async function ustate(t, user, name, op) {
 
 // ---------- ponto de entrada ----------
 async function apply(t, user, ops) {
-  const post = { accepted: [] };
+  const post = { accepted: [], houses: new Set() };
   const by = {};
   for (const o of (Array.isArray(ops) ? ops : [])) { if (o && typeof o.c === 'string') { by[o.c] = by[o.c] || []; by[o.c].push(o); } }
   const run = async (c, fn) => { for (const o of (by[c] || [])) await fn(o); };
   await run('houses', (o) => houses(t, user, o));
   await run('props', (o) => props(t, user, o, post));
+  await run('ints', (o) => ints(t, user, o));
   await run('blocks', (o) => blocks(t, user, o));
   await afterAccept(t, post);
   await run('noti', (o) => noti(t, user, o));

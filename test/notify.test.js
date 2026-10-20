@@ -111,7 +111,7 @@ test('textos: 3 idiomas, valores e datas formatados, aviso a corretor nunca cita
       if (K.to === 'broker') assert.ok(!r.text.includes('NOME-DE-CORRETOR'), `${kind}/${lang} cita corretor`);
     }
   }
-  const pt = M.render('proposal_new', 'pt', { house: 'Casa Azul', broker: 'Ana', in: '2026-11-01', out: '2026-11-04', value: 9000 });
+  const pt = M.render('proposal_new', 'pt', { house: 'Casa Azul', broker: 'Ana', in: '2026-11-01', out: '2026-11-04', value: 9000, hours: 48 });
   assert.equal(pt.body, 'Ana enviou uma proposta para Casa Azul, de 1 nov 2026 a 4 nov 2026, no valor de R$ 9.000. Responda em até 48 horas.');
   assert.match(M.render('proposal_new', 'en', { house: 'H', broker: 'Ana', in: '2026-11-01', out: '2026-11-04', value: 9000 }).body, /from Nov 1, 2026 to Nov 4, 2026, for R\$ 9,000/);
   assert.equal(M.render('proposal_new', 'xx', { house: 'H' }).lang, 'pt');
@@ -168,21 +168,24 @@ test('fluxo completo: convite, proposta, aceite e proposta encerrada geram e-mai
   await b1.sync([{ c: 'props', up: [{ id: 'p' + Date.now(), hid: 'rhNOT1', house: 'Casa Azul', broker: 'n-b1@x.com', bname: 'Beto Corretor', in: d1, out: d2, value: 9000, guest: 'Cliente', pax: 2, status: 'pending' }] }]);
   await b2.sync([{ c: 'props', up: [{ id: 'q' + Date.now(), hid: 'rhNOT1', house: 'Casa Azul', broker: 'n-b2@x.com', bname: 'Carla Corretora', in: D(61), out: D(64), value: 8000, guest: 'Y', pax: 2, status: 'pending' }] }]);
   const view = (await dono.get('/api/sync')).j.view;
-  assert.equal(view.props.length, 1, 'a segunda proposta (datas em conflito) não existe');
+  assert.equal(view.props.length, 1, 'a segunda proposta (datas em conflito) fica na fila e não aparece ao proprietário');
   await drain();
-  const novo = smtp.got.slice(n0).map(parseMail);
+  const raw = smtp.got.slice(n0);
+  assert.equal(raw.filter((m) => m.to === 'n-b2@x.com').length, 1, 'a segunda proposta entrou na fila e só o corretor dela é avisado');
+  const novo = raw.filter((m) => m.to === 'n-dono@x.com').map(parseMail);
   assert.equal(novo.length, 1);
   assert.equal(novo[0].subject, 'Nova proposta para Casa Azul');
   assert.match(novo[0].text, /Beto Corretor enviou uma proposta para Casa Azul.*R\$ 9\.000/);
-  assert.equal(smtp.got.at(-1).to, 'n-dono@x.com');
 
   const pid = view.props[0].id; const n1 = smtp.got.length;
   await dono.sync([{ c: 'props', up: [Object.assign({}, view.props[0], { status: 'accepted', final: 9000 })] }]);
   await drain();
   const aceite = smtp.got.slice(n1).map((m) => Object.assign(m, parseMail(m)));
-  assert.equal(aceite.length, 1);
+  assert.equal(aceite.length, 2, 'aceite ao corretor 1 e encerramento da proposta na fila do corretor 2');
+  aceite.sort((a, b) => a.to.localeCompare(b.to));
   assert.equal(aceite[0].to, 'n-b1@x.com'); assert.equal(aceite[0].subject, 'Sua proposta para Casa Azul foi aceita');
-  for (const m of aceite) for (const s of ['Carla', 'n-b2@x.com']) assert.ok(!m.body.includes(s), 'vazou outro corretor');
+  assert.equal(aceite[1].to, 'n-b2@x.com'); assert.match(aceite[1].subject || '', /foi encerrada|was closed/, JSON.stringify(aceite.map((m) => [m.to, m.subject])));
+  for (const m of aceite.filter((x) => x.to === 'n-b1@x.com')) for (const s of ['Carla', 'n-b2@x.com']) assert.ok(!m.body.includes(s), 'vazou outro corretor');
   assert.ok(pid);
 
   // privacidade: nenhum aviso dirigido a corretor cita o outro

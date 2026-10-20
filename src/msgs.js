@@ -32,9 +32,9 @@ const KINDS = {
     en: ['{broker} accepted the invitation to {house}', '{broker} can now see the house {house} in their calendar.'],
     es: ['{broker} aceptó la invitación a {house}', '{broker} ahora ve la casa {house} en su agenda.'] },
   proposal_new: { grp: 'proposal', to: 'owner',
-    pt: ['Nova proposta para {house}', '{broker} enviou uma proposta para {house}, de {in} a {out}, no valor de {value}. Responda em até 48 horas.'],
-    en: ['New proposal for {house}', '{broker} sent a proposal for {house}, from {in} to {out}, for {value}. Reply within 48 hours.'],
-    es: ['Nueva propuesta para {house}', '{broker} envió una propuesta para {house}, del {in} al {out}, por {value}. Responda en un plazo de 48 horas.'] },
+    pt: ['Nova proposta para {house}', '{broker} enviou uma proposta para {house}, de {in} a {out}, no valor de {value}. Responda em até {hours} horas.'],
+    en: ['New proposal for {house}', '{broker} sent a proposal for {house}, from {in} to {out}, for {value}. Reply within {hours} hours.'],
+    es: ['Nueva propuesta para {house}', '{broker} envió una propuesta para {house}, del {in} al {out}, por {value}. Responda en un plazo de {hours} horas.'] },
   proposal_cancelled: { grp: 'proposal', to: 'owner',
     pt: ['{broker} cancelou a proposta para {house}', 'A proposta de {in} a {out} foi cancelada. As datas voltaram a ficar livres.'],
     en: ['{broker} canceled the proposal for {house}', 'The proposal from {in} to {out} was canceled. The dates are free again.'],
@@ -56,9 +56,9 @@ const KINDS = {
     en: ['Your proposal for {house} was declined', 'The owner declined the proposal from {in} to {out}. The dates remain open for new proposals.'],
     es: ['Su propuesta para {house} fue rechazada', 'El propietario rechazó la propuesta del {in} al {out}. Las fechas siguen libres para nuevas propuestas.'] },
   proposal_countered: { grp: 'answer', to: 'broker',
-    pt: ['Contraproposta para {house}', 'O proprietário respondeu com {value} para {in} a {out}. Responda em até 48 horas.'],
-    en: ['Counteroffer for {house}', 'The owner replied with {value} for {in} to {out}. Reply within 48 hours.'],
-    es: ['Contraoferta para {house}', 'El propietario respondió con {value} para el {in} al {out}. Responda en un plazo de 48 horas.'] },
+    pt: ['Contraproposta para {house}', 'O proprietário respondeu com {value} para {in} a {out}. Responda em até {hours} horas.'],
+    en: ['Counteroffer for {house}', 'The owner replied with {value} for {in} to {out}. Reply within {hours} hours.'],
+    es: ['Contraoferta para {house}', 'El propietario respondió con {value} para el {in} al {out}. Responda en un plazo de {hours} horas.'] },
   proposal_closed: { grp: 'answer', to: 'broker',
     pt: ['Sua proposta para {house} foi encerrada', 'As datas de {in} a {out} foram reservadas por outra proposta.'],
     en: ['Your proposal for {house} was closed', 'The dates from {in} to {out} were booked by another proposal.'],
@@ -96,6 +96,22 @@ KINDS.checkin_ready = { grp: 'answer', to: 'broker',
   pt: ['A página de check-in de {house} está pronta', 'O proprietário preencheu a página de check-in de {in} a {out}. Abra a reserva, copie o link e envie ao cliente.'],
   en: ['The check-in page for {house} is ready', 'The owner filled in the check-in page for {in} to {out}. Open the booking, copy the link and send it to your client.'],
   es: ['La página de check-in de {house} está lista', 'El propietario completó la página de check-in del {in} al {out}. Abra la reserva, copie el enlace y envíelo al cliente.'] };
+KINDS.proposal_queued = { grp: 'answer', to: 'broker',
+  pt: ['Sua proposta para {house} entrou na fila', 'As datas de {in} a {out} estão em análise. Sua proposta segue na fila e será enviada ao proprietário se as datas voltarem a ficar livres.'],
+  en: ['Your proposal for {house} is in the queue', 'The dates from {in} to {out} are under review. Your proposal stays in the queue and goes to the owner if the dates become free again.'],
+  es: ['Su propuesta para {house} entró en la fila', 'Las fechas del {in} al {out} están en análisis. Su propuesta sigue en la fila y irá al propietario si las fechas vuelven a quedar libres.'] };
+KINDS.proposal_promoted = { grp: 'answer', to: 'broker',
+  pt: ['Sua proposta para {house} saiu da fila', 'As datas de {in} a {out} ficaram livres e sua proposta foi enviada ao proprietário.'],
+  en: ['Your proposal for {house} left the queue', 'The dates from {in} to {out} became free and your proposal was sent to the owner.'],
+  es: ['Su propuesta para {house} salió de la fila', 'Las fechas del {in} al {out} quedaron libres y su propuesta fue enviada al propietario.'] };
+KINDS.advance_due = { grp: 'expiring', to: 'broker',
+  pt: ['Informe o adiantamento de {house} em {hours} h', 'A reserva de {in} a {out} será liberada e você receberá uma ocorrência se o adiantamento não for informado em cerca de {hours} horas.'],
+  en: ['Report the advance for {house} in {hours} h', 'The booking from {in} to {out} will be released and you will get a strike if the advance is not reported in about {hours} hours.'],
+  es: ['Informe el anticipo de {house} en {hours} h', 'La reserva del {in} al {out} será liberada y recibirá una ocurrencia si el anticipo no se informa en unas {hours} horas.'] };
+KINDS.proposal_released = { grp: 'expiring', to: 'both',
+  pt: ['A reserva de {house} foi liberada', 'O adiantamento de {in} a {out} não foi informado no prazo. As datas voltaram à agenda e o corretor recebeu uma ocorrência.'],
+  en: ['The booking for {house} was released', 'The advance for {in} to {out} was not reported in time. The dates are back on the calendar and the broker got a strike.'],
+  es: ['La reserva de {house} fue liberada', 'El anticipo del {in} al {out} no se informó a tiempo. Las fechas volvieron a la agenda y el corredor recibió una ocurrencia.'] };
 const GROUPS = ['invite', 'proposal', 'answer', 'expiring'];
 
 const FOOT = {

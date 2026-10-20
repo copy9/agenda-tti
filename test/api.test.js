@@ -119,7 +119,9 @@ test('proposta: valida regras e nunca deixa data duplicada', async () => {
   assert.equal((await brk1.sync([{ c: 'props', up: [mk('p100000004', 40, 43, { pax: 99 })] }])).status, 400);
   const ok = await brk1.sync([{ c: 'props', up: [mk('p100000005', 40, 43)] }]);
   assert.equal(ok.status, 200, ok.txt);
-  assert.equal((await brk2.sync([{ c: 'props', up: [mk('p100000006', 41, 44)] }])).status, 409); // sobreposto
+  const q = await brk2.sync([{ c: 'props', up: [mk('p100000006', 41, 44)] }]); // sobreposto: entra na fila, nunca em duplicidade
+  assert.equal(q.status, 200, q.txt);
+  assert.equal(q.j.view.props.find((p) => p.id === 'p100000006').q, 1);
   assert.equal((await brk2.sync([{ c: 'props', up: [mk('p100000007', 50, 53)] }])).status, 200);
 });
 
