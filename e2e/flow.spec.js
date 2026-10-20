@@ -47,7 +47,7 @@ test('proprietário e dois corretores: convite, proposta, aceite e privacidade',
     await expect(cell).toHaveClass(/(^|\s)ng(\s|$)/);
     await expect(cell).not.toHaveClass(/(^|\s)bl(\s|$)/);
     await owner.evaluate((id) => { softb[id] = []; blocks[id] = (blocks[id] || []).slice(0, 1); saveB(); }, hid);
-    await owner.evaluate(() => { view = null; render(); });
+    await owner.click('#bk');
     await owner.waitForSelector('.hc');
   });
 
