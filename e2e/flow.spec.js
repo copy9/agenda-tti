@@ -72,13 +72,14 @@ test('proprietário e dois corretores: convite, proposta, aceite e privacidade',
     expect(v2.props.some((x) => x.ghost)).toBe(true);
   });
 
-  await test.step('dupla reserva é barrada no servidor', async () => {
+  await test.step('datas já em análise: a segunda proposta vai para a fila e o proprietário não a recebe', async () => {
     const [a, b] = await b2.evaluate(() => [add(31), add(32)]);
     await b2.evaluate(([h, x, y]) => {
       PROP.unshift({ id: 'p' + Date.now(), hid: 'r' + h, house: 'Casa Servidor', broker: ME, bname: 'Corretor Dois', in: x, out: y, value: 8000, guest: 'Y', pax: 2, msg: '', status: 'pending', at: today, log: [], chat: [] });
       saveP();
     }, [hid, a, b]);
-    await expect.poll(() => b2.evaluate(() => PROP.filter((x) => !x.ghost).length)).toBe(0);
+    await expect.poll(() => b2.evaluate(() => PROP.filter((x) => !x.ghost && x.q).length)).toBe(1);
+    expect((await api(owner, '/api/sync')).view.props.length).toBe(1);
   });
 
   await test.step('aceite bloqueia as datas para toda a rede', async () => {
