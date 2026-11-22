@@ -50,7 +50,27 @@ test('o app construído aponta para o manifest, e a demonstração do Pages não
   assert.match(app, /rel="apple-touch-icon" href="\/app\/apple-touch-icon\.png"/);
   assert.match(app, /name="apple-mobile-web-app-capable" content="yes"/);
   assert.match(app, /name="apple-mobile-web-app-title" content="Agenda TTI"/);
-  // a demonstração do GitHub Pages não é servida por este servidor e não tem /app/: apontar para lá daria 404
-  const demo = fs.readFileSync(path.join(root, 'index.html'), 'utf8').slice(0, 4000);
-  assert.ok(!/manifest\.webmanifest/.test(demo), 'a demonstração não pode apontar para o manifest');
+  // a demonstração do GitHub Pages é publicada em /<repositório>/, então usa o manifest dela, com caminhos relativos
+  const demo = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const head = demo.slice(0, 4000);
+  assert.match(head, /<link rel="manifest" href="demo\.webmanifest">/);
+  assert.ok(!/href="\/app\//.test(head), 'caminho absoluto quebraria: o Pages publica em um subcaminho');
+  assert.match(demo.slice(-2000), /register\("demo-sw\.js"\)/, 'sem service worker o Android não oferece instalar');
+});
+
+test('a demonstração publicada tem manifest próprio, com ícones que existem no repositório', async () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const m = JSON.parse(fs.readFileSync(path.join(root, 'demo.webmanifest'), 'utf8'));
+  assert.equal(m.display, 'standalone');
+  assert.equal(m.start_url, '.', 'o Pages publica em um subcaminho: start_url absoluto sairia do projeto');
+  assert.equal(m.scope, '.');
+  assert.ok(m.icons.some((i) => i.purpose === 'maskable'));
+  for (const i of m.icons) {
+    assert.ok(!i.src.startsWith('/'), 'ícone com caminho absoluto: ' + i.src);
+    assert.ok(fs.existsSync(path.join(root, i.src)), 'ícone ausente no repositório: ' + i.src);
+  }
+  assert.ok(fs.existsSync(path.join(root, 'demo-sw.js')));
+  assert.ok(fs.existsSync(path.join(root, '.nojekyll')), 'sem .nojekyll o Pages pode esconder arquivos');
 });
