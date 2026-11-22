@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Tela cheia com a cor da marca na barra de status. -->
+  <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+    <item name="android:statusBarColor">#0F4C5C</item>
+    <item name="android:windowBackground">#F5F2EC</item>
+  </style>
+</resources>
