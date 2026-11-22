@@ -3025,19 +3025,35 @@ async function showProfile(code){
 /* ===== mensalidade da plataforma (Mercado Pago) ===== */
 Object.assign(XT.pt,{bt:'Assinatura',bn:'{p} por mês, cobrados pelo Mercado Pago. Você pode cancelar quando quiser.',btr:'Período grátis: faltam {n} dia(s).',bac:'Assinatura ativa.',brn:'Renova sozinha. Próxima cobrança por volta de {d}.',bcn:'Renovação cancelada. Seu acesso vale até {d}.',bfr:'Sua conta não paga mensalidade.',
  bet:'Seu período grátis terminou',bep:'Para continuar usando a Agenda TTI, assine por {p} por mês. O pagamento é feito no Mercado Pago.',bsb:'Assinar com Mercado Pago',bpd:'Já paguei, verificar',bcc:'Cancelar renovação',bcy:'Confirmar: cancelar renovação',bpe:'Pagamento iniciado. Se você já concluiu no Mercado Pago, toque em "Já paguei, verificar".',
- bof:'O pagamento ainda não foi configurado neste servidor. Fale com a administração.',bnc:'Pagamento ainda não confirmado. Pode levar alguns minutos.',bok:'Assinatura confirmada. Obrigado!',bwa:'Faltam {n} dia(s) do período grátis. Assine em Conta, Assinatura.',bsx:'Sair',bcd:'Renovação cancelada'});
+ bof:'O pagamento ainda não foi configurado neste servidor. Fale com a administração.',bnc:'Pagamento ainda não confirmado. Pode levar alguns minutos.',bok:'Assinatura confirmada. Obrigado!',bw1:'Faltam {n} dia(s) de acesso',bw2:'Quando acabar, a plataforma trava até a assinatura de {p} por mês ser confirmada. Dá para assinar agora e continuar sem interrupção.',bep0:'Para voltar a usar, confirme a assinatura mensal.',bsx:'Sair',bcd:'Renovação cancelada'});
 Object.assign(XT.en,{bt:'Subscription',bn:'{p} per month, charged by Mercado Pago. You can cancel anytime.',btr:'Free period: {n} day(s) left.',bac:'Subscription active.',brn:'Renews automatically. Next charge around {d}.',bcn:'Renewal canceled. Your access lasts until {d}.',bfr:'Your account does not pay a subscription.',
  bet:'Your free period has ended',bep:'To keep using Agenda TTI, subscribe for {p} per month. Payment is made on Mercado Pago.',bsb:'Subscribe with Mercado Pago',bpd:'I already paid, check',bcc:'Cancel renewal',bcy:'Confirm: cancel renewal',bpe:'Payment started. If you already finished on Mercado Pago, tap "I already paid, check".',
- bof:'Payment is not set up on this server yet. Contact the administration.',bnc:'Payment not confirmed yet. It can take a few minutes.',bok:'Subscription confirmed. Thank you!',bwa:'{n} day(s) of the free period left. Subscribe under Account, Subscription.',bsx:'Sign out',bcd:'Renewal canceled'});
+ bof:'Payment is not set up on this server yet. Contact the administration.',bnc:'Payment not confirmed yet. It can take a few minutes.',bok:'Subscription confirmed. Thank you!',bw1:'{n} day(s) of access left',bw2:'When it ends, the platform locks until the {p} monthly subscription is confirmed. You can subscribe now and keep working without interruption.',bep0:'To use it again, confirm the monthly subscription.',bsx:'Sign out',bcd:'Renewal canceled'});
 Object.assign(XT.es,{bt:'Suscripción',bn:'{p} por mes, cobrados por Mercado Pago. Puede cancelar cuando quiera.',btr:'Período gratis: faltan {n} día(s).',bac:'Suscripción activa.',brn:'Se renueva sola. Próximo cobro alrededor del {d}.',bcn:'Renovación cancelada. Su acceso vale hasta el {d}.',bfr:'Su cuenta no paga mensualidad.',
  bet:'Su período gratis terminó',bep:'Para seguir usando Agenda TTI, suscríbase por {p} al mes. El pago se hace en Mercado Pago.',bsb:'Suscribirse con Mercado Pago',bpd:'Ya pagué, verificar',bcc:'Cancelar renovación',bcy:'Confirmar: cancelar renovación',bpe:'Pago iniciado. Si ya terminó en Mercado Pago, toque "Ya pagué, verificar".',
- bof:'El pago aún no está configurado en este servidor. Hable con la administración.',bnc:'Pago aún no confirmado. Puede tardar unos minutos.',bok:'Suscripción confirmada. ¡Gracias!',bwa:'Faltan {n} día(s) del período gratis. Suscríbase en Cuenta, Suscripción.',bsx:'Salir',bcd:'Renovación cancelada'});
+ bof:'El pago aún no está configurado en este servidor. Hable con la administración.',bnc:'Pago aún no confirmado. Puede tardar unos minutos.',bok:'Suscripción confirmada. ¡Gracias!',bw1:'Quedan {n} día(s) de acceso',bw2:'Cuando termine, la plataforma se bloquea hasta confirmar la suscripción de {p} al mes. Puede suscribirse ahora y seguir sin interrupción.',bep0:'Para volver a usarla, confirme la suscripción mensual.',bsx:'Salir',bcd:'Renovación cancelada'});
 let PAY=null,PAYWARN=false;
 const bmoney=n=>brl(Number(n));
 const bdate=ms=>new Date(ms).toLocaleDateString(LNAMES[TTI_LANG]||'pt-BR',{day:'2-digit',month:'long'});
-function setPay(p){PAY=p;if(SRVU)SRVU.pay=p;const b=$('fbill');if(b)b.textContent=xt('bt')+(p&&p.status==='trial'?' · '+p.daysLeft+' d':'');
- if(p&&p.status==='trial'&&p.daysLeft<=3&&!PAYWARN){PAYWARN=true;toast(xt('bwa',{n:p.daysLeft}))}
- if(p&&p.blocked)paywallDraw()}
+function setPay(p){PAY=p;if(SRVU)SRVU.pay=p;const b=$('fbill');if(b)b.textContent=xt('bt')+(p&&p.daysLeft?' · '+p.daysLeft+' d':'');
+ if(p&&p.blocked){paywallDraw();return}
+ // Aviso de vencimento: janela a partir de PAYWARN_D dias antes, para quem ainda tem acesso.
+ // Vale para o período grátis e para a assinatura que não renova sozinha.
+ if(p&&p.applies&&p.configured&&p.daysLeft>0&&p.daysLeft<=PAYWARN_D&&(p.status==='trial'||p.status==='active')&&payWarnDue())payWarnDraw(p.daysLeft)}
+
+/* Aviso antes de travar. Fecha e deixa usar: travar só acontece depois de vencer. Uma vez por dia. */
+const PAYWARN_D=5;
+const payWarnKey=()=>'tti.paywarn.'+((SRVU&&SRVU.email)||'');
+const payToday=()=>new Date().toISOString().slice(0,10);
+function payWarnDue(){if(PAYWARN)return false;try{return localStorage.getItem(payWarnKey())!==payToday()}catch(e){return true}}
+function payWarnDraw(n){const d=$('billd');if(!d||d.open)return;
+ PAYWARN=true;try{localStorage.setItem(payWarnKey(),payToday())}catch(e){}
+ d.oncancel=null;
+ d.innerHTML='<div class="fh"><h2 id="bgt">'+xt('bw1',{n:n})+'</h2><button class="fx" id="bx" type="button" aria-label="'+xt('cl')+'">×</button></div>'
+  +'<div class="xd"><p>'+xt('bw2',{n:n,p:bmoney((PAY||{}).price||0)})+'</p>'+billBody(PAY)+'<div class="row">'+billBtns(PAY)+'</div></div>';
+ $('bx').onclick=()=>d.close();
+ billBind(d,()=>d.close());
+ d.showModal()}
 async function payLoad(){if(!SRVU||SRVU.role==='admin')return;
  try{if(new URLSearchParams(location.search).get('assinatura')){history.replaceState(null,'',location.pathname);try{const r=await api0('/api/billing/refresh',{});setPay(r.pay);if(r.pay.status==='active'){if($('billd').open||PAYRET)location.reload();else toast(xt('bok'));return}}catch(e){}}
   setPay((await api0('/api/billing')).pay)}catch(e){}}
@@ -3061,7 +3077,7 @@ function srvPaywall(){if(!PAYRET&&new URLSearchParams(location.search).get('assi
  if(!PAY||!PAY.blocked){PAY=Object.assign({},PAY||{},{blocked:true,applies:true,status:'expired',configured:true});api0('/api/billing').then(r=>setPay(r.pay),()=>paywallDraw())}else paywallDraw()}
 function paywallDraw(){const d=$('billd');if(!d)return;
  d.oncancel=e=>e.preventDefault();
- d.innerHTML='<div class="xd" style="padding-top:24px"><h2 id="bgt" style="margin:0 0 8px">'+xt('bet')+'</h2><p>'+xt('bep',{p:bmoney((PAY||{}).price||10)})+'</p>'+billBody(PAY,1)+'<div class="row" style="margin-top:16px">'+billBtns(PAY)+'</div>'
+ d.innerHTML='<div class="xd" style="padding-top:24px"><h2 id="bgt" style="margin:0 0 8px">'+xt('bet')+'</h2><p>'+((PAY||{}).price?xt('bep',{p:bmoney(PAY.price)}):xt('bep0'))+'</p>'+billBody(PAY,1)+'<div class="row" style="margin-top:16px">'+billBtns(PAY)+'</div>'
   +'<div class="row" style="margin-top:14px"><a class="btn o" href="/api/me/export" download>'+xt('md')+'</a><button class="btn o" id="bout" type="button">'+xt('bsx')+'</button></div></div>';
  billBind(d,()=>location.reload());
  $('bout').onclick=()=>{api0('/api/logout',{}).catch(()=>{}).then(()=>location.reload())};
