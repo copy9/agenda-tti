@@ -95,6 +95,18 @@ Não há loja: a Agenda se instala direto do navegador, e o aplicativo é o pró
 
 Instalado, ele abre em tela cheia, com ícone próprio, e é **só nesse formato que o aviso push funciona no iPhone** — no Safari comum a Apple não entrega notificação web. Sem rede, o aplicativo ainda abre e mostra a última tela carregada, com uma faixa avisando que está sem conexão; propostas, bloqueios e reservas nunca vêm do cache, sempre do servidor. Isso exige HTTPS, que o `Caddyfile.example` já resolve.
 
+#### Aplicativo Android (arquivo .apk)
+
+Além da instalação pelo navegador, há um aplicativo Android baixável: o arquivo **agenda-tti.apk**, publicado em **Releases**, na tag `app-android`. Baixe no celular, abra o arquivo e confirme a instalação — como não vem da Play Store, o Android pede permissão de "fonte desconhecida" na primeira vez.
+
+O projeto fica em `android/` e é propositalmente enxuto: uma tela só, sem bibliotecas externas, que abre a plataforma em tela cheia, trata o botão voltar, permite escolher foto da galeria, manda links externos para o navegador e, sem rede, mostra a cópia que viaja dentro do aplicativo. A compilação roda no GitHub Actions (`.github/workflows/android.yml`), que já traz o SDK do Android.
+
+**Apontar para o seu servidor:** troque a constante `APP_URL` em `android/app/src/main/java/br/com/agendatti/MainActivity.java` pelo seu domínio e publique na `main` — o fluxo recompila e substitui o arquivo em Releases.
+
+O APK é assinado com a chave de depuração, o que basta para instalar por arquivo. Publicar na Play Store exigiria chave própria, guardada em segredo do repositório, e conta de desenvolvedor.
+
+Para iPhone não há arquivo: a Apple não permite instalar fora da App Store, então lá o caminho é a instalação pelo Safari, descrita acima.
+
 ### Recuperação de senha
 Em Entrar, "Esqueci a senha" envia por e-mail um link que vale 30 minutos e uma única vez (no banco fica só o hash). A resposta é a mesma exista o e-mail ou não, há limite por e-mail e por IP, e ao redefinir todas as sessões são encerradas e a pessoa recebe um aviso. Exige `SMTP_*` configurado. A senha do administrador continua vindo de `ADMIN_PASSWORD`.
 
@@ -135,6 +147,7 @@ src/migrate.js       criação das tabelas
 src/billing.js       mensalidade (período grátis, assinatura no Mercado Pago, painel)
 public/app/          ícones e manifest do aplicativo instalável
 public/sw.js         service worker: avisos push e funcionamento sem rede
+android/             aplicativo Android (WebView) que vira o arquivo .apk
 public/index.html    o site (front)
 test/api.test.js     testes da API
 scripts/check-db.js  confere a conexão com o banco
