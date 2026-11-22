@@ -16,6 +16,14 @@ def rep(old, new, count=1):
 
 # 0) variável de inicialização (o servidor troca "window.TTI_BOOT=null;" pelos dados da sessão)
 rep('<script>try{var _t=localStorage.getItem("tti-theme")', '<script>window.TTI_BOOT=null;</script>\n<script>try{var _t=localStorage.getItem("tti-theme")')
+# aplicativo instalável: só no modo servidor, porque a demonstração do Pages não serve /app/
+rep('<meta name="viewport"', '<link rel="manifest" href="/app/manifest.webmanifest">'
+    '<link rel="apple-touch-icon" href="/app/apple-touch-icon.png">'
+    '<meta name="apple-mobile-web-app-capable" content="yes">'
+    '<meta name="mobile-web-app-capable" content="yes">'
+    '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+    '<meta name="apple-mobile-web-app-title" content="Agenda TTI">'
+    '<meta name="viewport"')
 # idioma da página pública /c/<slug>?lg=en
 rep("||location.search.match(/[?&](?:c|pf|s)=[^&]+&lg=(pt|en|es)/);if(_h)", "||location.search.match(/[?&](?:c|pf|s)=[^&]+&lg=(pt|en|es)/)||(/^\\/(c|corretor|hospedagem)\\//.test(location.pathname)&&location.search.match(/[?&]lg=(pt|en|es)/));if(_h)")
 
@@ -47,7 +55,7 @@ rep('<button type="button" class="back" id="sw"', '<p class="lk" id="fgw" hidden
 rep("$('nmw').hidden=$('waw').hidden=ex;", "$('nmw').hidden=$('waw').hidden=$('tcw').hidden=ex;$('fgw').hidden=!SRV||!ex;")
 rep("function resetLogin(){INVT=null;", "function resetLogin(){INVT=null;$('tc').checked=false;")
 rep('<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button></div></div>', '<div><h4>Acesso</h4><button class="fl" type="button" data-open="login">Entrar</button><button class="fl" type="button" data-open="cadastro">Criar conta</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a></div></div>')
-rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="fbill">Assinatura</button><button class="fl" type="button" id="fdata">Meus dados</button><button class="fl" type="button" id="fnotif">Avisos por e-mail e push</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
+rep('<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span>', '<div><h4>Conta</h4><span class="fl" id="fwho" style="cursor:default"></span><button class="fl" type="button" id="finst" hidden>Instalar aplicativo</button><button class="fl" type="button" id="fbill">Assinatura</button><button class="fl" type="button" id="fdata">Meus dados</button><button class="fl" type="button" id="fnotif">Avisos por e-mail e push</button><a href="/termos" data-legal="terms">Termos de uso</a><a href="/privacidade" data-legal="privacy">Política de privacidade</a>')
 rep('<dialog id="dlg" aria-labelledby="dtt">', extra('server-extra.html') + '<dialog id="dlg" aria-labelledby="dtt">')
 rep('</style>', extra('server-extra.css') + '</style>')
 rep('const I18N_D=/*I18N_DATA*/[', 'const I18N_D=/*I18N_DATA*/' + json.dumps(json.loads(extra('server-extra.i18n.json')), ensure_ascii=False)[:-1] + ',')

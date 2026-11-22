@@ -86,6 +86,15 @@ O Mercado Pago só aceita endereço de retorno `https://` público, então `loca
 4. Se o checkout não abrir, o motivo está no log do servidor, na linha `mercado pago recusou a chamada` (campos `status` e `detail`): 401 é token errado, 400 `payer_email` ou `back_url` inválido.
 5. Com credenciais de produção a cobrança é real: para testar, ponha o valor em R$ 1 no painel e cancele a assinatura depois.
 
+### Aplicativo no celular
+
+Não há loja: a Agenda se instala direto do navegador, e o aplicativo é o próprio site, então ele nunca fica atrás de uma versão em análise.
+
+- **Android:** o Chrome oferece "Instalar aplicativo" sozinho. Também há o item **Instalar aplicativo** no menu da conta.
+- **iPhone:** no Safari, toque em Compartilhar e em "Adicionar à Tela de Início". O mesmo item do menu mostra esse passo a passo.
+
+Instalado, ele abre em tela cheia, com ícone próprio, e é **só nesse formato que o aviso push funciona no iPhone** — no Safari comum a Apple não entrega notificação web. Sem rede, o aplicativo ainda abre e mostra a última tela carregada, com uma faixa avisando que está sem conexão; propostas, bloqueios e reservas nunca vêm do cache, sempre do servidor. Isso exige HTTPS, que o `Caddyfile.example` já resolve.
+
 ### Recuperação de senha
 Em Entrar, "Esqueci a senha" envia por e-mail um link que vale 30 minutos e uma única vez (no banco fica só o hash). A resposta é a mesma exista o e-mail ou não, há limite por e-mail e por IP, e ao redefinir todas as sessões são encerradas e a pessoa recebe um aviso. Exige `SMTP_*` configurado. A senha do administrador continua vindo de `ADMIN_PASSWORD`.
 
@@ -124,6 +133,8 @@ src/auth.js          cadastro, login, sessões, administrador
 src/store.js         casas, fotos, avisos, expiração de propostas
 src/migrate.js       criação das tabelas
 src/billing.js       mensalidade (período grátis, assinatura no Mercado Pago, painel)
+public/app/          ícones e manifest do aplicativo instalável
+public/sw.js         service worker: avisos push e funcionamento sem rede
 public/index.html    o site (front)
 test/api.test.js     testes da API
 scripts/check-db.js  confere a conexão com o banco

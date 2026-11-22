@@ -151,13 +151,13 @@ async function showProfile(code){
 /* ===== mensalidade da plataforma (Mercado Pago) ===== */
 Object.assign(XT.pt,{bt:'Assinatura',bn:'{p} por mês, cobrados pelo Mercado Pago. Você pode cancelar quando quiser.',btr:'Período grátis: faltam {n} dia(s).',bac:'Assinatura ativa.',brn:'Renova sozinha. Próxima cobrança por volta de {d}.',bcn:'Renovação cancelada. Seu acesso vale até {d}.',bfr:'Sua conta não paga mensalidade.',
  bet:'Seu período grátis terminou',bep:'Para continuar usando a Agenda TTI, assine por {p} por mês. O pagamento é feito no Mercado Pago.',bsb:'Assinar com Mercado Pago',bpd:'Já paguei, verificar',bcc:'Cancelar renovação',bcy:'Confirmar: cancelar renovação',bpe:'Pagamento iniciado. Se você já concluiu no Mercado Pago, toque em "Já paguei, verificar".',
- bof:'O pagamento ainda não foi configurado neste servidor. Fale com a administração.',bnc:'Pagamento ainda não confirmado. Pode levar alguns minutos.',bok:'Assinatura confirmada. Obrigado!',bw1:'Faltam {n} dia(s) de acesso',bw2:'Quando acabar, a plataforma trava até a assinatura de {p} por mês ser confirmada. Dá para assinar agora e continuar sem interrupção.',bep0:'Para voltar a usar, confirme a assinatura mensal.',bsx:'Sair',bcd:'Renovação cancelada'});
+ bof:'O pagamento ainda não foi configurado neste servidor. Fale com a administração.',bnc:'Pagamento ainda não confirmado. Pode levar alguns minutos.',bok:'Assinatura confirmada. Obrigado!',ain:'Aplicativo instalado. Abra pelo ícone na tela do celular.',ait:'Instalar no iPhone',ai1:'1. Toque em Compartilhar, o quadrado com a seta para cima, na barra do Safari.',ai2:'2. Escolha “Adicionar à Tela de Início” e confirme.',ai3:'Depois disso a Agenda abre como aplicativo, em tela cheia, e os avisos de proposta passam a chegar no aparelho.',aof:'Sem conexão. Você está vendo o que já havia sido carregado.',bw1:'Faltam {n} dia(s) de acesso',bw2:'Quando acabar, a plataforma trava até a assinatura de {p} por mês ser confirmada. Dá para assinar agora e continuar sem interrupção.',bep0:'Para voltar a usar, confirme a assinatura mensal.',bsx:'Sair',bcd:'Renovação cancelada'});
 Object.assign(XT.en,{bt:'Subscription',bn:'{p} per month, charged by Mercado Pago. You can cancel anytime.',btr:'Free period: {n} day(s) left.',bac:'Subscription active.',brn:'Renews automatically. Next charge around {d}.',bcn:'Renewal canceled. Your access lasts until {d}.',bfr:'Your account does not pay a subscription.',
  bet:'Your free period has ended',bep:'To keep using Agenda TTI, subscribe for {p} per month. Payment is made on Mercado Pago.',bsb:'Subscribe with Mercado Pago',bpd:'I already paid, check',bcc:'Cancel renewal',bcy:'Confirm: cancel renewal',bpe:'Payment started. If you already finished on Mercado Pago, tap "I already paid, check".',
- bof:'Payment is not set up on this server yet. Contact the administration.',bnc:'Payment not confirmed yet. It can take a few minutes.',bok:'Subscription confirmed. Thank you!',bw1:'{n} day(s) of access left',bw2:'When it ends, the platform locks until the {p} monthly subscription is confirmed. You can subscribe now and keep working without interruption.',bep0:'To use it again, confirm the monthly subscription.',bsx:'Sign out',bcd:'Renewal canceled'});
+ bof:'Payment is not set up on this server yet. Contact the administration.',bnc:'Payment not confirmed yet. It can take a few minutes.',bok:'Subscription confirmed. Thank you!',ain:'App installed. Open it from the icon on your home screen.',ait:'Install on iPhone',ai1:'1. Tap Share, the square with an up arrow, in the Safari bar.',ai2:'2. Choose “Add to Home Screen” and confirm.',ai3:'From then on Agenda opens as an app, full screen, and proposal alerts reach the device.',aof:'No connection. You are seeing what had already loaded.',bw1:'{n} day(s) of access left',bw2:'When it ends, the platform locks until the {p} monthly subscription is confirmed. You can subscribe now and keep working without interruption.',bep0:'To use it again, confirm the monthly subscription.',bsx:'Sign out',bcd:'Renewal canceled'});
 Object.assign(XT.es,{bt:'Suscripción',bn:'{p} por mes, cobrados por Mercado Pago. Puede cancelar cuando quiera.',btr:'Período gratis: faltan {n} día(s).',bac:'Suscripción activa.',brn:'Se renueva sola. Próximo cobro alrededor del {d}.',bcn:'Renovación cancelada. Su acceso vale hasta el {d}.',bfr:'Su cuenta no paga mensualidad.',
  bet:'Su período gratis terminó',bep:'Para seguir usando Agenda TTI, suscríbase por {p} al mes. El pago se hace en Mercado Pago.',bsb:'Suscribirse con Mercado Pago',bpd:'Ya pagué, verificar',bcc:'Cancelar renovación',bcy:'Confirmar: cancelar renovación',bpe:'Pago iniciado. Si ya terminó en Mercado Pago, toque "Ya pagué, verificar".',
- bof:'El pago aún no está configurado en este servidor. Hable con la administración.',bnc:'Pago aún no confirmado. Puede tardar unos minutos.',bok:'Suscripción confirmada. ¡Gracias!',bw1:'Quedan {n} día(s) de acceso',bw2:'Cuando termine, la plataforma se bloquea hasta confirmar la suscripción de {p} al mes. Puede suscribirse ahora y seguir sin interrupción.',bep0:'Para volver a usarla, confirme la suscripción mensual.',bsx:'Salir',bcd:'Renovación cancelada'});
+ bof:'El pago aún no está configurado en este servidor. Hable con la administración.',bnc:'Pago aún no confirmado. Puede tardar unos minutos.',bok:'Suscripción confirmada. ¡Gracias!',ain:'Aplicación instalada. Ábrala desde el ícono en la pantalla de inicio.',ait:'Instalar en iPhone',ai1:'1. Toque Compartir, el cuadrado con la flecha hacia arriba, en la barra de Safari.',ai2:'2. Elija “Agregar a inicio” y confirme.',ai3:'Desde entonces la Agenda abre como aplicación, a pantalla completa, y los avisos de propuesta llegan al aparato.',aof:'Sin conexión. Está viendo lo que ya se había cargado.',bw1:'Quedan {n} día(s) de acceso',bw2:'Cuando termine, la plataforma se bloquea hasta confirmar la suscripción de {p} al mes. Puede suscribirse ahora y seguir sin interrupción.',bep0:'Para volver a usarla, confirme la suscripción mensual.',bsx:'Salir',bcd:'Renovación cancelada'});
 let PAY=null,PAYWARN=false;
 const bmoney=n=>brl(Number(n));
 const bdate=ms=>new Date(ms).toLocaleDateString(LNAMES[TTI_LANG]||'pt-BR',{day:'2-digit',month:'long'});
@@ -239,3 +239,31 @@ function admBillPaint(){
  $('ab-s').onclick=async()=>{const b=$('ab-s');MO.busy(b,true);try{await api0('/api/admin/billing',{price:$('ab-p').value,trial:Number($('ab-t').value),roles:$('ab-r').value,on:$('ab-o').checked});toast('Mensalidade salva');ABV=null;admBill()}catch(x){toast(x.message);MO.busy(b,false)}};
  el.querySelectorAll('[data-free]').forEach(b=>b.onclick=async()=>{try{await api0('/api/admin/billing/free',{email:b.dataset.free,on:b.dataset.on==='1'});ABV=null;admBill()}catch(x){toast(x.message)}})}
 {const _ar=arender;arender=function(){_ar();if(SRV&&AT==='cf')admBill()}}
+
+/* ===== aplicativo instalável ===== */
+/* O site vira aplicativo de tela cheia quando instalado. No Android o próprio navegador oferece
+   a instalação e nós só guardamos o convite; no iPhone não existe esse convite, então explicamos
+   o caminho. O item do menu fica escondido quando já está instalado ou quando não dá para instalar. */
+let INSTP=null;
+const appStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+const appIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent||'')||(/Mac/.test(navigator.platform||'')&&'ontouchend' in document);
+function instShow(){const b=$('finst');if(b)b.hidden=!(!appStandalone()&&(INSTP||appIOS()))}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTP=e;instShow()});
+addEventListener('appinstalled',()=>{INSTP=null;instShow();toast(xt('ain'))});
+function instIOS(){const d=$('instd');if(!d)return;
+ d.innerHTML='<div class="fh"><h2 id="intt">'+xt('ait')+'</h2><button class="fx" id="inx" type="button" aria-label="'+xt('cl')+'">×</button></div>'
+  +'<div class="xd"><p>'+xt('ai1')+'</p><p>'+xt('ai2')+'</p><p class="mute">'+xt('ai3')+'</p></div>';
+ $('inx').onclick=()=>d.close();if(!d.open)d.showModal()}
+async function instGo(){
+ if(INSTP){const p=INSTP;INSTP=null;try{p.prompt();await p.userChoice}catch(e){}instShow();return}
+ instIOS()}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#finst'))instGo()});
+
+/* Sem conexão: faixa discreta. O app continua na tela, com o que já estava carregado. */
+function offBar(){const b=$('offbar');if(!b)return;const off=navigator.onLine===false;b.hidden=!off;if(off)b.textContent=xt('aof')}
+addEventListener('online',offBar);addEventListener('offline',offBar);
+
+/* Registra o service worker no carregamento: é ele que faz o aplicativo abrir sem rede e
+   receber os avisos. Falhar aqui não pode derrubar a tela. */
+if('serviceWorker' in navigator){addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{})})}
+instShow();offBar();
