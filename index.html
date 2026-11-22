@@ -4,7 +4,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230F4C5C%27/%3E%3Crect x=%277%27 y=%279%27 width=%2718%27 height=%2716%27 rx=%273%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%272.2%27/%3E%3Cpath d=%27M7 14h18M12 6v5M20 6v5%27 stroke=%27%23fff%27 stroke-width=%272.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <meta charset="utf-8">
 <title>Agenda TTI | Área do proprietário</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="demo.webmanifest"><link rel="apple-touch-icon" href="public/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Agenda TTI"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>try{var _t=localStorage.getItem("tti-theme");if(_t)document.documentElement.setAttribute("data-theme",_t)}catch(e){}var TTI_LANG="pt";try{var _l=localStorage.getItem("tti-lang");if(_l==="en"||_l==="es")TTI_LANG=_l;var _h=location.hash.match(/casa=[^&]+&lg=(pt|en|es)/)||location.search.match(/[?&](?:c|pf|s)=[^&]+&lg=(pt|en|es)/);if(_h)TTI_LANG=_h[1]}catch(e){}function LOC(){return"pt-BR"}document.documentElement.lang={pt:"pt-BR",en:"en",es:"es"}[TTI_LANG];</script>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>:root{--bg:#F5F2EC;--surf:#fff;--ink:#14262E;--mute:#5C6B70;--line:#E6E1D6;--sea:#0F4C5C;--sea-ink:#fff;--bad:#C0392B;--badbg:#FBE9E6;--ok:#2F7D5B;--okbg:#E4F2EB;--brass:#B58A3C;--red:#C0392B;--deep:#0B3641;
@@ -2734,5 +2734,5 @@ const sv0=readStayQ();
 if(sv0)showStayDemo(sv0);else if(pv0)showPub(pv0,false);else if(iv0)showInvite(iv0);else try{const a=sessionStorage.getItem('tti-auth')||'';if(a.startsWith('owner:')&&(a.slice(6)===USER.email||OW()[a.slice(6)])&&!SUSP()[a.slice(6)])enter('owner',a.slice(6));else if(a.startsWith('broker:')&&BR()[a.slice(7)]&&!SUSP()[a.slice(7)])enter('broker',a.slice(7))}catch(e){}
 if(!pv0&&!iv0&&readPf()&&!window.TTI_BOOT)showProfDemo(readPf());
 </script>
-</body>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")addEventListener("load",function(){navigator.serviceWorker.register("demo-sw.js").catch(function(){})});</script></body>
 </html>

@@ -12,8 +12,14 @@ const root = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 const falhas = [];
 
-// 1. demonstração do Pages: cópia literal da fonte (npm run pages)
-if (read('front/source.html') !== read('index.html')) falhas.push('index.html (demonstração do GitHub Pages) está diferente de front/source.html — rode: npm run pages');
+// 1. demonstração do Pages: saída de make-pages (npm run pages)
+const tmpPg = path.join(os.tmpdir(), 'tti-pages-check-' + process.pid + '.html');
+const rp = spawnSync(process.execPath, [path.join(root, 'scripts/make-pages.js'), path.join(root, 'front/source.html'), tmpPg], { encoding: 'utf8' });
+if (rp.status !== 0) falhas.push('não foi possível gerar a demonstração para comparar: ' + ((rp.stderr || '').trim() || 'erro desconhecido'));
+else {
+  if (fs.readFileSync(tmpPg, 'utf8') !== read('index.html')) falhas.push('index.html (demonstração do GitHub Pages) está diferente do que front/source.html gera — rode: npm run pages');
+  try { fs.unlinkSync(tmpPg); } catch (e) { /* ok */ }
+}
 
 // 2. app do servidor: saída do make-front
 const tmp = path.join(os.tmpdir(), 'tti-front-check-' + process.pid + '.html');
