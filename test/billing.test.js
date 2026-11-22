@@ -41,15 +41,21 @@ async function admin() {
 }
 const pay = async (c) => (await c.get('/api/billing')).j.pay;
 
-test('conta nova começa em período grátis de 7 dias e usa tudo normalmente', async () => {
-  const c = await signup('owner', 'bl-o1@x.com', 'Dono Bill');
+test('corretor novo começa com uma semana grátis de R$ 110 por mês; proprietário não paga', async () => {
+  const c = await signup('broker', 'bl-c0@x.com', 'Corretor Bill');
   const p = await pay(c);
   assert.equal(p.status, 'trial');
   assert.equal(p.daysLeft, 7);
-  assert.equal(p.price, 10);
+  assert.equal(p.price, 110);
   assert.equal(p.blocked, false);
   assert.equal((await c.get('/api/sync')).status, 200);
   assert.equal((await c.get('/api/session')).j.user.pay.status, 'trial');
+  // o proprietário fica fora da cobrança
+  const o = await signup('owner', 'bl-o1@x.com', 'Dono Bill');
+  const po = await pay(o);
+  assert.equal(po.applies, false);
+  assert.equal(po.status, 'free');
+  assert.equal((await o.get('/api/sync')).status, 200);
 });
 
 test('administrador muda dias grátis e valor; conta vencida é bloqueada, mas páginas públicas e dados seguem abertos', async () => {
@@ -57,7 +63,7 @@ test('administrador muda dias grátis e valor; conta vencida é bloqueada, mas p
   await dono.sync([{ c: 'houses', up: [house('hBL1', { name: 'Casa Cobrança' })] }]);
   const slug = (await dono.get('/api/sync')).j.view.houses[0].pg;
   const adm = await admin();
-  let v = (await adm.post('/api/admin/billing', { trial: 0 })).j;
+  let v = (await adm.post('/api/admin/billing', { trial: 0, roles: 'both' })).j;
   assert.equal(v.settings.trial, 0);
   const p = await pay(dono);
   assert.equal(p.status, 'expired');
@@ -69,6 +75,7 @@ test('administrador muda dias grátis e valor; conta vencida é bloqueada, mas p
   assert.equal((await new Client().get('/api/public/house/' + slug)).status, 200, 'página pública da casa segue aberta');
   assert.equal((await adm.post('/api/admin/billing', { trial: 7 })).j.settings.trial, 7);
   assert.equal((await dono.get('/api/sync')).status, 200, 'voltar os dias grátis libera de novo');
+  await adm.post('/api/admin/billing', { roles: 'broker' });
 });
 
 test('valores inválidos no painel são recusados', async () => {
@@ -118,7 +125,7 @@ test('assinar cria a assinatura recorrente no Mercado Pago e o aviso assinado li
 test('valor novo vale para as próximas assinaturas e o aviso de pagamento também libera', async () => {
   const adm = await admin();
   await adm.post('/api/admin/billing', { trial: 0, price: '25,5' });
-  const o = await signup('owner', 'bl-o4@x.com', 'Dono Preço');
+  const o = await signup('broker', 'bl-c4@x.com', 'Corretor Preço');
   const r = await o.post('/api/billing/subscribe');
   const id = r.j.url.split('=').pop();
   assert.equal(mp.subs[id].amount, 25.5);
@@ -126,11 +133,11 @@ test('valor novo vale para as próximas assinaturas e o aviso de pagamento tamb�
   assert.equal(await hook('pg9', 'subscription_authorized_payment'), 200);
   assert.equal((await pay(o)).status, 'active');
   // "já paguei": a consulta direta ao Mercado Pago também funciona
-  const o2 = await signup('owner', 'bl-o5@x.com', 'Dono Volta');
+  const o2 = await signup('broker', 'bl-c5@x.com', 'Corretor Volta');
   const id2 = (await o2.post('/api/billing/subscribe')).j.url.split('=').pop();
   mp.subs[id2].status = 'authorized'; mp.subs[id2].next_payment_date = new Date(Date.now() + 30 * 864e5).toISOString();
   assert.equal((await o2.post('/api/billing/refresh')).j.pay.status, 'active');
-  await adm.post('/api/admin/billing', { price: 10 });
+  await adm.post('/api/admin/billing', { price: 110 });
 });
 
 test('cortesia isenta a conta; cobrança só de proprietários deixa corretores livres; desligar libera todos', async () => {
@@ -154,17 +161,38 @@ test('cortesia isenta a conta; cobrança só de proprietários deixa corretores 
   assert.equal(v.configured, true);
   assert.equal(v.hook, 'https://agenda.test/api/billing/webhook');
   assert.ok(v.list.every((x) => x.status === 'free'));
-  await adm.post('/api/admin/billing', { on: true, trial: 7 });
+  await adm.post('/api/admin/billing', { on: true, trial: 7, roles: 'broker' });
 });
 
 test('excluir a conta cancela a assinatura no Mercado Pago', async () => {
   const adm = await admin();
   await adm.post('/api/admin/billing', { trial: 0 });
-  const o = await signup('owner', 'bl-o7@x.com', 'Dono Sai');
+  const o = await signup('broker', 'bl-c7@x.com', 'Corretor Sai');
   const id = (await o.post('/api/billing/subscribe')).j.url.split('=').pop();
   mp.subs[id].status = 'authorized'; mp.subs[id].next_payment_date = new Date(Date.now() + 30 * 864e5).toISOString();
   await o.post('/api/billing/refresh');
-  assert.equal((await adm.post('/api/admin/delete-user', { email: 'bl-o7@x.com' })).status, 200);
+  assert.equal((await adm.post('/api/admin/delete-user', { email: 'bl-c7@x.com' })).status, 200);
   assert.equal(mp.subs[id].status, 'cancelled');
+  await adm.post('/api/admin/billing', { trial: 7 });
+});
+
+test('assinatura que não renova sozinha conta os dias que faltam, para avisar antes de travar', async () => {
+  const adm = await admin();
+  await adm.post('/api/admin/billing', { trial: 0, roles: 'broker' });
+  const c = await signup('broker', 'bl-c8@x.com', 'Corretor Fim');
+  const id = (await c.post('/api/billing/subscribe')).j.url.split('=').pop();
+  mp.subs[id].status = 'authorized';
+  mp.subs[id].next_payment_date = new Date(Date.now() + 2 * 864e5).toISOString();
+  await c.post('/api/billing/refresh');
+  const ativo = await pay(c);
+  assert.equal(ativo.status, 'active');
+  assert.equal(ativo.renews, true);
+  assert.equal(ativo.daysLeft, 0, 'enquanto renova sozinha não há contagem: nada a avisar');
+  assert.equal((await c.post('/api/billing/cancel')).status, 200);
+  const fim = await pay(c);
+  assert.equal(fim.status, 'active', 'segue usando até o fim do que pagou');
+  assert.equal(fim.renews, false);
+  assert.ok(fim.daysLeft >= 1 && fim.daysLeft <= 5, 'dias restantes chegam ao front: ' + fim.daysLeft);
+  assert.equal(fim.blocked, false);
   await adm.post('/api/admin/billing', { trial: 7 });
 });

@@ -11,7 +11,9 @@ const T = require('./telemetry');
 const DAY = 864e5;
 const GRACE = 3 * DAY; // folga depois da data prevista da próxima cobrança, para o aviso do Mercado Pago chegar
 const KEY = 'billing';
-const DEFAULTS = { on: 1, price: 10, trial: 7, roles: 'both' };
+// Padrão do produto: uma semana grátis e R$ 110 por mês, cobrados só do corretor.
+// O proprietário não paga — quem ganha comissão banca a ferramenta. Tudo isso muda pelo painel.
+const DEFAULTS = { on: 1, price: 110, trial: 7, roles: 'broker' };
 const ROLES = ['both', 'owner', 'broker'];
 
 let http = (...a) => fetch(...a);
@@ -69,7 +71,12 @@ function classify(s, role, created, sub, now) {
   if (sub && sub.free) return Object.assign(base, { status: 'free', applies: true, blocked: false, courtesy: true });
   const paidUntil = Number(sub && sub.paid_until) || 0;
   const renews = !!sub && sub.status === 'authorized';
-  if (renews || paidUntil > now) return Object.assign(base, { status: 'active', applies: true, blocked: false, renews, paidUntil });
+  if (renews || paidUntil > now) {
+    const act = { status: 'active', applies: true, blocked: false, renews, paidUntil };
+    // Assinatura que não renova sozinha tem data para acabar: o front avisa antes de travar.
+    if (!renews && paidUntil > now) act.daysLeft = Math.max(1, Math.ceil((paidUntil - now) / DAY));
+    return Object.assign(base, act);
+  }
   const trialEnd = Math.max(Number(created) || 0, s.since) + s.trial * DAY;
   if (now < trialEnd) return Object.assign(base, { status: 'trial', applies: true, blocked: false, trialEnd, daysLeft: Math.max(1, Math.ceil((trialEnd - now) / DAY)) });
   return Object.assign(base, { status: 'expired', applies: true, blocked: base.configured, pending: !!sub && sub.status === 'pending' });
