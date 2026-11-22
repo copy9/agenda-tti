@@ -337,8 +337,13 @@ test('lembrete 6 horas antes de vencer: vai a quem deve responder, uma vez só',
   assert.equal((await rows("kind = 'proposal_expired' AND doc LIKE '%Casa Lembrete%'")).length, 2);
 });
 
-test('service worker do push é servido na raiz e só mostra aviso e abre o site', async () => {
+test('service worker é servido na raiz, mostra aviso, abre o site e nunca serve dados de cache', async () => {
   const r = await new Client().get('/sw.js');
   assert.equal(r.status, 200); assert.equal(r.headers.get('service-worker-allowed'), '/'); assert.match(r.headers.get('content-type'), /javascript/);
-  assert.match(r.txt, /addEventListener\('push'/); assert.match(r.txt, /notificationclick/); assert.ok(!/caches\./.test(r.txt), 'não guarda nada em cache');
+  assert.match(r.txt, /addEventListener\('push'/); assert.match(r.txt, /notificationclick/);
+  // Desde o aplicativo instalável (#10) ele guarda a tela para funcionar sem rede. O que não pode
+  // mudar: dados nunca saem do cache, e a tela só vem do cache quando a rede falha.
+  assert.match(r.txt, /pathname\.startsWith\('\/api\/'\)/, 'as chamadas de dados ficam fora do cache');
+  assert.match(r.txt, /mode === 'navigate'/, 'a navegação tem tratamento próprio');
+  assert.ok(/const net = await fetch\(req\);[\s\S]{0,200}catch/.test(r.txt), 'a tela tenta a rede antes do cache');
 });

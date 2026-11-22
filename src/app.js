@@ -154,6 +154,22 @@ function build() {
   // Service worker do push: precisa ser servido na raiz para valer para o site todo.
   app.get('/sw.js', (req, res) => res.send(200, fs.readFileSync(path.join(__dirname, '..', 'public', 'sw.js')), { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'no-cache', 'Service-Worker-Allowed': '/' }));
 
+  // Aplicativo instalável: manifest e ícones. Nomes fixos, nada vem do pedido.
+  const APPFILES = {
+    'manifest.webmanifest': 'application/manifest+json; charset=utf-8',
+    'icon-192.png': 'image/png',
+    'icon-512.png': 'image/png',
+    'icon-maskable-512.png': 'image/png',
+    'apple-touch-icon.png': 'image/png',
+  };
+  app.get('/app/:file', (req, res) => {
+    const type = APPFILES[req.params.file];
+    if (!type) return res.json(404, { error: 'Não encontrado.' });
+    res.send(200, fs.readFileSync(path.join(__dirname, '..', 'public', 'app', req.params.file)), { 'Content-Type': type, 'Cache-Control': 'public, max-age=86400' });
+  });
+  // atalho que o iPhone procura na raiz quando o site não diz onde está o ícone
+  app.get('/apple-touch-icon.png', (req, res) => res.send(200, fs.readFileSync(path.join(__dirname, '..', 'public', 'app', 'apple-touch-icon.png')), { 'Content-Type': 'image/png', 'Cache-Control': 'public, max-age=86400' }));
+
   // ---------- observabilidade ----------
   app.get('/metrics', (req, res) => {
     if (!cfg.METRICS_TOKEN) return res.json(404, { error: 'Não encontrado.' });
