@@ -1,0 +1,5 @@
+// Projeto do aplicativo Android. A compilação roda no GitHub Actions (.github/workflows/android.yml),
+// que já tem o SDK do Android instalado.
+plugins {
+  id 'com.android.application' version '8.5.2' apply false
+}
